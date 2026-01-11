@@ -3,7 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "@/app/globals.css";
 import { ThemeProvider } from "@/providers/theme-provider"
-import { SessionProvider } from "next-auth/react";
+import NextAuthProvider from "@/providers/next-auth";
+
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -39,11 +40,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
-        <SessionProvider>
+       <NextAuthProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             {children}
           </ThemeProvider>
-        </SessionProvider>
+       </NextAuthProvider>
         <Analytics />
       </body>
     </html>

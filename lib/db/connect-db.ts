@@ -7,7 +7,7 @@ import mongoose from "mongoose"
 export default async function ConnectDB(): Promise<void> {
 
     try {
-
+       
         // if already connected, return !
 
         if(mongoose.connection.readyState === 1) return;
