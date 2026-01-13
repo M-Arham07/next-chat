@@ -4,6 +4,8 @@ import { Analytics } from "@vercel/analytics/next"
 import "@/app/globals.css";
 import { ThemeProvider } from "@/providers/theme-provider"
 import NextAuthProvider from "@/providers/next-auth";
+import GlobalLoader from "@/store/loader/GlobalLoader";
+import { LoaderContextProvider } from "@/store/loader/use-loader";
 
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -40,11 +42,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
-       <NextAuthProvider>
+        <NextAuthProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            {children}
+            <LoaderContextProvider>
+              <GlobalLoader loader="LoaderOne" />
+              {children}
+            </LoaderContextProvider>
           </ThemeProvider>
-       </NextAuthProvider>
+        </NextAuthProvider>
         <Analytics />
       </body>
     </html>

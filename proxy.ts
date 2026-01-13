@@ -14,7 +14,6 @@ export default async function proxy(request: NextRequest) {
     if (!pathname.startsWith("/register")) {
 
         if (!session?.user) {
-
             // if session doesent exist then:
             return NextResponse.redirect(new URL("/register", request.url));
         }
@@ -25,6 +24,23 @@ export default async function proxy(request: NextRequest) {
             return NextResponse.redirect(new URL("/register/onboarding", request.url));
         }
     }
+
+    if (pathname.startsWith("/register") && session?.user.username) {
+
+        console.log("HI")
+
+        // if an already onboarded (registered) user has tried to access
+        // /register or /register/onboarding,redirect the user to "/"
+        return NextResponse.redirect(new URL("/", request.url));
+
+    }
+
+
+
+
+
+
+
 
 
 

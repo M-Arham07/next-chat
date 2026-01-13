@@ -67,6 +67,7 @@ export const authOptions: NextAuthOptions = {
                 const foundUser: UserInterface | null = await Users.findOne({ email: token.email });
 
                 token.username = foundUser?.username;
+                token.image = foundUser?.image;
 
                 // if foundUser doesent exist ie : foundUser is null, token.username will be null
 
@@ -108,6 +109,7 @@ export const authOptions: NextAuthOptions = {
 
             // token.username might be undefined , if it is we'll manage it via middleware !
             session.user.username = token?.username;
+            session.user.image = token?.image;
             return session;
 
 

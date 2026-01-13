@@ -1,13 +1,18 @@
 import { UserInterface } from "@/packages/shared/types";
-import mongoose, { models,model } from "mongoose";
+import mongoose, { models, model } from "mongoose";
 
 
 
 // Omit _id,createdAt,updatedAt as it already exists in mongoose.Schema
 
-type UserSchemaType = Omit<UserInterface, "_id" | "createdAt" | "updatedAt">;
+export type UserSchemaType = Omit<UserInterface, "_id" | "createdAt" | "updatedAt">;
 
 const UserSchema = new mongoose.Schema<UserSchemaType>({
+
+    name: {
+        type: String,
+        required: true,
+    },
 
 
     username: {
