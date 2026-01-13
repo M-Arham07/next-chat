@@ -13,7 +13,8 @@ export default async function proxy(request: NextRequest) {
     // run only if pathname doesent start with register !
     if (!pathname.startsWith("/register")) {
 
-        if (!session?.user.username) {
+        if (!session?.user) {
+
             // if session doesent exist then:
             return NextResponse.redirect(new URL("/register", request.url));
         }

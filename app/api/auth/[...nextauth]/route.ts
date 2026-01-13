@@ -58,7 +58,7 @@ export const authOptions: NextAuthOptions = {
         // }
 
 
-        jwt: async function ({ token, session }): Promise<JWT> {
+        jwt: async function ({ token  }): Promise<JWT> {
 
 
             try {
