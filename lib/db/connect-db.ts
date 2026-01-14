@@ -11,7 +11,7 @@ export default async function ConnectDB(): Promise<void> {
         // if already connected, return !
 
         if(mongoose.connection.readyState === 1) return;
-
+       
 
 
 
@@ -21,6 +21,7 @@ export default async function ConnectDB(): Promise<void> {
     
         await mongoose.connect(process.env.DB_URI);
 
+        
         return;
 
     }

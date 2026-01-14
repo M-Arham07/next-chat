@@ -9,9 +9,11 @@ export default async function proxy(request: NextRequest) {
     const session = await getServerSession(authOptions);
     const pathname: string = request.nextUrl.pathname;
 
-
+  
     // run only if pathname doesent start with register !
+
     if (!pathname.startsWith("/register")) {
+
 
         if (!session?.user) {
             // if session doesent exist then:
@@ -25,15 +27,24 @@ export default async function proxy(request: NextRequest) {
         }
     }
 
-    if (pathname.startsWith("/register") && session?.user.username) {
+    if (pathname.startsWith("/register")) {
 
-        console.log("HI")
 
-        // if an already onboarded (registered) user has tried to access
-        // /register or /register/onboarding,redirect the user to "/"
-        return NextResponse.redirect(new URL("/", request.url));
+        if (session?.user.username) {
+
+            // if an already onboarded (registered) user has tried to access
+            // /register or /register/onboarding,redirect the user to "/"
+            return NextResponse.redirect(new URL("/", request.url));
+        }
 
     }
+
+    //     // if session.user.username doesent exist, go back to register page !
+
+    //     if(!session?.user?.username){
+    //         return NextResponse.redirect(new URL("/register", request.url));
+    //     }
+    // }
 
 
 

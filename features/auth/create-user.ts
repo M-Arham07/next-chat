@@ -1,6 +1,7 @@
 "use server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import ConnectDB from "@/lib/db/connect-db";
 import Users, { UserSchemaType } from "@/lib/db/models/user.schema";
 import { UserInterface } from "@/packages/shared/types";
 import { getServerSession } from "next-auth";
@@ -20,6 +21,7 @@ const CreateUser = async (username: string, newImage?: string): Promise<CreateUs
 
         if (!username?.trim()) throw new Error("No username provided");
 
+
         if (!session?.user) throw new Error("No session exists!");
 
         if (session.user.username) throw new Error("Onboarding is already done!");
@@ -27,6 +29,9 @@ const CreateUser = async (username: string, newImage?: string): Promise<CreateUs
 
         // append with previous session data, also append newImage (if it exists, otherwise use the previous one! )
 
+
+    
+        await ConnectDB();
 
         const newUser = { ...session.user, username: username, image: newImage || session.user.image };
 
@@ -41,6 +46,7 @@ const CreateUser = async (username: string, newImage?: string): Promise<CreateUs
 
         await Users.create(newUser);
 
+        
         return { success: true };
 
     }
