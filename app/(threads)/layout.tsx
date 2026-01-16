@@ -1,6 +1,8 @@
-"use client"
+import { MessagesProvider } from "@/features/chat/hooks/use-messages";
+
 export default function ThreadLayout({ children }: { children: React.ReactNode }) {
 
-    return <>{children}</>
+
+    return <MessagesProvider> {children} </MessagesProvider>
 
 }

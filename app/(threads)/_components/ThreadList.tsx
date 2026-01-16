@@ -1,11 +1,13 @@
 import ThreadItem, { ThreadItemProps } from "./ThreadItem";
 import { ScrollArea } from "@/components/ui/scroll-area";
+
+import { Thread } from "@/packages/shared/types/threads";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface ThreadListProps {
-  threads: ThreadItemProps[];
-  selectedThreadId?: number;
-  onThreadSelect?: (id: number) => void;
+  threads: Thread[]
+  selectedThreadId?: string;
+  onThreadSelect?: (id: string) => void;
   className?: string;
 }
 
@@ -26,6 +28,7 @@ const item = {
 
 const ThreadList = ({ threads, selectedThreadId, onThreadSelect, className }: ThreadListProps) => {
 
+  console.log(threads)
   if (threads.length === 0) {
     return (
       <motion.div
@@ -47,22 +50,19 @@ const ThreadList = ({ threads, selectedThreadId, onThreadSelect, className }: Th
       <motion.div
         className="pb-4"
         variants={container}
-        animate="show" 
+        animate="show"
       >
         <AnimatePresence mode="popLayout">
-          {threads.map((thread, index) => (
+          {threads.map((thread) => (
             <motion.div
-             key={index}
+              key={thread.threadId}
               variants={item}
               layout
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
             >
               <ThreadItem
-              key={index}
-                {...thread}
-                isSelected={selectedThreadId === thread.id}
-                onClick={() => onThreadSelect?.(thread.id)}
+                thread={thread}
               />
             </motion.div>
           ))}

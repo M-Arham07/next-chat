@@ -15,7 +15,9 @@ import ThreadList from "./_components/ThreadList"
 import BottomNavigation, { NavTab } from "./_components/layout/BottomNavigation";
 import DesktopSidebar from "./_components/layout/DesktopSidebar";
 import FloatingActionButton from "./_components/FloatingActionButton";
-import { ThreadItemProps } from "./_components/ThreadItem";
+import { Thread } from "@/packages/shared/types/threads";
+import { useMessages } from "@/features/chat/hooks/use-messages";
+import { useSession } from "next-auth/react";
 
 
 
@@ -24,175 +26,226 @@ import { ThreadItemProps } from "./_components/ThreadItem";
 
 
 
-export const mockThreads: ThreadItemProps[] = [
+export const mockThreads: Thread[] = [
   {
-    id: 1,
-    name: "+92 303 9472393",
-    lastMessage: "fast net Hoga tab hi kaam Hoga",
-    timestamp: "1/6/26",
-    avatar: "https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=100&h=100&fit=crop&crop=face",
-    hasBlueCheck: true,
+    threadId: "t1",
+    type: "direct",
+    createdAt: new Date("2023-10-01T10:00:00Z"),
+    particpants: [
+      {
+        username: "alex_smith",
+        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
+        role: "member"
+      },
+      {
+        username: "jordan_lee",
+        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan",
+        role: "member"
+      }
+    ]
   },
   {
-    id: 2,
-    name: "Salah Sheikh",
-    lastMessage: 'Salah reacted 👍 to "kabi Kiya ni aisa"',
-    timestamp: "1/6/26",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
+    threadId: "t2",
+    type: "group",
+    groupName: "Project Phoenix 🔥",
+    groupImage: "https://api.dicebear.com/7.x/initials/svg?seed=PP",
+    createdBy: "admin_sarah",
+    createdAt: new Date("2023-11-15T09:30:00Z"),
+    particpants: [
+      {
+        username: "admin_sarah",
+        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
+        role: "admin",
+        joinedAt: new Date("2023-11-15T09:30:00Z")
+      },
+      {
+        username: "dev_mike",
+        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mike",
+        role: "member",
+        joinedAt: new Date("2023-11-16T14:20:00Z")
+      },
+      {
+        username: "designer_rose",
+        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Rose",
+        role: "member",
+        joinedAt: new Date("2023-11-15T10:00:00Z"),
+        leftAt: new Date("2023-12-01T12:00:00Z")
+      }
+    ]
   },
   {
-    id: 3,
-    name: "Haider",
-    lastMessage: "Let's see",
-    timestamp: "1/6/26",
-    initial: "H",
+    threadId: "t3",
+    type: "direct",
+    createdAt: new Date("2024-01-05T18:45:00Z"),
+    particpants: [
+      {
+        username: "support_bot",
+        image: "https://api.dicebear.com/7.x/bottts/svg?seed=Support",
+        role: "member"
+      },
+      {
+        username: "jordan_lee",
+        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan",
+        role: "member"
+      }
+    ]
   },
   {
-    id: 4,
-    name: "+92 300 7947716",
-    lastMessage: "It is online classes. While may be waiting...",
-    timestamp: "1/6/26",
-    initial: "M",
-  },
-  {
-    id: 5,
-    name: "Ramzan Event",
-    lastMessage: "+92 330 4009973: Mausi",
-    timestamp: "1/5/26",
-    avatar: "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=100&h=100&fit=crop",
-    isGroup: true,
-  },
-  {
-    id: 6,
-    name: "+92 328 4198908",
-    lastMessage: "Ok",
-    timestamp: "1/3/26",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
-  },
-  {
-    id: 7,
-    name: "+212 715-912012",
-    lastMessage: 'You reacted ❤️ to "📷 File System: (F2FS)..."',
-    timestamp: "12/26",
-    initial: "A",
-  },
-  {
-    id: 8,
-    name: "Fahad Kdm",
-    lastMessage: "theek hai bro",
-    timestamp: "12/25",
-    avatar: "https://images.unsplash.com/photo-1599566150163-29194dcabd36?w=100&h=100&fit=crop&crop=face",
-  },
-  {
-    id: 9,
-    name: "Ali Khan",
-    lastMessage: "See you tomorrow!",
-    timestamp: "1/2/26",
-    initial: "A",
-  },
-  {
-    id: 10,
-    name: "Tech Group",
-    lastMessage: "New update available",
-    timestamp: "1/1/26",
-    initial: "T",
-    isGroup: true,
-  },
-  {
-    id: 11,
-    name: "Family Group",
-    lastMessage: "Mom: Dinner is ready",
-    timestamp: "12/31",
-    initial: "F",
-    isGroup: true,
-  },
+    threadId: "t4",
+    type: "group",
+    groupName: "Friday Lunch Crew",
+    groupImage: "https://api.dicebear.com/7.x/initials/svg?seed=FLC",
+    createdBy: "foodie_phil",
+    createdAt: new Date("2024-01-10T11:00:00Z"),
+    particpants: [
+      {
+        username: "foodie_phil",
+        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Phil",
+        role: "admin",
+        joinedAt: new Date("2024-01-10T11:00:00Z")
+      },
+      {
+        username: "alex_smith",
+        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
+        role: "member",
+        joinedAt: new Date("2024-01-10T11:05:00Z")
+      }
+    ]
+  }
 ];
+
+
+
+
+
+
+
+
 
 const Index = () => {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<NavTab>("threads");
-  const [activeFilter, setActiveFilter] = useState("all");
+  const [activeFilter, setActiveFilter] = useState<"all" | "unread" | "groups">("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedThreadId, setSelectedThreadId] = useState<number | undefined>();
+  const [selectedThreadId, setSelectedThreadId] = useState<string | undefined>();
+
+  const { data: session } = useSession();
+
+  const [threads, setThreads] = useState<Thread[]>(mockThreads);
+
+  // TODO: FETCH 10 messages for each thread on initial load ?
+
+  const messages = useMessages();
+
+  console.log("messages are:",messages)
+
 
   // Filter threads based on search query and active filter
   const filteredThreads = useMemo(() => {
-    let result = mockThreads;
+    let result: Thread[] = [...threads];
 
-    // Search filter (by name or number)
+    // filter logic
+
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (thread) =>
-          thread.name.toLowerCase().includes(query) ||
-          thread.lastMessage.toLowerCase().includes(query)
-      );
+
+      const query: string = searchQuery.toLowerCase();
+
+
+
+      result = result.filter(thread => {
+
+        // query matches atleast one of the messages in this thread?
+        const matchesMsgs = messages![thread.threadId]?.some(msg => msg.content.toLowerCase().includes(query));
+
+        // does the query match the partcipants name or group name? (in case of GC )
+
+        // EXCLUDE the loggined user's username while searching in particpants username!
+        let matchesName = false;
+
+
+        if (thread.particpants.some(p => p.username.toLowerCase().includes(query) && p.username !== session!.user.username!.toLowerCase())) {
+          matchesName = true;
+
+        }
+        else if (thread.type === "group" && thread.groupName!.toLowerCase().includes(query)) {
+          matchesName = true;
+        }
+
+        return matchesMsgs || matchesName;
+      
+
+      });
+
+
+
     }
 
-    // Tab filter
-    if (activeFilter === "unread") {
-      result = result.filter((thread) => thread.id <= 4); // Mock unread
-    } else if (activeFilter === "groups") {
-      result = result.filter((thread) => thread.isGroup);
-    }
 
- 
+
+
+
+    console.log("filtered is",result);
+
     return result;
-  }, [searchQuery, activeFilter]);
 
-// Mobile Layout
-if (isMobile) {
+
+  }, [searchQuery, activeFilter, threads]);
+
+
+
+  // Mobile Layout
+  if (isMobile) {
+    return (
+      <div className="h-screen bg-background max-w-md mx-auto relative overflow-hidden pb-[calc(72px+env(safe-area-inset-bottom))]">
+        <AnimatePresence mode="wait" initial={false}>
+          {activeTab === "threads" ? (
+            <motion.div
+              key="threads"
+              className="h-full"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <ThreadHeader
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+              />
+
+              <ThreadList
+                threads={filteredThreads}
+                selectedThreadId={selectedThreadId}
+                onThreadSelect={setSelectedThreadId}
+                className="h-[calc(100vh-200px)]"
+              />
+
+              {/* ✅ FAB lifted above BottomNavigation */}
+              <div className="fixed right-1 bottom-[calc(72px+env(safe-area-inset-bottom)+16px)] z-50">
+                <FloatingActionButton />
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key={activeTab}
+              className="h-[calc(100vh-100px)]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <ComingSoon title={activeTab} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Bottom nav is already fixed */}
+        <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+      </div>
+    );
+  }
+
+
   return (
-    <div className="h-screen bg-background max-w-md mx-auto relative overflow-hidden pb-[calc(72px+env(safe-area-inset-bottom))]">
-      <AnimatePresence mode="wait" initial={false}>
-        {activeTab === "threads" ? (
-          <motion.div
-            key="threads"
-            className="h-full"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-          >
-            <ThreadHeader
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-            />
-
-            <ThreadList
-              threads={filteredThreads}
-              selectedThreadId={selectedThreadId}
-              onThreadSelect={setSelectedThreadId}
-              className="h-[calc(100vh-200px)]"
-            />
-
-            {/* ✅ FAB lifted above BottomNavigation */}
-            <div className="fixed right-1 bottom-[calc(72px+env(safe-area-inset-bottom)+16px)] z-50">
-              <FloatingActionButton />
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key={activeTab}
-            className="h-[calc(100vh-100px)]"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-          >
-            <ComingSoon title={activeTab} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Bottom nav is already fixed */}
-      <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
-    </div>
-  );
-}
-
-
- return (
     <motion.div
       className="h-screen bg-background flex overflow-hidden"
       initial={{ opacity: 0 }}
