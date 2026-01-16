@@ -6,7 +6,7 @@ export type ThreadType = "direct" | "group"; // DM to someone, or a group chat
 
 
 // particpant(s) in the thread!
-interface particpant {
+export interface particpant {
 
     username: string,
     image: string,

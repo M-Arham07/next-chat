@@ -1,7 +1,9 @@
 import { CheckCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { motion } from "framer-motion";
-import { Thread } from "@/packages/shared/types/threads";
+import { particpant, Thread } from "@/packages/shared/types/threads";
+import { useSession } from "next-auth/react";
+import { useMessages } from "@/features/chat/hooks/use-messages";
 
 
 
@@ -29,11 +31,30 @@ const avatarColors = [
 
 
 // this component will receive the individual thread object ! 
-const ThreadItem = ({ thread } : {thread: Thread}) => {
+const ThreadItem = ({ thread }: { thread: Thread }) => {
   // Deterministic color based on id
   const colorClass = avatarColors[Math.floor(Math.random() * avatarColors.length)];
 
+  const { data: session } = useSession();
+  const messages = useMessages();
+
+  // get last message of this thread : 
+
+
+  const msgsLength = messages?.[thread.threadId]?.length ?? -1;
+
+  const lastMessage: Message | undefined = messages?.[thread.threadId]?.[msgsLength - 1];
+
   const onClick = () => console.log("clicked");
+
+  // IF THREAD TYPE IS DIRECT:
+  let otherParticipant: particpant | undefined = undefined;
+
+  if (thread.type === "direct") {
+    otherParticipant = thread.particpants?.find(p => p.username.toLowerCase() !== session?.user.username!.toLowerCase());
+  }
+
+
 
   return (
 
@@ -44,24 +65,31 @@ const ThreadItem = ({ thread } : {thread: Thread}) => {
       whileTap={{ scale: 0.970 }}
       transition={{ duration: 0.15 }}
     >
-      {/* <Avatar className="w-12 h-12 flex-shrink-0 ring-1 ring-border/50">
-        {thread ? (
-          <AvatarImage src={avatar} alt={name} className="object-cover" />
-        ) : null}
+      <Avatar className="w-12 h-12 flex-shrink-0 ring-1 ring-border/50">
+
+        <AvatarImage src={thread.groupImage ||
+          otherParticipant?.image
+          || null
+        } alt={thread.groupName || ""} className="object-cover" />
+
         <AvatarFallback className={`${colorClass} text-foreground text-base font-medium`}>
-          {initial || name.charAt(0).toUpperCase()}
+          {  (thread?.groupImage || otherParticipant?.username)!.charAt(0).toUpperCase()}
         </AvatarFallback>
-      </Avatar> */}
+      </Avatar>
 
       <div className="flex-1 min-w-0 py-1 border-b border-border/30">
         <div className="flex items-center justify-between">
           <span className="font-medium text-[15px] text-foreground truncate">
             {
-              "Sender Here"
+              /* If thread.groupName exists, then show the group name 
+               Otherwise, its a private dm so show the other participant's username ! 
+               (use "Unknown" as a fallback)
+              */
+              thread.groupName || otherParticipant?.username || "Unknown"
             }
           </span>
           <span className="text-xs text-muted-foreground flex-shrink-0 ml-2 font-mono">
-            {"timestamp"}
+            {lastMessage?.timestamp?.toLocaleTimeString()}
           </span>
         </div>
         <div className="flex items-center gap-1.5 mt-0.5">
@@ -71,7 +99,7 @@ const ThreadItem = ({ thread } : {thread: Thread}) => {
             <CheckCheck className="w-4 h-4 flex-shrink-0 text-success" color="#09ebd8" />
           )}
           <p className="text-sm text-muted-foreground truncate">
-            "last message here"
+            {lastMessage?.content}
           </p>
         </div>
       </div>

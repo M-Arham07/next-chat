@@ -183,9 +183,6 @@ const Index = () => {
 
 
 
-
-    console.log("filtered is",result);
-
     return result;
 
 
