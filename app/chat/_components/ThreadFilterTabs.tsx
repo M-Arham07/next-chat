@@ -1,9 +1,10 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ActiveFilter } from "@/features/chat/types";
 import { motion } from "framer-motion";
 
 interface ThreadFilterTabsProps {
   activeFilter: string;
-  onFilterChange: (value: string) => void;
+  onFilterChange: (value: ActiveFilter) => void;
 }
 
 const filters = ["all", "unread", "groups"] as const;

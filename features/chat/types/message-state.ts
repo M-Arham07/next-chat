@@ -1,3 +1,4 @@
+import { Message } from "@/packages/shared/types"
 
 
 export interface MessageState {

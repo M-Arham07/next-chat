@@ -62,7 +62,7 @@ const ThreadItem = ({ thread }: { thread: Thread }) => {
 
 
   return (
-    <Link href={`/${thread.threadId}`}>
+    <Link href={`/chats/${thread.threadId}`}>
 
       <motion.div                                                                                                            // need to put isSelected, or remove this
         className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 hover:bg-accent/50 group ${false ? 'selected bg-accent' : ''}`}

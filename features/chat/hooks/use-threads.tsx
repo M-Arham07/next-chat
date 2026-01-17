@@ -15,7 +15,9 @@ export interface ThreadsHook {
     selectedThreadId: string | undefined,
     setSelectedThreadId: Dispatch<SetStateAction<string | undefined>>,
     searchQuery: string,
-    setSearchQuery: Dispatch<SetStateAction<string>>
+    setSearchQuery: Dispatch<SetStateAction<string>>,
+    activeFilter : ActiveFilter,
+    setActiveFilter: Dispatch<SetStateAction<ActiveFilter>>
 
 }
 
@@ -106,7 +108,9 @@ export function useThreadsHook(): ThreadsHook {
         setActiveTab,
         filteredThreads,
         selectedThreadId,
-        setSelectedThreadId
+        setSelectedThreadId,
+        activeFilter,
+        setActiveFilter
     }
 
 

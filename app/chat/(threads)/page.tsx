@@ -1,18 +1,10 @@
 "use client"
-import React, { useState, useMemo, useEffect } from "react";
-import { ComingSoon } from "./_components/shared";
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { useIsMobile } from "@/lib/use-mobile";
+import { ComingSoon } from "../_components/shared";
 import { motion, AnimatePresence } from "framer-motion";
-import ThreadFilterTabs from "./_components/ThreadFilterTabs";
-import ThreadHeader from "./_components/ThreadHeader";
-import ThreadList from "./_components/ThreadList"
-import BottomNavigation, { NavTab } from "./_components/layout/BottomNavigation";
-import DesktopSidebar from "./_components/layout/DesktopSidebar";
-import FloatingActionButton from "./_components/FloatingActionButton";
-import { Thread } from "@/packages/shared/types/threads";
-import { useSession } from "next-auth/react";
-import filterThreads from "@/features/chat/lib/filter-threads";
+import ThreadHeader from "../_components/ThreadHeader";
+import ThreadList from "../_components/ThreadList"
+import BottomNavigation, { NavTab } from "../_components/layout/BottomNavigation";
+import FloatingActionButton from "../_components/FloatingActionButton";
 import { useChatApp } from "@/features/chat/hooks/use-chat-app";
 
 
@@ -21,7 +13,7 @@ import { useChatApp } from "@/features/chat/hooks/use-chat-app";
 
 
 
-export default function Hi() {
+export default function MobileThreadPage() {
 
   const { activeTab,
     setActiveTab,
@@ -30,16 +22,12 @@ export default function Hi() {
     filteredThreads,
     selectedThreadId,
     setSelectedThreadId,
-    mounted
-
   } = useChatApp()!;
 
  
 
 
 
-
-  if(!mounted) return null;
 
 
 
@@ -94,6 +82,10 @@ export default function Hi() {
           onTabChange={setActiveTab}
         />
       </div>
+
+
+    </>
+  );
 
       {/* ================= DESKTOP LAYOUT =================
     <motion.div
@@ -172,10 +164,6 @@ export default function Hi() {
         </ResizablePanel>
       </ResizablePanelGroup>
     </motion.div> */}
-    </>
-  );
-
-
 
 
 

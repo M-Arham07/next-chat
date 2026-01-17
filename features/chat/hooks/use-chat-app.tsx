@@ -54,6 +54,7 @@ export function ChatAppProvider({ children }: { children: React.ReactNode }) {
 // TO CONSUME THE HOOK: 
 export function useChatApp(): ChatAppHook | undefined {
     const ctx = useContext(ChatAppContext);
+    
 
     if (!ctx) throw new Error("no ctx found for useChatApp!");
     return ctx;

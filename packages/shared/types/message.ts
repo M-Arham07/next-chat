@@ -2,7 +2,7 @@
 type MessageContentType = "text" | "image" | "voice" | "document";
 
 
-interface Message {
+export interface Message {
     msgId: string,
     threadId: string, // associated thread ! 
     sender: string, // sender username
