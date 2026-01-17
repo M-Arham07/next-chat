@@ -1,12 +1,12 @@
 "use client";
-import ThreadItem, { ThreadItemProps } from "./ThreadItem";
+import ThreadItem from "./ThreadItem";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { Thread } from "@/packages/shared/types/threads";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface ThreadListProps {
-  threads: Thread[]
+  threads: Thread[] | null
   selectedThreadId?: string;
   onThreadSelect?: (id: string) => void;
   className?: string;
@@ -30,7 +30,7 @@ const item = {
 const ThreadList = ({ threads, selectedThreadId, onThreadSelect, className }: ThreadListProps) => {
 
   console.log(threads)
-  if (threads.length === 0) {
+  if (!threads || threads?.length === 0) {
     return (
       <motion.div
         className="flex flex-col items-center justify-center py-16 px-4 text-center"

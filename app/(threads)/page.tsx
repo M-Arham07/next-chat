@@ -1,14 +1,9 @@
 "use client"
-import { useState, useMemo, useEffect } from "react";
-
+import React, { useState, useMemo, useEffect } from "react";
 import { ComingSoon } from "./_components/shared";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { useIsMobile } from "@/lib/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
-
-
-
-
 import ThreadFilterTabs from "./_components/ThreadFilterTabs";
 import ThreadHeader from "./_components/ThreadHeader";
 import ThreadList from "./_components/ThreadList"
@@ -16,8 +11,9 @@ import BottomNavigation, { NavTab } from "./_components/layout/BottomNavigation"
 import DesktopSidebar from "./_components/layout/DesktopSidebar";
 import FloatingActionButton from "./_components/FloatingActionButton";
 import { Thread } from "@/packages/shared/types/threads";
-import { useMessages } from "@/features/chat/hooks/use-messages";
 import { useSession } from "next-auth/react";
+import filterThreads from "@/features/chat/lib/filter-threads";
+import { useChatApp } from "@/features/chat/hooks/use-chat-app";
 
 
 
@@ -25,185 +21,33 @@ import { useSession } from "next-auth/react";
 
 
 
+export default function Hi() {
 
-export const mockThreads: Thread[] = [
-  {
-    threadId: "t1",
-    type: "direct",
-    createdAt: new Date("2023-10-01T10:00:00Z"),
-    particpants: [
-      {
-        username: "alex_smith",
-        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
-        role: "member"
-      },
-      {
-        username: "jordan_lee",
-        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan",
-        role: "member"
-      }
-    ]
-  },
-  {
-    threadId: "t2",
-    type: "group",
-    groupName: "Project Phoenix 🔥",
-    groupImage: "https://api.dicebear.com/7.x/initials/svg?seed=PP",
-    createdBy: "admin_sarah",
-    createdAt: new Date("2023-11-15T09:30:00Z"),
-    particpants: [
-      {
-        username: "admin_sarah",
-        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
-        role: "admin",
-        joinedAt: new Date("2023-11-15T09:30:00Z")
-      },
-      {
-        username: "dev_mike",
-        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mike",
-        role: "member",
-        joinedAt: new Date("2023-11-16T14:20:00Z")
-      },
-      {
-        username: "designer_rose",
-        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Rose",
-        role: "member",
-        joinedAt: new Date("2023-11-15T10:00:00Z"),
-        leftAt: new Date("2023-12-01T12:00:00Z")
-      }
-    ]
-  },
-  {
-    threadId: "t3",
-    type: "direct",
-    createdAt: new Date("2024-01-05T18:45:00Z"),
-    particpants: [
-      {
-        username: "support_bot",
-        image: "https://api.dicebear.com/7.x/bottts/svg?seed=Support",
-        role: "member"
-      },
-      {
-        username: "jordan_lee",
-        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan",
-        role: "member"
-      }
-    ]
-  },
-  {
-    threadId: "t4",
-    type: "group",
-    groupName: "Friday Lunch Crew",
-    groupImage: "https://api.dicebear.com/7.x/initials/svg?seed=FLC",
-    createdBy: "foodie_phil",
-    createdAt: new Date("2024-01-10T11:00:00Z"),
-    particpants: [
-      {
-        username: "foodie_phil",
-        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Phil",
-        role: "admin",
-        joinedAt: new Date("2024-01-10T11:00:00Z")
-      },
-      {
-        username: "alex_smith",
-        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
-        role: "member",
-        joinedAt: new Date("2024-01-10T11:05:00Z")
-      }
-    ]
-  }
-];
+  const { activeTab,
+    setActiveTab,
+    searchQuery,
+    setSearchQuery,
+    filteredThreads,
+    selectedThreadId,
+    setSelectedThreadId,
+    mounted
 
+  } = useChatApp()!;
 
+ 
 
-
-
-
-
-
-
-const Index = () => {
-  const isMobile = useIsMobile();
-  const [activeTab, setActiveTab] = useState<NavTab>("threads");
-  const [activeFilter, setActiveFilter] = useState<"all" | "unread" | "groups">("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedThreadId, setSelectedThreadId] = useState<string | undefined>();
-
-  const { data: session } = useSession();
-
-  const [threads, setThreads] = useState<Thread[]>(mockThreads);
-
-  //  TO AVOID HYDRATION ERROR: 
-  const [mounted,setIsMounted] = useState(false);
-
-  useEffect(()=>setIsMounted(true),[]);
-
-  // TODO: FETCH 10 messages for each thread on initial load ?
-
-  const messages = useMessages();
-
-  console.log("messages are:",messages)
-
-
-  // Filter threads based on search query and active filter
-  const filteredThreads = useMemo(() => {
-    let result: Thread[] = [...threads];
-
-    // filter logic
-
-    if (searchQuery.trim()) {
-
-      const query: string = searchQuery.toLowerCase();
-
-
-
-      result = result.filter(thread => {
-
-        // query matches atleast one of the messages in this thread?
-        const matchesMsgs = messages![thread.threadId]?.some(msg => msg.content.toLowerCase().includes(query));
-
-        // does the query match the partcipants name or group name? (in case of GC )
-
-        // EXCLUDE the loggined user's username while searching in particpants username!
-        let matchesName = false;
-
-
-        if (thread.particpants.some(p => p.username.toLowerCase().includes(query) && p.username !== session!.user.username!.toLowerCase())) {
-          matchesName = true;
-
-        }
-        else if (thread.type === "group" && thread.groupName!.toLowerCase().includes(query)) {
-          matchesName = true;
-        }
-
-        return matchesMsgs || matchesName;
-      
-
-      });
-
-
-
-    }
-
-
-
-
-
-
-    return result;
-
-
-  }, [searchQuery, activeFilter, threads]);
 
 
 
   if(!mounted) return null;
 
 
-  // Mobile Layout
-  if (isMobile) {
-    return (
-      <div className="h-screen bg-background max-w-md mx-auto relative overflow-hidden pb-[calc(72px+env(safe-area-inset-bottom))]">
+
+
+  return (
+    <>
+      {/* ================= MOBILE LAYOUT ================= */}
+      <div className="md:hidden h-screen bg-background max-w-md mx-auto relative overflow-hidden pb-[calc(72px+env(safe-area-inset-bottom))]">
         <AnimatePresence mode="wait" initial={false}>
           {activeTab === "threads" ? (
             <motion.div
@@ -226,7 +70,7 @@ const Index = () => {
                 className="h-[calc(100vh-200px)]"
               />
 
-              {/* ✅ FAB lifted above BottomNavigation */}
+              {/* FAB */}
               <div className="fixed right-1 bottom-[calc(72px+env(safe-area-inset-bottom)+16px)] z-50">
                 <FloatingActionButton />
               </div>
@@ -245,21 +89,23 @@ const Index = () => {
           )}
         </AnimatePresence>
 
-        {/* Bottom nav is already fixed */}
-        <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+        <BottomNavigation
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
       </div>
-    );
-  }
 
-
-  return (
+      {/* ================= DESKTOP LAYOUT =================
     <motion.div
-      className="h-screen bg-background flex overflow-hidden"
+      className="hidden md:flex h-screen bg-background overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      <DesktopSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <DesktopSidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
 
       <ResizablePanelGroup direction="horizontal" className="flex-1">
         <ResizablePanel defaultSize={35} minSize={25} maxSize={50}>
@@ -279,12 +125,12 @@ const Index = () => {
                     searchQuery={searchQuery}
                     onSearchChange={setSearchQuery}
                   />
+
                   <ThreadFilterTabs
                     activeFilter={activeFilter}
                     onFilterChange={setActiveFilter}
                   />
 
-                  {/* ✅ scrollable region */}
                   <div className="flex-1 min-h-0 overflow-y-auto">
                     <ThreadList
                       threads={filteredThreads}
@@ -321,12 +167,19 @@ const Index = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.4 }}
           >
-            <ComingSoon />
+            {children}
           </motion.div>
         </ResizablePanel>
       </ResizablePanelGroup>
-    </motion.div>
+    </motion.div> */}
+    </>
   );
-};
 
-export default Index;
+
+
+
+
+
+
+
+}

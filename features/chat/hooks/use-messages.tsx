@@ -3,9 +3,7 @@ import { createContext, useContext, useState,useEffect } from "react";
 import { MessageState } from "../types/message-state";
 
 
-const MessagesContext = createContext<MessageState | null>(null);
-
-function useMessagesHook() : MessageState {
+export function useMessagesHook() : MessageState {
 
     const [messages, setMessages] = useState<MessageState | null>(null);
 
@@ -30,24 +28,6 @@ function useMessagesHook() : MessageState {
 
 
 }
-
-
-export function useMessages(){
-    const ctx = useContext(MessagesContext);
-
-    return ctx;
-}
-
-
-export function MessagesProvider({ children }: { children: React.ReactNode }) {
-
-    const value = useMessagesHook();
-
-    return <MessagesContext.Provider value={value}> {children} </MessagesContext.Provider>
-
-}
-
-
 
 
 

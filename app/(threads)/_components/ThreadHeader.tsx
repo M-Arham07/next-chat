@@ -10,6 +10,8 @@ interface ThreadHeaderProps {
 }
 
 const ThreadHeader = ({ isDesktop = false, searchQuery, onSearchChange }: ThreadHeaderProps) => {
+
+  
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   return (

@@ -1,9 +1,13 @@
-import { MessagesProvider } from "@/features/chat/hooks/use-messages";
-
-export default function ThreadLayout({ children }: { children: React.ReactNode }) {
+import { ChatAppProvider } from "@/features/chat/hooks/use-chat-app";
 
 
-    return <MessagesProvider> {children} </MessagesProvider>
+export default function ThreadsLayout({ children }: { children: React.ReactNode }) {
 
-}
+
+    return <ChatAppProvider>{children}</ChatAppProvider>
+
+
+
+
+};
 

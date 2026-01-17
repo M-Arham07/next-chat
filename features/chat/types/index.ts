@@ -1,1 +1,3 @@
-export * from "./message-state.type";
+export * from "./message-state";
+
+export * from "./active-filter";
