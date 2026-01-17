@@ -1,5 +1,5 @@
 "use client"
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 import { ComingSoon } from "./_components/shared";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -133,6 +133,11 @@ const Index = () => {
 
   const [threads, setThreads] = useState<Thread[]>(mockThreads);
 
+  //  TO AVOID HYDRATION ERROR: 
+  const [mounted,setIsMounted] = useState(false);
+
+  useEffect(()=>setIsMounted(true),[]);
+
   // TODO: FETCH 10 messages for each thread on initial load ?
 
   const messages = useMessages();
@@ -183,11 +188,16 @@ const Index = () => {
 
 
 
+
+
     return result;
 
 
   }, [searchQuery, activeFilter, threads]);
 
+
+
+  if(!mounted) return null;
 
 
   // Mobile Layout

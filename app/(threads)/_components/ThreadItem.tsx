@@ -1,3 +1,4 @@
+"use client";
 import { CheckCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { motion } from "framer-motion";
@@ -56,6 +57,9 @@ const ThreadItem = ({ thread }: { thread: Thread }) => {
 
 
 
+  
+
+
   return (
 
     <motion.div                                                                                                            // need to put isSelected, or remove this
@@ -69,7 +73,7 @@ const ThreadItem = ({ thread }: { thread: Thread }) => {
 
         <AvatarImage src={thread.groupImage ||
           otherParticipant?.image
-          || null
+          || ""
         } alt={thread.groupName || ""} className="object-cover" />
 
         <AvatarFallback className={`${colorClass} text-foreground text-base font-medium`}>

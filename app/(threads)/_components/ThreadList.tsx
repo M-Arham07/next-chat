@@ -1,3 +1,4 @@
+"use client";
 import ThreadItem, { ThreadItemProps } from "./ThreadItem";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
