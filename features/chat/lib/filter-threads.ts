@@ -1,13 +1,11 @@
 import { Thread } from "@/packages/shared/types/threads";
-import { useMessages } from "../hooks/use-messages";
-import { ActiveTabFilter } from "../types/active-filter";
+import { ActiveFilter } from "../types";
 import { MessageState } from "../types/message-state";
-import { SessionContextValue } from "next-auth/react";
 import { Session } from "next-auth";
 
 
 const filterThreads = (threads: Thread[] | null, messages: MessageState | null, session: Session | null,
-  searchQuery: string, activeFilter: ActiveTabFilter): Thread[] | null => {
+  searchQuery: string, activeFilter: ActiveFilter): Thread[] | null => {
 
   if (!searchQuery.trim()) return threads;
 

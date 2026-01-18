@@ -1,7 +1,8 @@
 import { MessageSquare, Radio, Users, Phone, Settings } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { useSession } from "next-auth/react";
 
 export type NavTab = "threads" | "updates" | "communities" | "calls";
 
@@ -17,9 +18,15 @@ const navItems: { id: NavTab; icon: React.ElementType; label: string }[] = [
   { id: "calls", icon: Phone, label: "Calls" },
 ];
 
+
 const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
+  
+  const { data: session } = useSession();
+
+  console.log("session img",session?.user?.image);
+
   return (
-    <motion.div 
+    <motion.div
       className="w-16 glass-card flex flex-col items-center py-4 border-r border-border/50"
       initial={{ x: -20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
@@ -31,9 +38,12 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
         animate={{ scale: 1 }}
         transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
       >
+
+        {/* PUT BRAND LOGO HERE! */}
         <Avatar className="w-10 h-10 mb-6 ring-2 ring-border">
+          
           <AvatarFallback className="bg-foreground text-background text-sm font-bold">
-            M
+            {session?.user?.username?.charAt(0)?.toUpperCase() || "?"}
           </AvatarFallback>
         </Avatar>
       </motion.div>
@@ -54,11 +64,10 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
                 variant="ghost"
                 size="icon"
                 onClick={() => onTabChange(item.id)}
-                className={`w-11 h-11 rounded-xl transition-all duration-200 relative ${
-                  isActive 
-                    ? 'bg-foreground text-background hover:bg-foreground/90' 
+                className={`w-11 h-11 rounded-xl transition-all duration-200 relative ${isActive
+                    ? 'bg-foreground text-background hover:bg-foreground/90'
                     : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                }`}
+                  }`}
               >
                 <Icon className="w-5 h-5" />
                 {isActive && (
@@ -75,7 +84,7 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
       </div>
 
       {/* Bottom Icons */}
-      <motion.div 
+      <motion.div
         className="flex flex-col items-center gap-2 mt-auto"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -89,8 +98,9 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
           <Settings className="w-5 h-5" />
         </Button>
         <Avatar className="w-9 h-9 ring-1 ring-border">
+          <AvatarImage src={session?.user?.image || ""}/>
           <AvatarFallback className="bg-avatar-3 text-foreground text-xs font-medium">
-            JD
+            {session?.user?.username?.charAt(0)?.toUpperCase() || "?"}
           </AvatarFallback>
         </Avatar>
       </motion.div>

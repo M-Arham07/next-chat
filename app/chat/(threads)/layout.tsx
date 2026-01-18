@@ -110,7 +110,10 @@ export default function ThreadsLayout({ children }: { children: React.ReactNode 
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.2, duration: 0.4 }}
                         >
+                          
                             {children}
+
+                            
                         </motion.div>
                     </ResizablePanel>
                 </ResizablePanelGroup>

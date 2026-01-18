@@ -6,6 +6,7 @@ import { particpant, Thread } from "@/packages/shared/types/threads";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useChatApp } from "@/features/chat/hooks/use-chat-app";
+import { Message } from "@/packages/shared/types";
 
 
 

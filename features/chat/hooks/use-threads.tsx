@@ -1,12 +1,12 @@
 "use client";
 import { createContext, Dispatch, SetStateAction, use, useEffect, useMemo, useState } from "react";
 import { ActiveFilter } from "../types/active-filter";
-import { NavTab } from "@/app/(threads)/_components/layout/BottomNavigation";
 import { Thread } from "@/packages/shared/types/threads";
 import { useSession } from "next-auth/react";
 import filterThreads from "../lib/filter-threads";
 import { useMessagesHook } from "./use-messages";
 import { useLoader } from "@/store/loader/use-loader";
+import { NavTab } from "@/app/chat/_components/layout/BottomNavigation";
 
 export interface ThreadsHook {
     activeTab: NavTab,
