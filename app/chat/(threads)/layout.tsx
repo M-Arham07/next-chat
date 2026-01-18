@@ -2,12 +2,10 @@
 import { ChatAppProvider } from "@/features/chat/hooks/use-chat-app";
 import { ComingSoon } from "../_components/shared";
 import { motion, AnimatePresence } from "framer-motion";
-import ThreadList from "../_components/ThreadList"
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
 import { DesktopSidebar } from "../_components/layout";
-import ThreadHeader from "../_components/ThreadHeader";
-import { ThreadFilterTabs } from "../_components";
-import FloatingActionButton from "../_components/FloatingActionButton";
+import { ThreadHeader, ThreadFilterTabs, ThreadItem, ThreadList } from "../_components";
+import { FloatingActionButton } from "../_components";
 import { useChatApp } from "@/features/chat/hooks/use-chat-app";
 
 
@@ -119,7 +117,23 @@ export default function ThreadsLayout({ children }: { children: React.ReactNode 
             </motion.div>
 
 
+
+            <div className="md:hidden">
+                {children}
+            </div>
+
+
         </>
+
+
+
+
+
+
+
+
+
+
 
     )
 
