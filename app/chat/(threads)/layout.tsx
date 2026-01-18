@@ -112,8 +112,8 @@ export default function ThreadsLayout({ children }: { children: React.ReactNode 
                         >
                           
                             {children}
-
-                            
+    
+    
                         </motion.div>
                     </ResizablePanel>
                 </ResizablePanelGroup>

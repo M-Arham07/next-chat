@@ -30,14 +30,8 @@ const ChatInput = ({ onSend }: ChatInputProps) => {
     }
   }
 
-  const handleMicClick = () => {
-    setIsRecording(true)
-  }
-
-  const handleRecordingCancel = () => {
-    setIsRecording(false)
-  }
-
+  const handleMicClick = () => setIsRecording(true)
+  const handleRecordingCancel = () => setIsRecording(false)
   const handleRecordingSend = (audioUrl: string, duration: string) => {
     onSend("", "voice", audioUrl, duration)
     setIsRecording(false)
@@ -54,7 +48,6 @@ const ChatInput = ({ onSend }: ChatInputProps) => {
           : file.type.startsWith("image/")
             ? "image"
             : "document"
-        const fileName = file.name
 
         if (fileType === "image") {
           onSend("", "image", fileUrl)
@@ -67,20 +60,16 @@ const ChatInput = ({ onSend }: ChatInputProps) => {
             onSend("", "voice", fileUrl, duration)
           }
         } else {
-          onSend("", "document", undefined, undefined, { name: fileName, url: fileUrl, type: file.type })
+          onSend("", "document", undefined, undefined, { name: file.name, url: fileUrl, type: file.type })
         }
       }
       reader.readAsDataURL(file)
     }
 
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
-    }
+    if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
-  const handleAttachmentClick = () => {
-    fileInputRef.current?.click()
-  }
+  const handleAttachmentClick = () => fileInputRef.current?.click()
 
   if (isRecording) {
     return <VoiceRecorder onSend={handleRecordingSend} onCancel={handleRecordingCancel} />
@@ -92,15 +81,18 @@ const ChatInput = ({ onSend }: ChatInputProps) => {
     <motion.div
       initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      // changed: fixed -> absolute so it stays within the parent component bounds
-      className="absolute bottom-0 left-0 right-0 z-50 p-3 backdrop-blur-xl bg-background/80 border-t border-glass-border"
+      className="
+        fixed md:absolute bottom-0 left-0 right-0 z-50
+        p-3 backdrop-blur-xl bg-background/80 border-t border-glass-border
+        pb-[max(env(safe-area-inset-bottom),0.75rem)]
+      "
     >
       <form onSubmit={handleSubmit} className="flex items-center gap-2">
         <button type="button" className="p-2 rounded-full hover:bg-secondary transition-colors flex-shrink-0">
           <Smile className="w-6 h-6 text-muted-foreground" />
         </button>
 
-        <div className="flex-1 relative">
+        <div className="flex-1 relative min-w-0">
           <Input
             value={message}
             onChange={(e) => setMessage(e.target.value)}

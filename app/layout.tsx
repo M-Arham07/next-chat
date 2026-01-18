@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/providers/theme-provider"
 import NextAuthProvider from "@/providers/next-auth";
 import GlobalLoader from "@/store/loader/GlobalLoader";
 import { LoaderContextProvider } from "@/store/loader/use-loader";
+import { Viewport } from "next";
 
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -34,6 +35,12 @@ export const metadata = {
   },
 }
 
+
+export const viewport: Viewport = {
+  interactiveWidget: 'resizes-content',
+};
+
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -41,6 +48,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
+      </head>
       <body className={`font-sans antialiased`}>
         <NextAuthProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>

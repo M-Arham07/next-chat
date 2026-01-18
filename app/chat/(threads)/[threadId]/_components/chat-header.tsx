@@ -3,6 +3,7 @@
 import { motion } from "framer-motion"
 import { ArrowLeft, Phone, MoreVertical, Video } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import Link from "next/link"
 
 interface ChatHeaderProps {
   name: string
@@ -15,12 +16,18 @@ const ChatHeader = ({ name, status = "online", avatarInitial }: ChatHeaderProps)
     <motion.header
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      // changed: fixed -> absolute so it stays within the parent component bounds
-      className="absolute top-0 left-0 right-0 z-50 flex items-center gap-3 px-2 py-3 backdrop-blur-xl bg-background/80 border-b border-glass-border"
+      className="
+        fixed md:absolute top-0 left-0 right-0 z-50
+        flex items-center gap-3 px-2 py-3
+        backdrop-blur-xl bg-background/80 border-b border-glass-border
+        pt-[max(env(safe-area-inset-top),0.75rem)]
+      "
     >
+      <Link href="/chat">
       <button className="p-2 rounded-full hover:bg-secondary transition-colors">
         <ArrowLeft className="w-5 h-5 text-foreground" />
       </button>
+      </Link>
 
       <Avatar className="w-10 h-10 bg-gradient-to-br from-muted to-accent">
         <AvatarFallback className="bg-transparent text-foreground font-medium">{avatarInitial}</AvatarFallback>
