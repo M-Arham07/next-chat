@@ -44,7 +44,11 @@ export default function ChatsView({ params }: ChatViewProps) {
 
     const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
 
-    const [replyingTo, setReplyingTo] = useState<{ id: string; content: string } | null>(null)
+
+
+    // To detect which message is being replied to!
+    const [replyingToMsg, setReplyingToMsg] = useState<Message | null>(null);
+
     const [contextMenuOpenMessageId, setContextMenuOpenMessageId] = useState<string | null>(null)
     const [loadingState, setLoadingState] = useState<"idle" | "loading" | "failed">("idle")
     const [loadingCount, setLoadingCount] = useState(0)
@@ -156,13 +160,10 @@ export default function ChatsView({ params }: ChatViewProps) {
         }
     }
 
-    const handleContextMenuReply = (messageId: string, content: string) => {
-        const message = messages.find((m) => m.id === messageId)
+    const handleContextMenuReply = (messageId: string) => {
+        const message = messages[threadId].find(m=>m.msgId === messageId);
         if (message) {
-            setReplyingTo({
-                id: messageId,
-                content: content || "Voice message" || "Image message" || "Document message",
-            })
+            setReplyingToMsg(message);
         }
     }
 
@@ -195,16 +196,16 @@ export default function ChatsView({ params }: ChatViewProps) {
                 voiceUrl: audioUrl,
                 voiceDuration: duration || "0:00",
                 status: "sending",
-                replyTo: replyingTo
+                replyTo: replyingToMsg
                     ? {
                         name: "You",
-                        content: replyingTo.content,
-                        messageId: replyingTo.id,
+                        content: replyingToMsg.content,
+                        messageId: replyingToMsg.id,
                     }
                     : undefined,
             }
             setMessages((prev) => [...prev, newMessage])
-            setReplyingTo(null)
+            setReplyingToMsg(null)
             setTimeout(() => {
                 setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
             }, 1000)
@@ -217,16 +218,16 @@ export default function ChatsView({ params }: ChatViewProps) {
                 type: "image",
                 imageUrl: audioUrl,
                 status: "sending",
-                replyTo: replyingTo
+                replyTo: replyingToMsg
                     ? {
                         name: "You",
-                        content: replyingTo.content,
-                        messageId: replyingTo.id,
+                        content: replyingToMsg.content,
+                        messageId: replyingToMsg.id,
                     }
                     : undefined,
             }
             setMessages((prev) => [...prev, newMessage])
-            setReplyingTo(null)
+            setReplyingToMsg(null)
             setTimeout(() => {
                 setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
             }, 1000)
@@ -240,16 +241,16 @@ export default function ChatsView({ params }: ChatViewProps) {
                 documentName: fileData.name,
                 documentUrl: fileData.url,
                 status: "sending",
-                replyTo: replyingTo
+                replyTo: replyingToMsg
                     ? {
                         name: "You",
-                        content: replyingTo.content,
-                        messageId: replyingTo.id,
+                        content: replyingToMsg.content,
+                        messageId: replyingToMsg.id,
                     }
                     : undefined,
             }
             setMessages((prev) => [...prev, newMessage])
-            setReplyingTo(null)
+            setReplyingToMsg(null)
             setTimeout(() => {
                 setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
             }, 1000)
@@ -262,16 +263,16 @@ export default function ChatsView({ params }: ChatViewProps) {
                 isRead: false,
                 type: "text",
                 status: "sending",
-                replyTo: replyingTo
+                replyTo: replyingToMsg
                     ? {
                         name: "You",
-                        content: replyingTo.content,
-                        messageId: replyingTo.id,
+                        content: replyingToMsg.content,
+                        messageId: replyingToMsg.id,
                     }
                     : undefined,
             }
             setMessages((prev) => [...prev, newMessage])
-            setReplyingTo(null)
+            setReplyingToMsg(null)
             setTimeout(() => {
                 setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
             }, 1000)
@@ -380,9 +381,9 @@ export default function ChatsView({ params }: ChatViewProps) {
                                 }}
                             >
                                 <MessageBubble
-                                    isHighlighted={highlightedMessageId === message.id}
+                                    isHighlighted={highlightedMessageId === message.msgId}
                                     onReplyClick={handleReplyPreviewClick}
-                                    onSwipeReply={() => handleContextMenuReply(message.id, message.content || "")}
+                                    onSwipeReply={() => handleContextMenuReply(message.msgId, message.content || "")}
                                     status={message.status}
                                     onRetry={() => handleRetryMessage(message.id)}
                                     onContextMenuReply={handleContextMenuReply}
@@ -396,8 +397,9 @@ export default function ChatsView({ params }: ChatViewProps) {
                     <div ref={messagesEndRef} />
                 </div>
             </motion.main>
+            
 
-            {replyingTo && (
+            {replyingToMsg && (
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -406,11 +408,12 @@ export default function ChatsView({ params }: ChatViewProps) {
                 >
                     <div className="mx-auto max-w-2xl flex items-center gap-3 px-4 py-3 bg-secondary/50 backdrop-blur-sm border border-glass-border rounded-lg">
                         <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-primary">Replying to message</p>
-                            <p className="text-sm text-foreground truncate">{replyingTo.content}</p>
+                    
+                            <p className="text-xs font-medium text-primary">Replying to {replyingToMsg.sender}</p>
+                            <p className="text-sm text-foreground truncate">{replyingToMsg.content}</p>
                         </div>
                         <button
-                            onClick={() => setReplyingTo(null)}
+                            onClick={() => setReplyingToMsg(null)}
                             className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
                         >
                             ✕
