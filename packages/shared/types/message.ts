@@ -1,5 +1,5 @@
 
-type MessageContentType = "text" | "image" | "voice" | "document";
+type MessageContentType = "text" | "image" | "voice" | "document" | "deleted";
 
 
 export interface Message {
@@ -8,8 +8,7 @@ export interface Message {
     sender: string, // sender username
     type: MessageContentType,
     content: string, // link to the content!,
-    // TODO : ADD REACTIONS ETC!
-    reactions?:string,
-    readBy?:string,
+    replyToMsgId? : string, // if this msg is a reply to another message
+    readBy?:string, // string of usernames
     timestamp:Date
 }

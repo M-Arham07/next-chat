@@ -13,47 +13,59 @@ import VoiceMessage from "./voice-message"
 import DocumentMessage from "./document-message"
 import MessageContextMenu from "./message-context-menu"
 import TypingIndicator from "./typing-indicator"
+import { Message } from "@/packages/shared/types"
+// interface MessageBubbleProps {
+//   id: string
+//   content?: string
+//   timestamp: string
+//   isSent: boolean // const isSent = message.sender === session.user.username 
+//   isRead?: boolean // const isRead = readBy.includes(otherUser.username)
+//   type?: "text" | "image" | "voice" | "deleted" | "document"
+//   imageUrl?: string
+//   voiceDuration?: string
+//   voiceUrl?: string
+//   documentName?: string
+//   documentUrl?: string
+//   replyTo?: {
+//     name: string
+//     content: string
+//     messageId: string
+//   }
+//   isHighlighted?: boolean
+//   onReplyClick?: (messageId: string) => void
+//   onSwipeReply?: () => void
+//   status?: "sending" | "sent" | "failed" | "typing"
+//   onRetry?: () => void
+//   onContextMenuReply?: (messageId: string, content: string) => void
+//   onDeleteMessage?: (messageId: string) => void
+//   onContextMenuOpenChange?: (isOpen: boolean, messageId: string) => void
+// }
+
+
+
 
 interface MessageBubbleProps {
-  id: string
-  content?: string
-  timestamp: string
-  isSent: boolean
-  isRead?: boolean
-  type?: "text" | "image" | "voice" | "deleted" | "document"
-  imageUrl?: string
-  voiceDuration?: string
-  voiceUrl?: string
-  documentName?: string
-  documentUrl?: string
-  replyTo?: {
-    name: string
-    content: string
-    messageId: string
-  }
-  isHighlighted?: boolean
-  onReplyClick?: (messageId: string) => void
-  onSwipeReply?: () => void
-  status?: "sending" | "sent" | "failed" | "typing"
-  onRetry?: () => void
-  onContextMenuReply?: (messageId: string, content: string) => void
-  onDeleteMessage?: (messageId: string) => void
-  onContextMenuOpenChange?: (isOpen: boolean, messageId: string) => void
+  message : Message
 }
-
 const MessageBubble = ({
-  id,
-  content,
-  timestamp,
-  isSent,
-  isRead = false,
-  type = "text",
-  imageUrl,
-  voiceDuration,
-  voiceUrl,
-  documentName,
-  documentUrl,
-  replyTo,
+
+  // id,
+  // content,
+  // timestamp,
+  // isSent,
+  // isRead = false,
+  // replyTo,
+  // type,
+
+
+  // voiceDuration,
+  // documentName, // need to find solution for document name
+  // documentUrl,
+  message,
+
+
+
+
   isHighlighted = false,
   onReplyClick,
   onSwipeReply,
@@ -62,13 +74,13 @@ const MessageBubble = ({
   onContextMenuReply,
   onDeleteMessage,
   onContextMenuOpenChange,
-}: MessageBubbleProps) => {
+}) => {
   const [swipeX, setSwipeX] = useState(0)
   const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number; y: number } | null>(null)
   const swipeStartX = useRef(0)
   const swipeStartY = useRef(0)
   const containerRef = useRef<HTMLDivElement>(null)
-  const longPressTimerRef = useRef<ReturnType<typeof setTimeout>>()
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const hasTriggeredReply = useRef(false)
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -209,15 +221,14 @@ const MessageBubble = ({
             </span>
           </motion.div>
         )}
-      
+
         <motion.div
           animate={
             isHighlighted ? { backgroundColor: ["rgb(var(--highlight-start))", "rgb(var(--highlight-end))"] } : {}
           }
           transition={isHighlighted ? { duration: 0.5, repeat: 4, repeatType: "reverse" } : {}}
-          className={`relative max-w-[80%] rounded-2xl backdrop-blur-sm border border-glass-border overflow-hidden ${getStatusStyles()} ${
-            isSent ? "bg-message-sent rounded-br-md" : "bg-message-received rounded-bl-md"
-          }`}
+          className={`relative max-w-[80%] rounded-2xl backdrop-blur-sm border border-glass-border overflow-hidden ${getStatusStyles()} ${isSent ? "bg-message-sent rounded-br-md" : "bg-message-received rounded-bl-md"
+            }`}
         >
           {replyTo && (
             <div
@@ -237,9 +248,8 @@ const MessageBubble = ({
           )}
 
           <div
-            className={`flex items-center justify-end gap-1 px-3 pb-2 ${
-              type === "image" ? "absolute bottom-1 right-1 bg-background/60 rounded-full px-2 py-1" : ""
-            }`}
+            className={`flex items-center justify-end gap-1 px-3 pb-2 ${type === "image" ? "absolute bottom-1 right-1 bg-background/60 rounded-full px-2 py-1" : ""
+              }`}
           >
             <span className="text-[10px] text-muted-foreground">{timestamp}</span>
             {isSent &&
