@@ -1,16 +1,16 @@
 "use client"
+import { useChatApp } from "@/features/chat/hooks/use-chat-app"
 import { Message } from "@/packages/shared/types"
 import { motion, AnimatePresence } from "framer-motion"
 import { Reply, Copy, Trash2, MoreHorizontal } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 
 interface MessageContextMenuProps {
-  message : Message
+  message: Message
   isSent: boolean
   position: { x: number; y: number } | null
   onReply: () => void
   onCopy: () => void
-  onDelete: () => void
   onClose: () => void
 }
 
@@ -50,6 +50,10 @@ const MessageContextMenu = ({
   // Handle click outside is now managed by parent component through onClose callback
   // The backdrop overlay handles closing the menu via React onClick
 
+
+  const { handleDeleteMessage } = useChatApp()!;
+
+
   const handleReply = () => {
     onReply()
     onClose()
@@ -62,11 +66,23 @@ const MessageContextMenu = ({
     onClose()
   }
 
-  const handleDelete = () => {
+
+
+
+  const handleDelete = async () => {
 
     // TODO: MANAGE onClose etc in hook, and set message status to loading first!
-    onDelete()
-    onClose()
+
+   const isDeleted = await handleDeleteMessage(message);
+
+   if(!isDeleted){
+
+    // show error?
+
+   }
+    onClose();
+
+    return;
   }
 
   const menuItems = [
@@ -118,10 +134,10 @@ const MessageContextMenu = ({
             style={
               adjustedPosition
                 ? {
-                    position: "fixed",
-                    left: `${adjustedPosition.x}px`,
-                    top: `${adjustedPosition.y}px`,
-                  }
+                  position: "fixed",
+                  left: `${adjustedPosition.x}px`,
+                  top: `${adjustedPosition.y}px`,
+                }
                 : undefined
             }
             className="z-[100] bg-secondary backdrop-blur-xl border border-glass-border rounded-2xl shadow-lg overflow-hidden w-64"

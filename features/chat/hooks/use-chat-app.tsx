@@ -3,7 +3,7 @@
 // ONE SINGLE HOOK FOR ALL CHAT FUNCTIONS, under the same provider ! 
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { useMessagesHook } from "./use-messages";
+import { MessagesHookType, useMessagesHook } from "./use-messages";
 import { useThreadsHook, ThreadsHook } from "./use-threads";
 import { MessageState } from "../types";
 
@@ -13,16 +13,15 @@ import { MessageState } from "../types";
 // {messages , (rest of the return values in useThreadsHook()) }
 
 type ChatAppHook = {
-    messages: MessageState,
     mounted : boolean
-} & ThreadsHook
+} & ThreadsHook & MessagesHookType
 
 
 const ChatAppContext = createContext<ChatAppHook | undefined>(undefined);
 
 export function ChatAppProvider({ children }: { children: React.ReactNode }) {
 
-    const messages = useMessagesHook();
+    const messagesHook = useMessagesHook();
 
     const threadHook = useThreadsHook();
 
@@ -36,7 +35,7 @@ export function ChatAppProvider({ children }: { children: React.ReactNode }) {
     },[])
 
 
-    const value: ChatAppHook = { messages, ...threadHook, mounted };
+    const value: ChatAppHook = { ...messagesHook, ...threadHook, mounted };
 
     return (
         <>

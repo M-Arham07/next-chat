@@ -66,7 +66,6 @@ const MessageBubble = ({
   status = "sent",
   onRetry,
   onContextMenuReply,
-  onDeleteMessage,
   onContextMenuOpenChange,
 }: MessageBubbleProps) => {
   const [swipeX, setSwipeX] = useState(0)

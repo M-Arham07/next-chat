@@ -160,18 +160,14 @@ export default function ChatsView({ params }: ChatViewProps) {
         }
     }
 
-    const handleContextMenuReply = (messageId: string) => {
+    const handleMessageReply = (messageId: string) => {
         const message = messages[threadId].find(m=>m.msgId === messageId);
         if (message) {
             setReplyingToMsg(message);
         }
     }
 
-    const handleDeleteMessage = (messageId: string) => {
-        setMessages((prev) =>
-            prev.map((msg) => (msg.id === messageId ? { ...msg, type: "deleted" as const, content: undefined } : msg)),
-        )
-    }
+  
 
     const handleSendMessage = (
         content: string,
@@ -364,7 +360,7 @@ export default function ChatsView({ params }: ChatViewProps) {
 
                     {messages?.[threadId]?.map((message) => {
                         const isContextMenuOpen = contextMenuOpenMessageId !== null
-                        const isThisMessageOpen = contextMenuOpenMessageId === message.id
+                        const isThisMessageOpen = contextMenuOpenMessageId === message.msgId
                         const shouldBlur = isContextMenuOpen && !isThisMessageOpen
 
                         return (
@@ -383,11 +379,10 @@ export default function ChatsView({ params }: ChatViewProps) {
                                 <MessageBubble
                                     isHighlighted={highlightedMessageId === message.msgId}
                                     onReplyClick={handleReplyPreviewClick}
-                                    onSwipeReply={() => handleContextMenuReply(message.msgId, message.content || "")}
+                                    onSwipeReply={() => handleMessageReply(message.msgId, message.content || "")}
                                     status={message.status}
                                     onRetry={() => handleRetryMessage(message.id)}
-                                    onContextMenuReply={handleContextMenuReply}
-                                    onDeleteMessage={handleDeleteMessage}
+                                    onContextMenuReply={handleMessageReply}
                                     onContextMenuOpenChange={handleContextMenuOpenChange}
                                 />
                             </div>

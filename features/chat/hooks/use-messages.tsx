@@ -4,7 +4,12 @@ import { MessageState } from "../types/message-state";
 import { Message } from "@/packages/shared/types";
 
 
-export function useMessagesHook(): MessageState {
+
+export interface MessagesHookType {
+    messages: MessageState | null,
+    handleDeleteMessage: (message : Message) => Promise<boolean>
+}
+export function useMessagesHook(): MessagesHookType {
     // NOTE:  NEED TO USE THREAD ID AS PARAM TO FETCH MESSAGES!
 
     const [messages, setMessages] = useState<MessageState | null>(null);
@@ -45,20 +50,59 @@ export function useMessagesHook(): MessageState {
     }, []);
 
 
-    const handleDeleteMessage = (messageId: string) => {
-       setMessages((prev)=>{
-        return {...prev,
-            ()
-        }
-       });
+    const handleDeleteMessage = async (message: Message) => {
 
-       // MANAGE CLOSING STATE OF CONTEXT MENU HERE!
+
+
+
+        setMessages(prev => {
+
+
+            // prev cant be null as some message might exist before for this to be deleted!
+
+
+            // updated messages array for this thread:
+            const updatedMsgs: Message[] = prev![message.threadId].map(m => {
+
+                if (m.msgId === message.msgId) {
+
+                    // set message to deleted, and destroy its content!
+
+                    return {
+                        ...m,
+                        type: "deleted",
+                        content: "",
+                    };
+
+                }
+
+                return m;
+            });
+
+
+
+            return {
+                ...prev,
+                [message.threadId]: updatedMsgs
+            };
+
+
+
+
+        });
+
+        // CALL API IN TRY CATCH , and set message loading to true!
+
+
+
+        return true;
+
+
     }
 
 
 
-    useEffect(()=>console.log("msgs are!",messages),[messages]);
-    
+    useEffect(() => console.log("msgs are!", messages), [messages]);
 
 
 
@@ -67,7 +111,8 @@ export function useMessagesHook(): MessageState {
 
 
 
-    return messages!;
+
+    return { messages, handleDeleteMessage }
 
 
 
