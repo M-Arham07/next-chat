@@ -14,6 +14,7 @@ import DocumentMessage from "./document-message"
 import MessageContextMenu from "./message-context-menu"
 import TypingIndicator from "./typing-indicator"
 import { Message } from "@/packages/shared/types"
+import { useSession } from "next-auth/react"
 // interface MessageBubbleProps {
 //   id: string
 //   content?: string
@@ -45,18 +46,9 @@ import { Message } from "@/packages/shared/types"
 
 
 interface MessageBubbleProps {
-  message : Message
+  message: Message
 }
 const MessageBubble = ({
-
-  // id,
-  // content,
-  // timestamp,
-  // isSent,
-  // isRead = false,
-  // replyTo,
-  // type,
-
 
   // voiceDuration,
   // documentName, // need to find solution for document name
@@ -74,14 +66,32 @@ const MessageBubble = ({
   onContextMenuReply,
   onDeleteMessage,
   onContextMenuOpenChange,
-} : MessageBubbleProps) => {
+}: MessageBubbleProps) => {
   const [swipeX, setSwipeX] = useState(0)
   const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number; y: number } | null>(null)
   const swipeStartX = useRef(0)
   const swipeStartY = useRef(0)
   const containerRef = useRef<HTMLDivElement>(null)
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const hasTriggeredReply = useRef(false)
+  const hasTriggeredReply = useRef(false);
+
+  const { data: session } = useSession();
+
+
+  // have i sent this messagee ? 
+  const isSent : boolean = session!.user!.username === message.sender;
+
+  // is the message read ? 
+  const isRead = true; // FOR NOW, I'LL USE PLACEHOLDER TRUE!
+
+
+
+
+
+
+
+
+
 
   const handleTouchStart = (e: React.TouchEvent) => {
     swipeStartX.current = e.touches[0].clientX
@@ -147,15 +157,15 @@ const MessageBubble = ({
 
   const openContextMenu = (x: number, y: number) => {
     setContextMenuPosition({ x, y })
-    onContextMenuOpenChange?.(true, id)
+    onContextMenuOpenChange?.(true, message.msgId)
   }
 
   const handleContextMenuReply = () => {
-    onContextMenuReply?.(message.id, content || "")
+    onContextMenuReply?.(message.msgId, message.content || "")
   }
 
   const handleDelete = () => {
-    onDeleteMessage?.(id)
+    onDeleteMessage?.(message.msgId)
   }
 
   const getStatusStyles = () => {
