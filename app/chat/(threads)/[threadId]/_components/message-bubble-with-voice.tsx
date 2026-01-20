@@ -74,7 +74,7 @@ const MessageBubble = ({
   onContextMenuReply,
   onDeleteMessage,
   onContextMenuOpenChange,
-}) => {
+} : MessageBubbleProps) => {
   const [swipeX, setSwipeX] = useState(0)
   const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number; y: number } | null>(null)
   const swipeStartX = useRef(0)
@@ -151,7 +151,7 @@ const MessageBubble = ({
   }
 
   const handleContextMenuReply = () => {
-    onContextMenuReply?.(id, content || "")
+    onContextMenuReply?.(message.id, content || "")
   }
 
   const handleDelete = () => {
@@ -169,7 +169,7 @@ const MessageBubble = ({
     return <TypingIndicator isSent={isSent} />
   }
 
-  if (type === "deleted") {
+  if (message.type === "deleted") {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.8, x: isSent ? 20 : -20 }}
@@ -182,7 +182,7 @@ const MessageBubble = ({
             <div className="w-2 h-0.5 bg-muted-foreground rotate-45" />
           </div>
           <span className="text-sm text-muted-foreground italic">You deleted this message</span>
-          <span className="text-xs text-muted-foreground ml-2">{timestamp}</span>
+          <span className="text-xs text-muted-foreground ml-2">{message.timestamp.toLocaleTimeString()}</span>
         </div>
       </motion.div>
     )
@@ -230,28 +230,28 @@ const MessageBubble = ({
           className={`relative max-w-[80%] rounded-2xl backdrop-blur-sm border border-glass-border overflow-hidden ${getStatusStyles()} ${isSent ? "bg-message-sent rounded-br-md" : "bg-message-received rounded-bl-md"
             }`}
         >
-          {replyTo && (
+          {/* TODO: FIX {message?.replyToMsgId && (
             <div
-              onClick={() => onReplyClick && onReplyClick(replyTo.messageId)}
+              onClick={() => onReplyClick && onReplyClick(replyToMsgId)}
               className="px-3 pt-2 pb-1 border-l-2 border-primary/50 mx-2 mt-2 bg-secondary/30 rounded cursor-pointer hover:bg-secondary/50 transition-colors"
             >
               <p className="text-xs font-medium text-primary">{replyTo.name}</p>
               <p className="text-xs text-muted-foreground truncate">{replyTo.content}</p>
             </div>
-          )}
+          )} */}
 
-          {type === "text" && content && <TextMessage content={content} />}
-          {type === "image" && imageUrl && <ImageMessage imageUrl={imageUrl} />}
-          {type === "voice" && voiceUrl && <VoiceMessage voiceUrl={voiceUrl} voiceDuration={voiceDuration || "0:00"} />}
-          {type === "document" && documentName && documentUrl && (
-            <DocumentMessage documentName={documentName} documentUrl={documentUrl} />
+          {message.type === "text" && message.content && <TextMessage content={message.content} />}
+          {message.type === "image" && message.content && <ImageMessage imageUrl={message.content} />}
+          {message.type === "voice" && message.content && <VoiceMessage voiceUrl={message.content} voiceDuration={voiceDuration || "0:00"} />}
+          {message.type === "document" && message.content && (
+            <DocumentMessage documentName={"Placeholder name"} documentUrl={message.content} />
           )}
 
           <div
             className={`flex items-center justify-end gap-1 px-3 pb-2 ${type === "image" ? "absolute bottom-1 right-1 bg-background/60 rounded-full px-2 py-1" : ""
               }`}
           >
-            <span className="text-[10px] text-muted-foreground">{timestamp}</span>
+            <span className="text-[10px] text-muted-foreground">{message.timestamp.toLocaleTimeString()}</span>
             {isSent &&
               (status === "sending" ? (
                 <div className="w-4 h-4 rounded-full border-2 border-muted-foreground border-t-primary animate-spin" />
@@ -276,19 +276,21 @@ const MessageBubble = ({
       </motion.div>
 
       <MessageContextMenu
-        messageId={id}
-        messageContent={content}
+        messageId={message.msgId}
+        messageContent={message.content}
         messageSender={isSent ? "You" : "+92 332 6910247"}
         isSent={isSent}
         position={contextMenuPosition}
         onReply={handleContextMenuReply}
         onCopy={() => {
-          if (content) navigator.clipboard.writeText(content)
+
+          // TODO: NEED TO BLOCK COPY IN CASE OF other than text msg
+          if (message.content) navigator.clipboard.writeText(message.content)
         }}
         onDelete={handleDelete}
         onClose={() => {
           setContextMenuPosition(null)
-          onContextMenuOpenChange?.(false, id)
+          onContextMenuOpenChange?.(false, message.msgId)
         }}
       />
     </>
