@@ -1,12 +1,11 @@
 "use client"
+import { Message } from "@/packages/shared/types"
 import { motion, AnimatePresence } from "framer-motion"
 import { Reply, Copy, Trash2, MoreHorizontal } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 
 interface MessageContextMenuProps {
-  messageId: string
-  messageContent?: string
-  messageSender: string
+  message : Message
   isSent: boolean
   position: { x: number; y: number } | null
   onReply: () => void
@@ -16,18 +15,15 @@ interface MessageContextMenuProps {
 }
 
 const MessageContextMenu = ({
-  messageId,
-  messageContent,
-  messageSender,
+  message,
   isSent,
   position,
   onReply,
   onCopy,
-  onDelete,
   onClose,
 }: MessageContextMenuProps) => {
   const menuRef = useRef<HTMLDivElement>(null)
-  const [adjustedPosition, setAdjustedPosition] = useState(position)
+  const [adjustedPosition, setAdjustedPosition] = useState(position);
 
   useEffect(() => {
     if (!position || !menuRef.current) return
@@ -60,13 +56,15 @@ const MessageContextMenu = ({
   }
 
   const handleCopy = () => {
-    if (messageContent) {
-      navigator.clipboard.writeText(messageContent)
+    if (message.content) {
+      navigator.clipboard.writeText(message.content)
     }
     onClose()
   }
 
   const handleDelete = () => {
+
+    // TODO: MANAGE onClose etc in hook, and set message status to loading first!
     onDelete()
     onClose()
   }

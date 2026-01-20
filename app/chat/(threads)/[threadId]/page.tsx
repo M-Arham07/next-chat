@@ -37,21 +37,24 @@ export default function ChatsView({ params }: ChatViewProps) {
 
 
     const { messages } = useChatApp()!;
-    const [totalMessagesLoaded, setTotalMessagesLoaded] = useState(MESSAGES_PER_LOAD)
+
+
     const [mounted, setMounted] = useState(false)
-    const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null)
+
+
+    const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+
     const [replyingTo, setReplyingTo] = useState<{ id: string; content: string } | null>(null)
     const [contextMenuOpenMessageId, setContextMenuOpenMessageId] = useState<string | null>(null)
     const [loadingState, setLoadingState] = useState<"idle" | "loading" | "failed">("idle")
     const [loadingCount, setLoadingCount] = useState(0)
-    const { theme, toggleTheme } = useTheme()
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const messageRefsMap = useRef<{ [key: string]: HTMLDivElement | null }>({})
     const sentinelRef = useRef<HTMLDivElement>(null)
     const loadTriggerCountRef = useRef(0)
     const mainRef = useRef<HTMLElement>(null)
     const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-    const observedCountRef = useRef<number>(0)
+
 
     useEffect(() => {
         setMounted(true)
@@ -62,7 +65,7 @@ export default function ChatsView({ params }: ChatViewProps) {
         if (mounted && messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: "auto" })
         }
-    }, [mounted])
+    }, [mounted]);
 
     // Cleanup loading timeout on unmount
     useEffect(() => {
@@ -110,14 +113,9 @@ export default function ChatsView({ params }: ChatViewProps) {
                                     setLoadingState("idle")
                                 }, 2000)
                             } else {
-                                // Load the next batch of messages
-                                setTotalMessagesLoaded((prev) => {
-                                    const newTotal = Math.min(prev + MESSAGES_PER_LOAD, initialMessages.length)
-                                    console.log("[v0] Loading messages, new total:", newTotal)
-                                    const newMessages = initialMessages.slice(-newTotal)
-                                    setMessages(newMessages)
-                                    return newTotal
-                                })
+
+                                setMessages(newMessages)
+
                                 setLoadingState("idle")
                             }
                         }, 2000)
@@ -142,8 +140,11 @@ export default function ChatsView({ params }: ChatViewProps) {
     }, [mounted])
 
 
-    const handleReplyClick = (messageId: string) => {
-        const messageElement = messageRefsMap.current[messageId]
+
+
+    const handleReplyPreviewClick = (messageId: string) => {
+        // when u click on a reply preview, it will scroll to that message and highlight it for 2 seconds
+        const messageElement = messageRefsMap.current[messageId];
         if (messageElement) {
             messageElement.scrollIntoView({ behavior: "smooth", block: "center" })
 
@@ -294,7 +295,7 @@ export default function ChatsView({ params }: ChatViewProps) {
 
     return (
         <div className="h-full bg-background relative overflow-hidden flex flex-col">
-            <motion.button
+            {/* <motion.button
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 onClick={toggleTheme}
@@ -306,7 +307,7 @@ export default function ChatsView({ params }: ChatViewProps) {
                 ) : (
                     <Moon className="w-5 h-5 text-foreground" />
                 )}
-            </motion.button>
+            </motion.button> */}
 
             <ChatHeader name="+92 332 6910247" status="online" avatarInitial="W" />
 
@@ -367,9 +368,9 @@ export default function ChatsView({ params }: ChatViewProps) {
 
                         return (
                             <div
-                                key={message.id}
+                                key={message.msgId}
                                 ref={(el) => {
-                                    if (el) messageRefsMap.current[message.id] = el
+                                    if (el) messageRefsMap.current[message.msgId] = el
                                 }}
                                 style={{
                                     filter: shouldBlur ? "blur(6px)" : "none",
@@ -380,7 +381,7 @@ export default function ChatsView({ params }: ChatViewProps) {
                             >
                                 <MessageBubble
                                     isHighlighted={highlightedMessageId === message.id}
-                                    onReplyClick={handleReplyClick}
+                                    onReplyClick={handleReplyPreviewClick}
                                     onSwipeReply={() => handleContextMenuReply(message.id, message.content || "")}
                                     status={message.status}
                                     onRetry={() => handleRetryMessage(message.id)}

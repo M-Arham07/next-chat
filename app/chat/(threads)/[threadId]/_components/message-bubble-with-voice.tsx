@@ -47,6 +47,8 @@ import { useSession } from "next-auth/react"
 
 interface MessageBubbleProps {
   message: Message
+  isHighlighted:boolean
+  onReplyClick : (messageId : string) => void
 }
 const MessageBubble = ({
 
@@ -54,11 +56,11 @@ const MessageBubble = ({
   // documentName, // need to find solution for document name
   // documentUrl,
   message,
+  isHighlighted,
 
 
 
 
-  isHighlighted = false,
   onReplyClick,
   onSwipeReply,
   status = "sent",
@@ -79,7 +81,7 @@ const MessageBubble = ({
 
 
   // have i sent this messagee ? 
-  const isSent : boolean = session!.user!.username === message.sender;
+  const isSent: boolean = session!.user!.username === message.sender;
 
   // is the message read ? 
   const isRead = true; // FOR NOW, I'LL USE PLACEHOLDER TRUE!
@@ -164,9 +166,7 @@ const MessageBubble = ({
     onContextMenuReply?.(message.msgId, message.content || "")
   }
 
-  const handleDelete = () => {
-    onDeleteMessage?.(message.msgId)
-  }
+
 
   const getStatusStyles = () => {
     if (!isSent) return ""
@@ -286,9 +286,7 @@ const MessageBubble = ({
       </motion.div>
 
       <MessageContextMenu
-        messageId={message.msgId}
-        messageContent={message.content}
-        messageSender={isSent ? "You" : "+92 332 6910247"}
+        message={message}
         isSent={isSent}
         position={contextMenuPosition}
         onReply={handleContextMenuReply}
@@ -297,7 +295,6 @@ const MessageBubble = ({
           // TODO: NEED TO BLOCK COPY IN CASE OF other than text msg
           if (message.content) navigator.clipboard.writeText(message.content)
         }}
-        onDelete={handleDelete}
         onClose={() => {
           setContextMenuPosition(null)
           onContextMenuOpenChange?.(false, message.msgId)

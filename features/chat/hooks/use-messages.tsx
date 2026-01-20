@@ -45,6 +45,18 @@ export function useMessagesHook(): MessageState {
     }, []);
 
 
+    const handleDeleteMessage = (messageId: string) => {
+       setMessages((prev)=>{
+        return {...prev,
+            ()
+        }
+       });
+
+       // MANAGE CLOSING STATE OF CONTEXT MENU HERE!
+    }
+
+
+
     useEffect(()=>console.log("msgs are!",messages),[messages]);
     
 
