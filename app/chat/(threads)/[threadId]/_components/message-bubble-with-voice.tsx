@@ -67,7 +67,7 @@ const MessageBubble = ({
   onReplyClick,
   status = "sent",
   onReply
-  onRetry,
+
 
 }: MessageBubbleProps) => {
   const [swipeX, setSwipeX] = useState(0)
@@ -93,6 +93,8 @@ const MessageBubble = ({
 
   // is the message read ? 
   const isRead = true; // FOR NOW, I'LL USE PLACEHOLDER TRUE!
+
+
 
 
 
@@ -285,7 +287,8 @@ const MessageBubble = ({
 
         {isSent && status === "failed" && (
           <button
-            onClick={onRetry}
+          // Show retry button in case message sending failed, JUST re-use sendMessage function
+            onClick={()=>sendMessage(message);}
             className="ml-2 px-3 py-1 text-xs font-medium text-red-500 bg-red-500/10 border border-red-500/30 rounded hover:bg-red-500/20 transition-colors opacity-0 group-hover:opacity-100"
           >
             Retry
@@ -295,7 +298,6 @@ const MessageBubble = ({
 
       <MessageContextMenu
         message={message}
-        isSent={isSent}
         position={contextMenuPosition}
         handleReplyToMsg={() => onReply(message)}
         onClose={()=>setContextMenuPosition(null);}

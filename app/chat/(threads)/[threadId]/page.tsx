@@ -267,13 +267,7 @@ export default function ChatsView({ params }: ChatViewProps) {
         }
     }
 
-    const handleRetryMessage = (messageId: string) => {
-        setMessages((prev) => prev.map((msg) => (msg.id === messageId ? { ...msg, status: "sending" as const } : msg)))
-        setTimeout(() => {
-            setMessages((prev) => prev.map((msg) => (msg.id === messageId ? { ...msg, status: "sent" as const } : msg)))
-        }, 1000)
-    }
-
+  
 
 
     if (!mounted) {
@@ -374,7 +368,6 @@ export default function ChatsView({ params }: ChatViewProps) {
                                     onReplyClick={handleReplyPreviewClick}
                                     onReply={() => setReplyingToMsg(message)}
                                     status={message.status}
-                                    onRetry={() => handleRetryMessage(message.id)}
                                 />
                             </div>
                         )

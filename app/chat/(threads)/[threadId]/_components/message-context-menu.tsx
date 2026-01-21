@@ -7,7 +7,6 @@ import { useState, useEffect, useRef } from "react"
 
 interface MessageContextMenuProps {
   message: Message
-  isSent: boolean
   position: { x: number; y: number } | null
   handleReplyToMsg: () => void
   onClose: () => void
@@ -15,7 +14,6 @@ interface MessageContextMenuProps {
 
 const MessageContextMenu = ({
   message,
-  isSent,
   position,
   handleReplyToMsg,
   onClose,

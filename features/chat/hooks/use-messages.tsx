@@ -101,13 +101,7 @@ export function useMessagesHook(): MessagesHookType {
 
     }
 
-    const handleMessageReply = (message: Message) => {
-
-        setReplyingToMsg(message);
-
-    }
-
-
+ 
 
     useEffect(() => console.log("msgs are!", messages), [messages]);
 
@@ -121,7 +115,16 @@ export function useMessagesHook(): MessagesHookType {
 
 
 
-    return { messages, handleDeleteMessage, handleMessageReply }
+
+
+
+
+
+
+
+
+
+    return { messages, handleDeleteMessage, handleRetrySendMessage }
 
 
 
