@@ -15,6 +15,7 @@ import MessageContextMenu from "./message-context-menu"
 import TypingIndicator from "./typing-indicator"
 import { Message } from "@/packages/shared/types"
 import { useSession } from "next-auth/react"
+import { useChatApp } from "@/features/chat/hooks/use-chat-app"
 // interface MessageBubbleProps {
 //   id: string
 //   content?: string
@@ -47,8 +48,8 @@ import { useSession } from "next-auth/react"
 
 interface MessageBubbleProps {
   message: Message
-  isHighlighted:boolean
-  onReplyClick : (messageId : string) => void
+  isHighlighted: boolean
+  onReplyClick: (messageId: string) => void
 }
 const MessageBubble = ({
 
@@ -77,6 +78,13 @@ const MessageBubble = ({
   const hasTriggeredReply = useRef(false);
 
   const { data: session } = useSession();
+  const { messages } = useChatApp()!;
+
+
+
+   
+  // if this message is a reply to another message, get the message to which this message is a reply to!
+  const repliedToMsg : Message | null = messages![message.threadId].find(m=>m.msgId === m?.replyToMsgId) ?? null;
 
 
   // have i sent this messagee ? 
@@ -239,15 +247,19 @@ const MessageBubble = ({
           className={`relative max-w-[80%] rounded-2xl backdrop-blur-sm border border-glass-border overflow-hidden ${getStatusStyles()} ${isSent ? "bg-message-sent rounded-br-md" : "bg-message-received rounded-bl-md"
             }`}
         >
-          {/* TODO: FIX {message?.replyToMsgId && (
+
+
+
+          {/* Message reply preview section: */}
+          {repliedToMsg && (
             <div
-              onClick={() => onReplyClick && onReplyClick(replyToMsgId)}
+              onClick={() => onReplyClick(repliedToMsg.msgId)}
               className="px-3 pt-2 pb-1 border-l-2 border-primary/50 mx-2 mt-2 bg-secondary/30 rounded cursor-pointer hover:bg-secondary/50 transition-colors"
             >
-              <p className="text-xs font-medium text-primary">{replyTo.name}</p>
-              <p className="text-xs text-muted-foreground truncate">{replyTo.content}</p>
+              <p className="text-xs font-medium text-primary">{repliedToMsg.sender === session?.user?.username ? "You" : repliedToMsg.sender}</p>
+              <p className="text-xs text-muted-foreground truncate">{repliedToMsg.content}</p>
             </div>
-          )} */}
+          )}
 
           {message.type === "text" && message.content && <TextMessage content={message.content} />}
           {message.type === "image" && message.content && <ImageMessage imageUrl={message.content} />}
