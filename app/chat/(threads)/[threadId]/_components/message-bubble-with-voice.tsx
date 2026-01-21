@@ -35,7 +35,7 @@ import { useChatApp } from "@/features/chat/hooks/use-chat-app"
 //   }
 //   isHighlighted?: boolean
 //   onReplyClick?: (messageId: string) => void
-//   onSwipeReply?: () => void
+//   onReply?: () => void
 //   status?: "sending" | "sent" | "failed" | "typing"
 //   onRetry?: () => void
 //   onContextMenuReply?: (messageId: string, content: string) => void
@@ -50,6 +50,8 @@ interface MessageBubbleProps {
   message: Message
   isHighlighted: boolean
   onReplyClick: (messageId: string) => void
+  onReply: (message: Message) => void
+
 }
 const MessageBubble = ({
 
@@ -63,11 +65,10 @@ const MessageBubble = ({
 
 
   onReplyClick,
-  onSwipeReply,
   status = "sent",
+  onReply
   onRetry,
-  onContextMenuReply,
-  onContextMenuOpenChange,
+
 }: MessageBubbleProps) => {
   const [swipeX, setSwipeX] = useState(0)
   const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number; y: number } | null>(null)
@@ -82,9 +83,9 @@ const MessageBubble = ({
 
 
 
-   
+
   // if this message is a reply to another message, get the message to which this message is a reply to!
-  const repliedToMsg : Message | null = messages![message.threadId].find(m=>m.msgId === m?.replyToMsgId) ?? null;
+  const repliedToMsg: Message | null = messages![message.threadId].find(m => m.msgId === m?.replyToMsgId) ?? null;
 
 
   // have i sent this messagee ? 
@@ -143,15 +144,15 @@ const MessageBubble = ({
 
     // Trigger reply only once, when threshold is crossed
     if (swipeX >= MAX_SWIPE_THRESHOLD && !hasTriggeredReply.current) {
-      hasTriggeredReply.current = true
+      hasTriggeredReply.current = true;
 
       // Haptic feedback
       if (navigator.vibrate) {
-        navigator.vibrate(200)
+        navigator.vibrate(300); //CAN BE CHANGED
       }
 
       // Trigger reply and reset
-      onSwipeReply?.()
+      onReply(message);
       setSwipeX(0)
     } else {
       // Reset swipe without triggering reply
@@ -159,19 +160,12 @@ const MessageBubble = ({
     }
   }
 
-  const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault()
-    openContextMenu(e.clientX, e.clientY)
-  }
-
+ 
   const openContextMenu = (x: number, y: number) => {
-    setContextMenuPosition({ x, y })
-    onContextMenuOpenChange?.(true, message.msgId)
+    setContextMenuPosition({ x, y });
+
   }
 
-  const handleContextMenuReply = () => {
-    onContextMenuReply?.(message.msgId, message.content || "")
-  }
 
 
 
@@ -216,13 +210,16 @@ const MessageBubble = ({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        onContextMenu={handleContextMenu}
+        onContextMenu={(e : React.MouseEvent) => {
+          e.preventDefault()
+          openContextMenu(e.clientX, e.clientY)
+        }}
         role="button"
         tabIndex={0}
         style={{ touchAction: "pan-y" }}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
-            onSwipeReply?.()
+            onReply(message);
           }
         }}
       >
@@ -300,17 +297,8 @@ const MessageBubble = ({
         message={message}
         isSent={isSent}
         position={contextMenuPosition}
-        onReply={handleContextMenuReply}
-        onCopy={() => {
-
-          // TODO: NEED TO BLOCK COPY IN CASE OF other than text msg
-          if (message.content) navigator.clipboard.writeText(message.content)
-        }}
-        onClose={() => {
-          setContextMenuPosition(null)
-          onContextMenuOpenChange?.(false, message.msgId)
-        }}
-      />
+        handleReplyToMsg={() => onReply(message)}
+        onClose={()=>setContextMenuPosition(null);}
     </>
   )
 }

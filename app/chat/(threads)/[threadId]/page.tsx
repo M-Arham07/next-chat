@@ -49,7 +49,6 @@ export default function ChatsView({ params }: ChatViewProps) {
     // To detect which message is being replied to!
     const [replyingToMsg, setReplyingToMsg] = useState<Message | null>(null);
 
-    const [contextMenuOpenMessageId, setContextMenuOpenMessageId] = useState<string | null>(null)
     const [loadingState, setLoadingState] = useState<"idle" | "loading" | "failed">("idle")
     const [loadingCount, setLoadingCount] = useState(0)
     const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -160,14 +159,7 @@ export default function ChatsView({ params }: ChatViewProps) {
         }
     }
 
-    const handleMessageReply = (messageId: string) => {
-        const message = messages[threadId].find(m=>m.msgId === messageId);
-        if (message) {
-            setReplyingToMsg(message);
-        }
-    }
 
-  
 
     const handleSendMessage = (
         content: string,
@@ -282,9 +274,7 @@ export default function ChatsView({ params }: ChatViewProps) {
         }, 1000)
     }
 
-    const handleContextMenuOpenChange = (isOpen: boolean, messageId: string) => {
-        setContextMenuOpenMessageId(isOpen ? messageId : null)
-    }
+
 
     if (!mounted) {
         return null
@@ -356,12 +346,15 @@ export default function ChatsView({ params }: ChatViewProps) {
                 <DateSeparator date="Today" />
 
                 <div className="space-y-1 relative">
-                    {contextMenuOpenMessageId && <div className="absolute inset-0 pointer-events-none z-40" />}
+                    {/* {contextMenuOpenMessageId && <div className="absolute inset-0 pointer-events-none z-40" />} */}
 
                     {messages?.[threadId]?.map((message) => {
-                        const isContextMenuOpen = contextMenuOpenMessageId !== null
-                        const isThisMessageOpen = contextMenuOpenMessageId === message.msgId
-                        const shouldBlur = isContextMenuOpen && !isThisMessageOpen
+
+                        // const isContextMenuOpen = contextMenuOpenMessageId !== null
+
+
+                        // const isThisMessageOpen = contextMenuOpenMessageId === message.msgId
+                        // const shouldBlur = isContextMenuOpen && !isThisMessageOpen
 
                         return (
                             <div
@@ -370,20 +363,18 @@ export default function ChatsView({ params }: ChatViewProps) {
                                     if (el) messageRefsMap.current[message.msgId] = el
                                 }}
                                 style={{
-                                    filter: shouldBlur ? "blur(6px)" : "none",
-                                    opacity: shouldBlur ? 0.4 : 1,
-                                    pointerEvents: shouldBlur ? "none" : "auto",
+                                    filter: "none",
+                                    opacity: 1,
+                                    pointerEvents: "auto",
                                     transition: "filter 0.2s ease, opacity 0.2s ease, pointer-events 0.2s ease",
                                 }}
                             >
                                 <MessageBubble
                                     isHighlighted={highlightedMessageId === message.msgId}
                                     onReplyClick={handleReplyPreviewClick}
-                                    onSwipeReply={() => handleMessageReply(message.msgId, message.content || "")}
+                                    onReply={() => setReplyingToMsg(message)}
                                     status={message.status}
                                     onRetry={() => handleRetryMessage(message.id)}
-                                    onContextMenuReply={handleMessageReply}
-                                    onContextMenuOpenChange={handleContextMenuOpenChange}
                                 />
                             </div>
                         )
@@ -392,7 +383,7 @@ export default function ChatsView({ params }: ChatViewProps) {
                     <div ref={messagesEndRef} />
                 </div>
             </motion.main>
-            
+
 
             {replyingToMsg && (
                 <motion.div
@@ -403,7 +394,7 @@ export default function ChatsView({ params }: ChatViewProps) {
                 >
                     <div className="mx-auto max-w-2xl flex items-center gap-3 px-4 py-3 bg-secondary/50 backdrop-blur-sm border border-glass-border rounded-lg">
                         <div className="flex-1 min-w-0">
-                    
+
                             <p className="text-xs font-medium text-primary">Replying to {replyingToMsg.sender}</p>
                             <p className="text-sm text-foreground truncate">{replyingToMsg.content}</p>
                         </div>
@@ -418,10 +409,10 @@ export default function ChatsView({ params }: ChatViewProps) {
             )}
 
             <div
-                style={{
-                    filter: contextMenuOpenMessageId ? "blur(8px)" : "none",
-                    transition: "filter 0.2s ease",
-                }}
+            // style={{
+            //     filter: contextMenuOpenMessageId ? "blur(8px)" : "none",
+            //     transition: "filter 0.2s ease",
+            // }}
             >
                 <ChatInput onSend={handleSendMessage} />
             </div>

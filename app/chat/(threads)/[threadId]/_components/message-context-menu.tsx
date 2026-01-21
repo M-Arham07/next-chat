@@ -9,8 +9,7 @@ interface MessageContextMenuProps {
   message: Message
   isSent: boolean
   position: { x: number; y: number } | null
-  onReply: () => void
-  onCopy: () => void
+  handleReplyToMsg: () => void
   onClose: () => void
 }
 
@@ -18,8 +17,7 @@ const MessageContextMenu = ({
   message,
   isSent,
   position,
-  onReply,
-  onCopy,
+  handleReplyToMsg,
   onClose,
 }: MessageContextMenuProps) => {
   const menuRef = useRef<HTMLDivElement>(null)
@@ -55,11 +53,13 @@ const MessageContextMenu = ({
 
 
   const handleReply = () => {
-    onReply()
+    handleReplyToMsg()
     onClose()
   }
 
   const handleCopy = () => {
+
+     // TODO: NEED TO BLOCK COPY IN CASE OF other than text msg
     if (message.content) {
       navigator.clipboard.writeText(message.content)
     }

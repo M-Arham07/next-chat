@@ -7,7 +7,8 @@ import { Message } from "@/packages/shared/types";
 
 export interface MessagesHookType {
     messages: MessageState | null,
-    handleDeleteMessage: (message : Message) => Promise<boolean>
+    handleDeleteMessage: (message: Message) => Promise<boolean>
+    handleMessageReply: (message: Message) => void
 }
 export function useMessagesHook(): MessagesHookType {
     // NOTE:  NEED TO USE THREAD ID AS PARAM TO FETCH MESSAGES!
@@ -100,6 +101,12 @@ export function useMessagesHook(): MessagesHookType {
 
     }
 
+    const handleMessageReply = (message: Message) => {
+
+        setReplyingToMsg(message);
+
+    }
+
 
 
     useEffect(() => console.log("msgs are!", messages), [messages]);
@@ -112,7 +119,9 @@ export function useMessagesHook(): MessagesHookType {
 
 
 
-    return { messages, handleDeleteMessage }
+
+
+    return { messages, handleDeleteMessage, handleMessageReply }
 
 
 
