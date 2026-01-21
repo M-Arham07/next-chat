@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, Dispatch, SetStateAction } from "react";
 import { MessageState } from "../types/message-state";
 import { Message } from "@/packages/shared/types";
 
@@ -8,12 +8,18 @@ import { Message } from "@/packages/shared/types";
 export interface MessagesHookType {
     messages: MessageState | null,
     handleDeleteMessage: (message: Message) => Promise<boolean>
-    handleMessageReply: (message: Message) => void
+    handleSendMessage: (message: Message) => Promise<void>
+    replyingToMsg: Message | null
+    setReplyingToMsg: Dispatch<SetStateAction<Message | null>>
 }
 export function useMessagesHook(): MessagesHookType {
     // NOTE:  NEED TO USE THREAD ID AS PARAM TO FETCH MESSAGES!
 
     const [messages, setMessages] = useState<MessageState | null>(null);
+
+
+    // To detect which message is being replied to!
+    const [replyingToMsg, setReplyingToMsg] = useState<Message | null>(null);
 
 
     // api call + loading logic here
@@ -101,13 +107,113 @@ export function useMessagesHook(): MessagesHookType {
 
     }
 
- 
+
 
     useEffect(() => console.log("msgs are!", messages), [messages]);
 
 
 
 
+    const handleSendMessage = async (message: Message): Promise<void> => {
+        const timestamp = new Date().toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+        });
+
+
+        if (type === "voice" && audioUrl) {
+            const newMessage: Message = {
+                id: Date.now().toString(),
+                timestamp,
+                isSent: true,
+                isRead: false,
+                type: "voice",
+                voiceUrl: audioUrl,
+                voiceDuration: duration || "0:00",
+                status: "sending",
+                replyTo: replyingToMsg
+                    ? {
+                        name: "You",
+                        content: replyingToMsg.content,
+                        messageId: replyingToMsg.id,
+                    }
+                    : undefined,
+            }
+            setMessages((prev) => [...prev, newMessage])
+            setReplyingToMsg(null)
+            setTimeout(() => {
+                setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
+            }, 1000)
+        } else if (type === "image" && audioUrl) {
+            const newMessage: Message = {
+                id: Date.now().toString(),
+                timestamp,
+                isSent: true,
+                isRead: false,
+                type: "image",
+                imageUrl: audioUrl,
+                status: "sending",
+                replyTo: replyingToMsg
+                    ? {
+                        name: "You",
+                        content: replyingToMsg.content,
+                        messageId: replyingToMsg.id,
+                    }
+                    : undefined,
+            }
+            setMessages((prev) => [...prev, newMessage])
+            setReplyingToMsg(null)
+            setTimeout(() => {
+                setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
+            }, 1000)
+        } else if (type === "document" && fileData) {
+            const newMessage: Message = {
+                id: Date.now().toString(),
+                timestamp,
+                isSent: true,
+                isRead: false,
+                type: "document",
+                documentName: fileData.name,
+                documentUrl: fileData.url,
+                status: "sending",
+                replyTo: replyingToMsg
+                    ? {
+                        name: "You",
+                        content: replyingToMsg.content,
+                        messageId: replyingToMsg.id,
+                    }
+                    : undefined,
+            }
+            setMessages((prev) => [...prev, newMessage])
+            setReplyingToMsg(null)
+            setTimeout(() => {
+                setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
+            }, 1000)
+        } else if (content.trim()) {
+            const newMessage: Message = {
+                id: Date.now().toString(),
+                content,
+                timestamp,
+                isSent: true,
+                isRead: false,
+                type: "text",
+                status: "sending",
+                replyTo: replyingToMsg
+                    ? {
+                        name: "You",
+                        content: replyingToMsg.content,
+                        messageId: replyingToMsg.id,
+                    }
+                    : undefined,
+            }
+            setMessages((prev) => [...prev, newMessage])
+            setReplyingToMsg(null)
+            setTimeout(() => {
+                setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
+            }, 1000)
+        }
+    }
 
 
 
@@ -124,7 +230,16 @@ export function useMessagesHook(): MessagesHookType {
 
 
 
-    return { messages, handleDeleteMessage, handleRetrySendMessage }
+
+
+
+
+
+    return {
+        messages, handleDeleteMessage,
+        handleSendMessage,
+        replyingToMsg, setReplyingToMsg
+    }
 
 
 

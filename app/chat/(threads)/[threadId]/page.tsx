@@ -36,7 +36,7 @@ export default function ChatsView({ params }: ChatViewProps) {
 
 
 
-    const { messages } = useChatApp()!;
+    const { messages, replyingToMsg, setReplyingToMsg } = useChatApp()!;
 
 
     const [mounted, setMounted] = useState(false)
@@ -46,8 +46,8 @@ export default function ChatsView({ params }: ChatViewProps) {
 
 
 
-    // To detect which message is being replied to!
-    const [replyingToMsg, setReplyingToMsg] = useState<Message | null>(null);
+
+
 
     const [loadingState, setLoadingState] = useState<"idle" | "loading" | "failed">("idle")
     const [loadingCount, setLoadingCount] = useState(0)
@@ -60,7 +60,7 @@ export default function ChatsView({ params }: ChatViewProps) {
 
 
     useEffect(() => {
-        setMounted(true)
+        setMounted(true);
     }, [])
 
     // Scroll to bottom on mount (instant, no animation)
@@ -161,113 +161,113 @@ export default function ChatsView({ params }: ChatViewProps) {
 
 
 
-    const handleSendMessage = (
-        content: string,
-        type?: string,
-        audioUrl?: string,
-        duration?: string,
-        fileData?: { name: string; url: string; type: string },
-    ) => {
-        const timestamp = new Date().toLocaleTimeString("en-US", {
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
-        })
+    // const handleSendMessage = (
+    //     content: string,
+    //     type?: string,
+    //     audioUrl?: string,
+    //     duration?: string,
+    //     fileData?: { name: string; url: string; type: string },
+    // ) => {
+    //     const timestamp = new Date().toLocaleTimeString("en-US", {
+    //         hour: "numeric",
+    //         minute: "2-digit",
+    //         hour12: true,
+    //     })
 
-        if (type === "voice" && audioUrl) {
-            const newMessage: Message = {
-                id: Date.now().toString(),
-                timestamp,
-                isSent: true,
-                isRead: false,
-                type: "voice",
-                voiceUrl: audioUrl,
-                voiceDuration: duration || "0:00",
-                status: "sending",
-                replyTo: replyingToMsg
-                    ? {
-                        name: "You",
-                        content: replyingToMsg.content,
-                        messageId: replyingToMsg.id,
-                    }
-                    : undefined,
-            }
-            setMessages((prev) => [...prev, newMessage])
-            setReplyingToMsg(null)
-            setTimeout(() => {
-                setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
-            }, 1000)
-        } else if (type === "image" && audioUrl) {
-            const newMessage: Message = {
-                id: Date.now().toString(),
-                timestamp,
-                isSent: true,
-                isRead: false,
-                type: "image",
-                imageUrl: audioUrl,
-                status: "sending",
-                replyTo: replyingToMsg
-                    ? {
-                        name: "You",
-                        content: replyingToMsg.content,
-                        messageId: replyingToMsg.id,
-                    }
-                    : undefined,
-            }
-            setMessages((prev) => [...prev, newMessage])
-            setReplyingToMsg(null)
-            setTimeout(() => {
-                setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
-            }, 1000)
-        } else if (type === "document" && fileData) {
-            const newMessage: Message = {
-                id: Date.now().toString(),
-                timestamp,
-                isSent: true,
-                isRead: false,
-                type: "document",
-                documentName: fileData.name,
-                documentUrl: fileData.url,
-                status: "sending",
-                replyTo: replyingToMsg
-                    ? {
-                        name: "You",
-                        content: replyingToMsg.content,
-                        messageId: replyingToMsg.id,
-                    }
-                    : undefined,
-            }
-            setMessages((prev) => [...prev, newMessage])
-            setReplyingToMsg(null)
-            setTimeout(() => {
-                setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
-            }, 1000)
-        } else if (content.trim()) {
-            const newMessage: Message = {
-                id: Date.now().toString(),
-                content,
-                timestamp,
-                isSent: true,
-                isRead: false,
-                type: "text",
-                status: "sending",
-                replyTo: replyingToMsg
-                    ? {
-                        name: "You",
-                        content: replyingToMsg.content,
-                        messageId: replyingToMsg.id,
-                    }
-                    : undefined,
-            }
-            setMessages((prev) => [...prev, newMessage])
-            setReplyingToMsg(null)
-            setTimeout(() => {
-                setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
-            }, 1000)
-        }
-    }
+    //     if (type === "voice" && audioUrl) {
+    //         const newMessage: Message = {
+    //             id: Date.now().toString(),
+    //             timestamp,
+    //             isSent: true,
+    //             isRead: false,
+    //             type: "voice",
+    //             voiceUrl: audioUrl,
+    //             voiceDuration: duration || "0:00",
+    //             status: "sending",
+    //             replyTo: replyingToMsg
+    //                 ? {
+    //                     name: "You",
+    //                     content: replyingToMsg.content,
+    //                     messageId: replyingToMsg.id,
+    //                 }
+    //                 : undefined,
+    //         }
+    //         setMessages((prev) => [...prev, newMessage])
+    //         setReplyingToMsg(null)
+    //         setTimeout(() => {
+    //             setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
+    //         }, 1000)
+    //     } else if (type === "image" && audioUrl) {
+    //         const newMessage: Message = {
+    //             id: Date.now().toString(),
+    //             timestamp,
+    //             isSent: true,
+    //             isRead: false,
+    //             type: "image",
+    //             imageUrl: audioUrl,
+    //             status: "sending",
+    //             replyTo: replyingToMsg
+    //                 ? {
+    //                     name: "You",
+    //                     content: replyingToMsg.content,
+    //                     messageId: replyingToMsg.id,
+    //                 }
+    //                 : undefined,
+    //         }
+    //         setMessages((prev) => [...prev, newMessage])
+    //         setReplyingToMsg(null)
+    //         setTimeout(() => {
+    //             setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
+    //         }, 1000)
+    //     } else if (type === "document" && fileData) {
+    //         const newMessage: Message = {
+    //             id: Date.now().toString(),
+    //             timestamp,
+    //             isSent: true,
+    //             isRead: false,
+    //             type: "document",
+    //             documentName: fileData.name,
+    //             documentUrl: fileData.url,
+    //             status: "sending",
+    //             replyTo: replyingToMsg
+    //                 ? {
+    //                     name: "You",
+    //                     content: replyingToMsg.content,
+    //                     messageId: replyingToMsg.id,
+    //                 }
+    //                 : undefined,
+    //         }
+    //         setMessages((prev) => [...prev, newMessage])
+    //         setReplyingToMsg(null)
+    //         setTimeout(() => {
+    //             setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
+    //         }, 1000)
+    //     } else if (content.trim()) {
+    //         const newMessage: Message = {
+    //             id: Date.now().toString(),
+    //             content,
+    //             timestamp,
+    //             isSent: true,
+    //             isRead: false,
+    //             type: "text",
+    //             status: "sending",
+    //             replyTo: replyingToMsg
+    //                 ? {
+    //                     name: "You",
+    //                     content: replyingToMsg.content,
+    //                     messageId: replyingToMsg.id,
+    //                 }
+    //                 : undefined,
+    //         }
+    //         setMessages((prev) => [...prev, newMessage])
+    //         setReplyingToMsg(null)
+    //         setTimeout(() => {
+    //             setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
+    //         }, 1000)
+    //     }
+    // }
 
-  
+
 
 
     if (!mounted) {
