@@ -51,13 +51,12 @@ interface MessageBubbleProps {
   isHighlighted: boolean
   onReplyClick: (messageId: string) => void
   onReply: (message: Message) => void
+  status : string
 
 }
 const MessageBubble = ({
 
-  // voiceDuration,
-  // documentName, // need to find solution for document name
-  // documentUrl,
+
   message,
   isHighlighted,
 

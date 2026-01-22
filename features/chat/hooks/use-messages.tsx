@@ -32,7 +32,7 @@ export function useMessagesHook(): MessagesHookType {
 
 
     const selectedThreadId = "13"
-    const { data: session } = useSession();
+    const { data: session } = useSession(); 
 
 
     // api call + loading logic here
@@ -128,118 +128,8 @@ export function useMessagesHook(): MessagesHookType {
 
 
 
-    // adds message in the state, to the correct threadId
-    const addMessage = (newMessage: Message): void => {
-
-        // FIRST ZOD PARSE HERE! 
-
-        if (!newMessage) return;
-
-        setMessages(prev => {
-            // updated messages for this thread!
-
-            const safePrev: MessageState = prev ?? {};
-
-            const updatedMsgs = [...(safePrev[newMessage.threadId] ??= []), newMessage]
-            return {
-                ...safePrev,
-                [newMessage.threadId]: updatedMsgs
-            }
-        });
-    }
 
 
-
-
-    const handleSendMessage = async (
-        type: Omit<MessageContentType, "deleted">,
-        content: string | File): Promise<void> => {
-
-
-        try {
-
-            // if message is a file, we'll upload it to supabase, and gets it's url! 
-
-
-            // NOTE: if a message fails to send, i will not remove it from DB! 
-            // Just let it stay there, user can later click resend! 
-
-
-
-
-
-            // if file type is Not text and a file, upload it!
-            let uploadedContentUrl: string | null = null;
-
-            if (type !== "text" && content instanceof File) {
-
-                // UPLOAD THE FILE TO SUPABASE!
-
-                const data = await GetFileUrl(content, type);
-
-                if (!data?.url) throw new Error("Uploading file failed at handleSendMessage");
-
-                uploadedContentUrl = data.url;
-
-
-            }
-
-
-            let newMessage: Message = {
-
-                msgId: crypto?.randomUUID() || (Date.now() - Math.random()).toString(),
-                threadId: selectedThreadId as string,
-                sender: session?.user?.username || "",
-                type: type as MessageContentType,
-                content: uploadedContentUrl || (content as string),
-                timestamp: new Date(Date.now()),
-                status: "sending"
-
-            }
-
-            
-            // TODO: PARSE VIA ZOD SCHEMA HERE, throw error if not matches it! 
-
-
-            // append the newMessage to the state, for this thread id!
-            addMessage(newMessage);
-
-
-
-
-            // socket.emit the message , then use ack! 
-
-
-
-            // if all above goes well 
-
-
-            newMessage.status = "sent";
-
-
-            // update the state ! 
-            addMessage(newMessage);
-
-
-        }
-
-
-        catch (err) {
-
-        }
-
-        finally {
-            setReplyingToMsg(null);
-            return;
-        }
-
-
-
-
-
-
-
-    }
 
 
 

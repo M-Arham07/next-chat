@@ -10,6 +10,7 @@ import { NavTab } from "@/app/chat/_components/layout/BottomNavigation";
 export interface ThreadsHook {
     activeTab: NavTab,
     setActiveTab: Dispatch<SetStateAction<NavTab>>,
+    threads:Thread[]
     filteredThreads: Thread[] | null,
     selectedThreadId: string | undefined,
     setSelectedThreadId: Dispatch<SetStateAction<string | undefined>>,
@@ -30,56 +31,6 @@ export function useThreadsHook(): ThreadsHook {
 
 
 
-    const [activeTab, setActiveTab] = useState<NavTab>("threads");
-    const [activeFilter, setActiveFilter] = useState<ActiveFilter>("all");
-    const [searchQuery, setSearchQuery] = useState<string>("");
-    const [selectedThreadId, setSelectedThreadId] = useState<string | undefined>();
-    const [threads, setThreads] = useState<Thread[] | null>(null);
-
-    const { setLoading } = useLoader();
-
-
-    useEffect(() => {
-
-        setLoading(true);
-
-
-
-        const fetchMockThreads = async () => {
-
-
-            try {
-                const res = await fetch(API_ENDPOINT, { method: "GET" });
-
-                if (!res.ok) throw new Error("FAILED to fetch threads");
-                const data = await res.json() as Thread[] | null;
-
-                setThreads(data);
-
-                setLoading(false);
-
-            }
-            catch (err) {
-                setThreads(null);
-                setLoading(false);
-            }
-
-        }
-
-
-        fetchMockThreads();
-
-
-
-
-        return () => {
-            setLoading(false);
-        }
-    }, []);
-
-
-
-
 
 
     // TODO: FETCH 10 messages for each thread on initial load ?
@@ -91,9 +42,7 @@ export function useThreadsHook(): ThreadsHook {
 
 
 
-    // Filter threads based on search query and active filter
-    const filteredThreads = useMemo(() => filterThreads(threads, messages, session, searchQuery, activeFilter),
-        [searchQuery, messages, activeFilter, threads]);
+ 
 
 
 
