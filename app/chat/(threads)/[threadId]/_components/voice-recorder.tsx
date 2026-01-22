@@ -1,11 +1,14 @@
 "use client"
 
+
+
+// THIS PAGE NEEDS TO BE CLEANED, BUT I SKIPPER CLEANING IT
 import { motion } from "framer-motion"
 import { Trash2, Play, Pause, Send, X, RefreshCcw } from "lucide-react"
 import { useVoiceRecorder } from "@/features/chat/hooks/message-bubble/use-voice-recorder"
 
 interface VoiceRecorderProps {
-  onSend: (audioUrl: string, duration: string) => void
+  onSend: (audioUrl: string) => void
   onCancel: () => void
 }
 
@@ -17,7 +20,7 @@ const formatDuration = (seconds: number) => {
 
 export default function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) {
   const { isRecording, isPaused, isStopping, durationSec, error, start, togglePause, cancel, send } =
-    useVoiceRecorder(true)
+    useVoiceRecorder(true);
 
   const handleDelete = () => {
     cancel()
@@ -25,7 +28,7 @@ export default function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) 
   }
 
   const handleSend = () => {
-    send((url, durationLabel) => onSend(url, durationLabel))
+    send((url, durationLabel) => onSend(url))
   }
 
   if (error) {

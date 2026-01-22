@@ -1,14 +1,22 @@
 "use client";
 import { createContext, useContext, useState, useEffect, Dispatch, SetStateAction } from "react";
 import { MessageState } from "../types/message-state";
-import { Message } from "@/packages/shared/types";
+import { Message, MessageContentType } from "@/packages/shared/types";
+import { useThreadsHook } from "./use-threads";
+import { useSession } from "next-auth/react";
+import { GetFileUrl } from "@/features/upload-avatar/get-url";
 
 
 
 export interface MessagesHookType {
     messages: MessageState | null,
     handleDeleteMessage: (message: Message) => Promise<boolean>
-    handleSendMessage: (message: Message) => Promise<void>
+
+    handleSendMessage: (
+        type: Omit<MessageContentType, "deleted">,
+        content: string | File,
+
+    ) => Promise<void>
     replyingToMsg: Message | null
     setReplyingToMsg: Dispatch<SetStateAction<Message | null>>
 }
@@ -18,8 +26,13 @@ export function useMessagesHook(): MessagesHookType {
     const [messages, setMessages] = useState<MessageState | null>(null);
 
 
+
     // To detect which message is being replied to!
     const [replyingToMsg, setReplyingToMsg] = useState<Message | null>(null);
+
+
+    const { selectedThreadId } = useThreadsHook();
+    const { data: session } = useSession();
 
 
     // api call + loading logic here
@@ -65,11 +78,11 @@ export function useMessagesHook(): MessagesHookType {
         setMessages(prev => {
 
 
-            // prev cant be null as some message might exist before for this to be deleted!
+            // prev[message.threadId] cant be null as some message might exist before for this to be deleted!
 
 
             // updated messages array for this thread:
-            const updatedMsgs: Message[] = prev![message.threadId].map(m => {
+            const updatedMsgs: Message[] = (prev![message.threadId]).map(m => {
 
                 if (m.msgId === message.msgId) {
 
@@ -114,105 +127,118 @@ export function useMessagesHook(): MessagesHookType {
 
 
 
-    const handleSendMessage = async (message: Message): Promise<void> => {
-        const timestamp = new Date().toLocaleTimeString("en-US", {
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
+
+    // adds message in the state, to the correct threadId
+    const addMessage = (newMessage: Message): void => {
+
+        // FIRST ZOD PARSE HERE! 
+
+        if (!newMessage) return;
+
+        setMessages(prev => {
+            // updated messages for this thread!
+
+            const safePrev: MessageState = prev ?? {};
+
+            const updatedMsgs = [...(safePrev[newMessage.threadId] ??= []), newMessage]
+            return {
+                ...safePrev,
+                [newMessage.threadId]: updatedMsgs
+            }
         });
+    }
 
 
-        if (type === "voice" && audioUrl) {
-            const newMessage: Message = {
-                id: Date.now().toString(),
-                timestamp,
-                isSent: true,
-                isRead: false,
-                type: "voice",
-                voiceUrl: audioUrl,
-                voiceDuration: duration || "0:00",
-                status: "sending",
-                replyTo: replyingToMsg
-                    ? {
-                        name: "You",
-                        content: replyingToMsg.content,
-                        messageId: replyingToMsg.id,
-                    }
-                    : undefined,
+
+
+    const handleSendMessage = async (
+        type: Omit<MessageContentType, "deleted">,
+        content: string | File): Promise<void> => {
+
+
+        try {
+
+            // if message is a file, we'll upload it to supabase, and gets it's url! 
+
+
+            // NOTE: if a message fails to send, i will not remove it from DB! 
+            // Just let it stay there, user can later click resend! 
+
+
+
+
+
+            // if file type is Not text and a file, upload it!
+            let uploadedContentUrl: string | null = null;
+
+            if (type !== "text" && content instanceof File) {
+
+                // UPLOAD THE FILE TO SUPABASE!
+
+                const data = await GetFileUrl(content, type);
+
+                if (!data?.url) throw new Error("Uploading file failed at handleSendMessage");
+
+                uploadedContentUrl = data.url;
+
+
             }
-            setMessages((prev) => [...prev, newMessage])
-            setReplyingToMsg(null)
-            setTimeout(() => {
-                setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
-            }, 1000)
-        } else if (type === "image" && audioUrl) {
-            const newMessage: Message = {
-                id: Date.now().toString(),
-                timestamp,
-                isSent: true,
-                isRead: false,
-                type: "image",
-                imageUrl: audioUrl,
-                status: "sending",
-                replyTo: replyingToMsg
-                    ? {
-                        name: "You",
-                        content: replyingToMsg.content,
-                        messageId: replyingToMsg.id,
-                    }
-                    : undefined,
+
+
+            let newMessage: Message = {
+
+                msgId: crypto?.randomUUID() || (Date.now() - Math.random()).toString(),
+                threadId: selectedThreadId as string,
+                sender: session?.user?.username || "",
+                type: type as MessageContentType,
+                content: uploadedContentUrl || (content as string),
+                timestamp: new Date(Date.now()),
+                status: "sending"
+
             }
-            setMessages((prev) => [...prev, newMessage])
-            setReplyingToMsg(null)
-            setTimeout(() => {
-                setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
-            }, 1000)
-        } else if (type === "document" && fileData) {
-            const newMessage: Message = {
-                id: Date.now().toString(),
-                timestamp,
-                isSent: true,
-                isRead: false,
-                type: "document",
-                documentName: fileData.name,
-                documentUrl: fileData.url,
-                status: "sending",
-                replyTo: replyingToMsg
-                    ? {
-                        name: "You",
-                        content: replyingToMsg.content,
-                        messageId: replyingToMsg.id,
-                    }
-                    : undefined,
-            }
-            setMessages((prev) => [...prev, newMessage])
-            setReplyingToMsg(null)
-            setTimeout(() => {
-                setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
-            }, 1000)
-        } else if (content.trim()) {
-            const newMessage: Message = {
-                id: Date.now().toString(),
-                content,
-                timestamp,
-                isSent: true,
-                isRead: false,
-                type: "text",
-                status: "sending",
-                replyTo: replyingToMsg
-                    ? {
-                        name: "You",
-                        content: replyingToMsg.content,
-                        messageId: replyingToMsg.id,
-                    }
-                    : undefined,
-            }
-            setMessages((prev) => [...prev, newMessage])
-            setReplyingToMsg(null)
-            setTimeout(() => {
-                setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
-            }, 1000)
+
+            
+            // TODO: PARSE VIA ZOD SCHEMA HERE, throw error if not matches it! 
+
+
+            // append the newMessage to the state, for this thread id!
+            addMessage(newMessage);
+
+
+
+
+            // socket.emit the message , then use ack! 
+
+
+
+            // if all above goes well 
+
+
+            newMessage.status = "sent";
+
+
+            // update the state ! 
+            addMessage(newMessage);
+
+
         }
+
+
+        catch (err) {
+
+        }
+
+        finally {
+            setReplyingToMsg(null);
+            return;
+        }
+
+
+
+
+
+
+
     }
 
 

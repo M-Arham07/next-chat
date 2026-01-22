@@ -36,7 +36,7 @@ export default function ChatsView({ params }: ChatViewProps) {
 
 
 
-    const { messages, replyingToMsg, setReplyingToMsg } = useChatApp()!;
+    const { messages, replyingToMsg, setReplyingToMsg, handleSendMessage} = useChatApp()!;
 
 
     const [mounted, setMounted] = useState(false)

@@ -10,6 +10,8 @@
  * BUT IT WORKS PERFECTLY FINE IN PRODUCTION!!!!!!!!!
  * 
  * thanks for ur attention :)
+ * 
+ * PS: No need to waste time understanding this hook, as this hook was written by AI xD
  */
 import { useCallback, useEffect, useRef, useState } from "react"
 
@@ -193,7 +195,7 @@ export function useVoiceRecorder(autoStart = true): UseVoiceRecorderReturn {
       localRecorder.onstop = () => {
         const mime = localRecorder.mimeType || "audio/webm"
         const blob = new Blob(chunksRef.current, { type: mime })
-        const url = URL.createObjectURL(blob)
+        const url = URL.createObjectURL(blob);
 
         // ensure mic is off
         hardStopStream(localStream)

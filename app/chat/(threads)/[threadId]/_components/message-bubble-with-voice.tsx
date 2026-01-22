@@ -36,7 +36,7 @@ import { useChatApp } from "@/features/chat/hooks/use-chat-app"
 //   isHighlighted?: boolean
 //   onReplyClick?: (messageId: string) => void
 //   onReply?: () => void
-//   status?: "sending" | "sent" | "failed" | "typing"
+//   status?: "sending" | "sent" | "failed"
 //   onRetry?: () => void
 //   onContextMenuReply?: (messageId: string, content: string) => void
 //   onDeleteMessage?: (messageId: string) => void
@@ -178,9 +178,11 @@ const MessageBubble = ({
     return ""
   }
 
-  if (status === "typing") {
-    return <TypingIndicator isSent={isSent} />
-  }
+
+
+  // if (otherUserTyping is true) {
+  //   return <TypingIndicator isSent={isSent} />
+  // }
 
   if (message.type === "deleted") {
     return (

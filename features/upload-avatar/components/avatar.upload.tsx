@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 import { Upload } from "lucide-react"
 import AvatarUploadModal from "./avatar-upload-modal"
 import { useLoader } from "@/store/loader/use-loader"
-import { GetImageURL } from "../get-url"
+import { GetFileUrl } from "../get-url"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 
@@ -49,7 +49,7 @@ export default function AvatarUpload({
         setLoading(true);
         setIsModalOpen(false);
 
-        const data = await GetImageURL(file);
+        const data = await GetFileUrl(file);
 
         if (!data) {
             setLoading(false);

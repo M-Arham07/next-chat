@@ -1,20 +1,23 @@
 "use server";
+import { MessageContentType } from "@/packages/shared/types";
 import { supabase } from "@/supabase/supabase-client";
 
 
 // this function will upload an image to supabase, and return its url !
 
-type GetImageURLType = {
+type GetFileUrlType = {
 
   url: string,
   path: string
 
 } | null
 
-export async function GetImageURL(file: File): Promise<GetImageURLType> {
+export async function GetFileUrl(
+  file: File, type?: Omit<MessageContentType, "deleted">
+): Promise<GetFileUrlType> {
 
   try {
-   
+
 
     const ext = file.name.split(".").pop();
     const filePath = `public/${Date.now()}-${crypto.randomUUID()}.${ext}`;
@@ -24,7 +27,7 @@ export async function GetImageURL(file: File): Promise<GetImageURLType> {
       .upload(filePath, file, {
         cacheControl: "3600",
         upsert: false,
-        contentType: file.type,
+        contentType: type as string || file.type, // if file type specified then use it!
       });
 
     if (error) throw error;
@@ -39,7 +42,7 @@ export async function GetImageURL(file: File): Promise<GetImageURLType> {
 
     if (err instanceof Error) {
 
-      console.error("Uploading avatar failed at GetImageURL >> ", err?.message);
+      console.error("Uploading file failed at GetFileUrl >> ", err?.message);
 
     }
 
