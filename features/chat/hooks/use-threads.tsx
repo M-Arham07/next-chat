@@ -4,7 +4,6 @@ import { ActiveFilter } from "../types/active-filter";
 import { Thread } from "@/packages/shared/types/threads";
 import { useSession } from "next-auth/react";
 import filterThreads from "../lib/filter-threads";
-import { useMessagesHook } from "./use-messages";
 import { useLoader } from "@/store/loader/use-loader";
 import { NavTab } from "@/app/chat/_components/layout/BottomNavigation";
 
@@ -16,7 +15,7 @@ export interface ThreadsHook {
     setSelectedThreadId: Dispatch<SetStateAction<string | undefined>>,
     searchQuery: string,
     setSearchQuery: Dispatch<SetStateAction<string>>,
-    activeFilter : ActiveFilter,
+    activeFilter: ActiveFilter,
     setActiveFilter: Dispatch<SetStateAction<ActiveFilter>>
 
 }
@@ -28,7 +27,7 @@ export function useThreadsHook(): ThreadsHook {
     const { data: session } = useSession();
 
 
-   
+
 
 
     const [activeTab, setActiveTab] = useState<NavTab>("threads");
@@ -43,11 +42,11 @@ export function useThreadsHook(): ThreadsHook {
     useEffect(() => {
 
         setLoading(true);
-        
-      
+
+
 
         const fetchMockThreads = async () => {
-            
+
 
             try {
                 const res = await fetch(API_ENDPOINT, { method: "GET" });
@@ -84,8 +83,6 @@ export function useThreadsHook(): ThreadsHook {
 
 
     // TODO: FETCH 10 messages for each thread on initial load ?
-
-    const messages = useMessagesHook();
 
     // fetch threads
     const API_ENDPOINT: string = "https://mocki.io/v1/353c786f-5fab-4af4-b388-f918b05e923d";

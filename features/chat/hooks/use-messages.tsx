@@ -31,7 +31,7 @@ export function useMessagesHook(): MessagesHookType {
     const [replyingToMsg, setReplyingToMsg] = useState<Message | null>(null);
 
 
-    const { selectedThreadId } = useThreadsHook();
+    const selectedThreadId = "13"
     const { data: session } = useSession();
 
 

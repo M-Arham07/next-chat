@@ -92,7 +92,10 @@ const MessageBubble = ({
   const isSent: boolean = session!.user!.username === message.sender;
 
   // is the message read ? 
-  const isRead = true; // FOR NOW, I'LL USE PLACEHOLDER TRUE!
+  const isRead = true; // FOR NOW, I'LL USE PLACEHOLDER TRUE!;
+
+
+  const { handleSendMessage } = useChatApp()!;
 
 
 
@@ -162,7 +165,7 @@ const MessageBubble = ({
     }
   }
 
- 
+
   const openContextMenu = (x: number, y: number) => {
     setContextMenuPosition({ x, y });
 
@@ -214,7 +217,7 @@ const MessageBubble = ({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        onContextMenu={(e : React.MouseEvent) => {
+        onContextMenu={(e: React.MouseEvent) => {
           e.preventDefault()
           openContextMenu(e.clientX, e.clientY)
         }}
@@ -289,20 +292,21 @@ const MessageBubble = ({
 
         {isSent && status === "failed" && (
           <button
-          // Show retry button in case message sending failed, JUST re-use sendMessage function
-            onClick={()=>sendMessage(message);}
-            className="ml-2 px-3 py-1 text-xs font-medium text-red-500 bg-red-500/10 border border-red-500/30 rounded hover:bg-red-500/20 transition-colors opacity-0 group-hover:opacity-100"
+            // Show retry button in case message sending failed, JUST re-use handleSendMessage
+            // WE'LL SEND THE MESSAGE WITH LATEST TIMESTAMP!
+            onClick={() => handleSendMessage(message.type,message.content)}
+        className="ml-2 px-3 py-1 text-xs font-medium text-red-500 bg-red-500/10 border border-red-500/30 rounded hover:bg-red-500/20 transition-colors opacity-0 group-hover:opacity-100"
           >
-            Retry
-          </button>
+        Retry
+      </button>
         )}
-      </motion.div>
+    </motion.div >
 
       <MessageContextMenu
         message={message}
         position={contextMenuPosition}
         handleReplyToMsg={() => onReply(message)}
-        onClose={()=>setContextMenuPosition(null);}
+        onClose={() => setContextMenuPosition(null)} />
     </>
   )
 }
