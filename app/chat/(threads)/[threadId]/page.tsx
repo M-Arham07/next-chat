@@ -204,7 +204,7 @@ export default function ChatsView({ params }: ChatViewProps) {
                 )}
             </motion.button> */}
 
-            <ChatHeader name="+92 332 6910247" status="online" avatarInitial="W" />
+            <ChatHeader name="TEST" status="online" avatarInitial="W" />
 
             {/* Loading state display below header */}
             {loadingState !== "idle" && (
