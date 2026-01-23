@@ -57,7 +57,7 @@ const MessageContextMenu = ({
 
   const handleCopy = () => {
 
-     // TODO: NEED TO BLOCK COPY IN CASE OF other than text msg
+    // TODO: NEED TO BLOCK COPY IN CASE OF other than text msg
     if (message.content) {
       navigator.clipboard.writeText(message.content)
     }
@@ -67,18 +67,14 @@ const MessageContextMenu = ({
 
 
 
-  const handleDelete = async () => {
+  const handleDelete = async () : Promise<void> => {
 
-    // TODO: MANAGE onClose etc in hook, and set message status to loading first!
 
-   const isDeleted = await handleDeleteMessage(message);
 
-   if(!isDeleted){
-
-    // show error?
-
-   }
     onClose();
+
+    await handleDeleteMessage(message);
+
 
     return;
   }

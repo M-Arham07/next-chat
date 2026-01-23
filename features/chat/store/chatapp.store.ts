@@ -22,7 +22,7 @@ export interface ChatAppStore {
     setThreads: (threads: Thread[]) => void
     addMessage: (newMessage: Message) => void
     updateMessageStatus: (threadId: string, msgId: string, newStatus: MessageStatusType) => void
-
+    removeMessage: (messageToDelete: Message) => void
 }
 
 export const useChatAppStore = create<ChatAppStore>((set) => ({
@@ -70,9 +70,10 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
     }),
 
 
+
+
     // Update message status for a particular message of a thread! 
     // (will be mainly used to update the status of a message after handleSendMessage is fired!)
-
 
     updateMessageStatus: (threadId: string, msgId: string, newStatus: MessageStatusType) => set((state) => {
 
@@ -91,21 +92,67 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
         // UPDATE THE STATUS
         updatedMsgs[idx].status = newStatus;
 
+   
+
         // FINALLY, SET STATE TO THE UPDATED MESSSAGES!
 
+
         return {
-
-            ...state.messages,
-            [threadId]: updatedMsgs
-
-        };
-
+            messages: {
+                ...state.messages,
+                [threadId]: updatedMsgs
+            }
+        }
 
 
 
 
 
     }),
+
+
+
+
+    // Delete a particular message in a thread 
+
+    removeMessage: (messageToDelete: Message) => set((state) => {
+
+
+        // state.messages must exist before for a message to be deleted!
+
+        const threadId: string = messageToDelete.threadId;
+
+        // FIND INDEX OF THE MESSAGE IN THE THREAD
+
+        const idx: number = state.messages![threadId].findIndex(m => m.msgId === messageToDelete.msgId);
+
+        if (idx < 0) return { messages: state.messages};
+
+
+
+        // updatedMsgs array for this thread id
+        let updatedMsgs = [...state.messages![threadId]];
+        updatedMsgs[idx] = {
+            ...updatedMsgs[idx],
+            content: "",
+            type: "deleted",
+            replyToMsgId: "",
+        };
+
+
+
+
+        return {
+            messages: {
+                ...state.messages,
+                [threadId]: updatedMsgs
+            }
+        }
+
+
+
+
+    })
 
 
 

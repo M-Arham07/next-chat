@@ -13,6 +13,8 @@ interface ChatAppHook extends ChatAppStore {
     handleSendMessage: (type: Omit<MessageContentType, "deleted">,
         content: string | File) => Promise<void>
 
+    handleDeleteMessage: (messageToDelete: Message) => Promise<void>
+
     filteredThreads: Thread[] | null
 
 
@@ -29,7 +31,7 @@ const useChatApp = (): ChatAppHook => {
         markMounted, searchQuery, activeFilter,
         setThreads, addMessage,
         selectedThreadId, replyingToMsg,
-        set, updateMessageStatus } = store;
+        set, updateMessageStatus, removeMessage } = store;
 
     const { data: session } = useSession();
 
@@ -126,52 +128,35 @@ const useChatApp = (): ChatAppHook => {
 
 
 
-    const handleDeleteMessage = async (message: Message) => {
+    const handleDeleteMessage = async (messageToDelete: Message): Promise<void> => {
+
+        // TODO : BLOCK DELETION IF MESSAGE.SENDER !== SESSION.USER.USERNAME
+        // A user can only delete his OWN messages! 
+
+
+        const { threadId, msgId } = messageToDelete;
+
+
+        // FIRST SET STATUS TO SENDING  (to show loading)
+
+        // TODO :ADD A STATUS LIKE DELETE FAILED AND HANDLE BEHAVIOUR OF RETRY BUTTON DPEENDING ON status? 
+      
+        // idk why but this isnt working, need to fix it! 
+        updateMessageStatus(threadId, msgId, "sending");
+        console.log("updated status OK");
+
+
+        // API CALL + OTHER THINGS
+
+        await new Promise<void>(r => setTimeout(() => r(), 500));
+
+
+        // if above success, UPDATE THE STATE
+        removeMessage(messageToDelete);
 
 
 
 
-        setMessages(prev => {
-
-
-            // prev[message.threadId] cant be null as some message might exist before for this to be deleted!
-
-
-            // updated messages array for this thread:
-            const updatedMsgs: Message[] = (prev![message.threadId]).map(m => {
-
-                if (m.msgId === message.msgId) {
-
-                    // set message to deleted, and destroy its content!
-
-                    return {
-                        ...m,
-                        type: "deleted",
-                        content: "",
-                    };
-
-                }
-
-                return m;
-            });
-
-
-
-            return {
-                ...prev,
-                [message.threadId]: updatedMsgs
-            };
-
-
-
-
-        });
-
-        // CALL API IN TRY CATCH , and set message loading to true!
-
-
-
-        return true;
 
 
     }
@@ -227,10 +212,10 @@ const useChatApp = (): ChatAppHook => {
 
             }
 
-            
 
 
-            
+
+
 
             // TODO: PARSE VIA ZOD SCHEMA HERE, throw error if not matches it! 
 
@@ -238,7 +223,7 @@ const useChatApp = (): ChatAppHook => {
             // append the newMessage to the state, for this thread id!
             addMessage(newMessage);
 
-           
+
 
 
 
@@ -292,7 +277,7 @@ const useChatApp = (): ChatAppHook => {
 
 
 
-    return { ...store, handleSendMessage, filteredThreads };
+    return { ...store, handleSendMessage, filteredThreads, handleDeleteMessage };
 
 
 
