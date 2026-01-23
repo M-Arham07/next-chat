@@ -27,7 +27,7 @@ const item = {
 
 const ThreadList = ({ threads, className }: ThreadListProps) => {
 
-  console.log(threads)
+  
   if (!threads || threads?.length === 0) {
     return (
       <motion.div

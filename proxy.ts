@@ -9,6 +9,8 @@ export default async function proxy(request: NextRequest) {
     const session = await getServerSession(authOptions);
     const pathname: string = request.nextUrl.pathname;
 
+    
+
   
     // run only if pathname doesent start with register !
 

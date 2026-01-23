@@ -35,7 +35,7 @@ const ThreadItem = ({ thread }: { thread: Thread }) => {
 
   const lastMessage: Message | undefined = messages?.[thread.threadId]?.[msgsLength - 1];
 
-  
+
 
 
   // IF THREAD TYPE IS DIRECT:
@@ -60,7 +60,7 @@ const ThreadItem = ({ thread }: { thread: Thread }) => {
         whileTap={{ scale: 0.970 }}
         transition={{ duration: 0.15 }}
       >
-        <Avatar className="w-12 h-12 flex-shrink-0 ring-1 ring-border/50">
+        <Avatar className="w-12 h-12 shrink-0 ring-1 ring-border/50">
 
           <AvatarImage src={thread.groupImage ||
             otherParticipant?.image
@@ -83,20 +83,23 @@ const ThreadItem = ({ thread }: { thread: Thread }) => {
                 thread.groupName || otherParticipant?.username || "Unknown"
               }
             </span>
-            <span className="text-xs text-muted-foreground flex-shrink-0 ml-2 font-mono">
+            <span className="text-xs text-muted-foreground shrink-0 ml-2 font-mono">
               {formatTime(lastMessage?.timestamp)}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 mt-0.5">
+          <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
 
-            {/* WILL MODIFY LATER! */}
-            {true && (
-              <CheckCheck className="w-4 h-4 flex-shrink-0 text-success" color="#09ebd8" />
-            )}
-            <p className="text-sm text-muted-foreground truncate">
-              {lastMessage?.type === "text" ? lastMessage?.content : `${lastMessage?.type} message` }
+            {/** WILL BE REPLACED BY READBY.INCLUDES! */}
+            {false &&
+              <CheckCheck className="w-4 h-4 shrink-0 text-success" />
+            }
+            <p className="text-sm text-muted-foreground truncate flex-1">
+              {lastMessage?.type === "text"
+                ? lastMessage.content.slice(0,30) + "..."
+                : `${lastMessage?.type} message`}
             </p>
           </div>
+
         </div>
       </motion.div>
     </Link>
