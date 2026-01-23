@@ -7,8 +7,6 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface ThreadListProps {
   threads: Thread[] | null
-  selectedThreadId?: string;
-  onThreadSelect?: (id: string) => void;
   className?: string;
 }
 
@@ -27,7 +25,7 @@ const item = {
   show: { opacity: 1, x: 0 },
 };
 
-const ThreadList = ({ threads, selectedThreadId, onThreadSelect, className }: ThreadListProps) => {
+const ThreadList = ({ threads, className }: ThreadListProps) => {
 
   console.log(threads)
   if (!threads || threads?.length === 0) {

@@ -23,7 +23,7 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
   
   const { data: session } = useSession();
 
-  console.log("session img",session?.user?.image);
+ 
 
   return (
     <motion.div

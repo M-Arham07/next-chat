@@ -3,10 +3,11 @@ import { ChatAppProvider } from "@/features/chat/hooks/use-chat-app";
 import { ComingSoon } from "../_components/shared";
 import { motion, AnimatePresence } from "framer-motion";
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
-import { DesktopSidebar } from "../_components/layout";
+import { DesktopSidebar, NavTab } from "../_components/layout";
 import { ThreadHeader, ThreadFilterTabs, ThreadItem, ThreadList } from "../_components";
 import { FloatingActionButton } from "../_components";
 import { useChatApp } from "@/features/chat/hooks/use-chat-app";
+import { ActiveFilter } from "@/features/chat/types";
 
 
 
@@ -17,15 +18,11 @@ export default function ThreadsLayout({ children }: { children: React.ReactNode 
 
 
     const { activeTab,
-        setActiveTab,
         searchQuery,
-        setSearchQuery,
         filteredThreads,
         selectedThreadId,
-        setSelectedThreadId,
         mounted,
-        activeFilter,
-        setActiveFilter
+        activeFilter, set
 
     } = useChatApp()!;
 
@@ -47,7 +44,7 @@ export default function ThreadsLayout({ children }: { children: React.ReactNode 
             >
                 <DesktopSidebar
                     activeTab={activeTab}
-                    onTabChange={setActiveTab}
+                    onTabChange={(tab: NavTab) => set("activeTab", tab)}
                 />
 
                 <ResizablePanelGroup direction="horizontal" className="flex-1">
@@ -66,19 +63,17 @@ export default function ThreadsLayout({ children }: { children: React.ReactNode 
                                         <ThreadHeader
                                             isDesktop
                                             searchQuery={searchQuery}
-                                            onSearchChange={setSearchQuery}
+                                            onSearchChange={(query: string) => set("searchQuery", query)}
                                         />
 
                                         <ThreadFilterTabs
                                             activeFilter={activeFilter}
-                                            onFilterChange={setActiveFilter}
+                                            onFilterChange={(val: ActiveFilter) => set("activeFilter", val)}
                                         />
 
                                         <div className="flex-1 min-h-0 overflow-y-auto">
                                             <ThreadList
                                                 threads={filteredThreads}
-                                                selectedThreadId={selectedThreadId}
-                                                onThreadSelect={setSelectedThreadId}
                                                 className="h-full"
                                             />
                                         </div>
@@ -110,10 +105,10 @@ export default function ThreadsLayout({ children }: { children: React.ReactNode 
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.2, duration: 0.4 }}
                         >
-                          
+
                             {children}
-    
-    
+
+
                         </motion.div>
                     </ResizablePanel>
                 </ResizablePanelGroup>

@@ -48,6 +48,7 @@ const ThreadItem = ({ thread }: { thread: Thread }) => {
 
   const lastMessage: Message | undefined = messages?.[thread.threadId]?.[msgsLength - 1];
 
+  
 
 
   // IF THREAD TYPE IS DIRECT:
@@ -96,7 +97,7 @@ const ThreadItem = ({ thread }: { thread: Thread }) => {
               }
             </span>
             <span className="text-xs text-muted-foreground flex-shrink-0 ml-2 font-mono">
-              {lastMessage?.timestamp?.toLocaleTimeString()}
+              {"Loading"}
             </span>
           </div>
           <div className="flex items-center gap-1.5 mt-0.5">

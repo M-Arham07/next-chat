@@ -16,6 +16,7 @@ import TypingIndicator from "./typing-indicator"
 import { Message } from "@/packages/shared/types"
 import { useSession } from "next-auth/react"
 import { useChatApp } from "@/features/chat/hooks/use-chat-app"
+import {formatTime} from "@/lib/format-time"
 // interface MessageBubbleProps {
 //   id: string
 //   content?: string
@@ -84,11 +85,13 @@ const MessageBubble = ({
 
 
   // if this message is a reply to another message, get the message to which this message is a reply to!
+
+ 
   const repliedToMsg: Message | null = messages![message.threadId].find(m => m.msgId === m?.replyToMsgId) ?? null;
 
 
   // have i sent this messagee ? 
-  const isSent: boolean = session!.user!.username === message.sender;
+  const isSent: boolean = session?.user?.username === message.sender;
 
   // is the message read ? 
   const isRead = true; // FOR NOW, I'LL USE PLACEHOLDER TRUE!;
@@ -96,6 +99,8 @@ const MessageBubble = ({
 
   const { handleSendMessage } = useChatApp()!;
 
+
+  
 
 
 
@@ -185,6 +190,7 @@ const MessageBubble = ({
   // if (otherUserTyping is true) {
   //   return <TypingIndicator isSent={isSent} />
   // }
+  
 
   if (message.type === "deleted") {
     return (
@@ -199,7 +205,7 @@ const MessageBubble = ({
             <div className="w-2 h-0.5 bg-muted-foreground rotate-45" />
           </div>
           <span className="text-sm text-muted-foreground italic">You deleted this message</span>
-          <span className="text-xs text-muted-foreground ml-2">{message.timestamp.toLocaleTimeString()}</span>
+          <span className="text-xs text-muted-foreground ml-2">{formatTime(message.timestamp)}</span>
         </div>
       </motion.div>
     )
@@ -272,10 +278,10 @@ const MessageBubble = ({
           )}
 
           <div
-            className={`flex items-center justify-end gap-1 px-3 pb-2 ${type === "image" ? "absolute bottom-1 right-1 bg-background/60 rounded-full px-2 py-1" : ""
+            className={`flex items-center justify-end gap-1 px-3 pb-2 ${message.type === "image" ? "absolute bottom-1 right-1 bg-background/60 rounded-full px-2 py-1" : ""
               }`}
           >
-            <span className="text-[10px] text-muted-foreground">{message.timestamp.toLocaleTimeString()}</span>
+            <span className="text-[10px] text-muted-foreground">{formatTime(message.timestamp)}</span>
             {isSent &&
               (status === "sending" ? (
                 <div className="w-4 h-4 rounded-full border-2 border-muted-foreground border-t-primary animate-spin" />

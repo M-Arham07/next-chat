@@ -83,6 +83,7 @@ const useChatApp = (): ChatAppHook => {
             const res = await fetch(URL, { method: "GET" });
             const messages: Message[] = await res.json();
 
+
             // TODO: NEED TO FIX DATES!
 
 
@@ -90,9 +91,13 @@ const useChatApp = (): ChatAppHook => {
             // to convert to state!
             const result: MessageState = {};
             for (const msg of messages) {
+
+                msg.timestamp = new Date(msg.timestamp);
                 (result[msg.threadId] ??= []).push(msg);
 
+
             }
+            // TODO: ZOD VALIDATION HERE!
 
 
             set("messages", result);
@@ -117,7 +122,7 @@ const useChatApp = (): ChatAppHook => {
 
 
 
-    useEffect(()=>console.log("Threads are: ",store.threads, "Messages are: ",store.messages),[store.messages,store.threads])
+    useEffect(() => console.log("Threads are: ", store.threads, "Messages are: ", store.messages), [store.messages, store.threads])
 
 
 

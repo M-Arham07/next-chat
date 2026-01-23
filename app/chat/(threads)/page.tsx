@@ -16,15 +16,16 @@ import { useChatApp } from "@/features/chat/hooks/use-chat-app";
 export default function MobileThreadPage() {
 
   const { activeTab,
-    setActiveTab,
+
     searchQuery,
-    setSearchQuery,
+
     filteredThreads,
     selectedThreadId,
-    setSelectedThreadId,
+
+    set
   } = useChatApp()!;
 
- 
+
 
 
 
@@ -47,13 +48,11 @@ export default function MobileThreadPage() {
             >
               <ThreadHeader
                 searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
+                onSearchChange={(query: string) => set("searchQuery", query)}
               />
 
               <ThreadList
                 threads={filteredThreads}
-                selectedThreadId={selectedThreadId}
-                onThreadSelect={setSelectedThreadId}
                 className="h-[calc(100vh-200px)]"
               />
 
@@ -78,7 +77,7 @@ export default function MobileThreadPage() {
 
         <BottomNavigation
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={(tab : NavTab)=>set("activeTab",tab)}
         />
       </div>
 

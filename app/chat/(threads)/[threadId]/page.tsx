@@ -36,7 +36,7 @@ export default function ChatsView({ params }: ChatViewProps) {
 
 
 
-    const { messages, replyingToMsg, setReplyingToMsg, handleSendMessage} = useChatApp()!;
+    const { messages, replyingToMsg, handleSendMessage ,set} = useChatApp()!;
 
 
     const [mounted, setMounted] = useState(false)
@@ -57,6 +57,8 @@ export default function ChatsView({ params }: ChatViewProps) {
     const loadTriggerCountRef = useRef(0)
     const mainRef = useRef<HTMLElement>(null)
     const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+
 
 
     useEffect(() => {
@@ -80,67 +82,67 @@ export default function ChatsView({ params }: ChatViewProps) {
     }, []);
 
 
-    // Intersection Observer for infinite scroll at top
-    useEffect(() => {
-        if (!sentinelRef.current || !mainRef.current || !mounted) return
+    // // Intersection Observer for infinite scroll at top
+    // useEffect(() => {
+    //     if (!sentinelRef.current || !mainRef.current || !mounted) return
 
 
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    console.log("[v0] Sentinel visibility:", entry.isIntersecting, "ratio:", entry.intersectionRatio)
+    //     const observer = new IntersectionObserver(
+    //         (entries) => {
+    //             entries.forEach((entry) => {
+    //                 console.log("[v0] Sentinel visibility:", entry.isIntersecting, "ratio:", entry.intersectionRatio)
 
-                    // Only trigger when sentinel becomes visible (enters viewport)
-                    if (entry.isIntersecting) {
-                        loadTriggerCountRef.current += 1
-                        console.log("[v0] Load trigger count:", loadTriggerCountRef.current)
-
-
-
-                        // Clear any existing timeout
-                        if (loadingTimeoutRef.current) {
-                            clearTimeout(loadingTimeoutRef.current)
-                        }
-
-                        // Show loading state
-                        setLoadingState("loading")
-                        setLoadingCount(loadTriggerCountRef.current)
-
-                        // Simulate loading for 2 seconds, then randomly succeed or fail
-                        loadingTimeoutRef.current = setTimeout(() => {
-                            const shouldFail = Math.random() > 0.7 // 30% chance of failure
-                            if (shouldFail) {
-                                setLoadingState("failed")
-                                // Show error for 2 more seconds
-                                loadingTimeoutRef.current = setTimeout(() => {
-                                    setLoadingState("idle")
-                                }, 2000)
-                            } else {
-
-                                setMessages(newMessages)
-
-                                setLoadingState("idle")
-                            }
-                        }, 2000)
-                    }
-                })
-            },
-            {
-                root: null,
-                threshold: 0.01,
-                rootMargin: "0px 0px 1000px 0px"
-            },
-        )
+    //                 // Only trigger when sentinel becomes visible (enters viewport)
+    //                 if (entry.isIntersecting) {
+    //                     loadTriggerCountRef.current += 1
+    //                     console.log("[v0] Load trigger count:", loadTriggerCountRef.current)
 
 
-        if (sentinelRef.current) {
-            observer.observe(sentinelRef.current)
-        }
 
-        return () => {
-            observer.disconnect()
-        }
-    }, [mounted])
+    //                     // Clear any existing timeout
+    //                     if (loadingTimeoutRef.current) {
+    //                         clearTimeout(loadingTimeoutRef.current)
+    //                     }
+
+    //                     // Show loading state
+    //                     setLoadingState("loading")
+    //                     setLoadingCount(loadTriggerCountRef.current)
+
+    //                     // Simulate loading for 2 seconds, then randomly succeed or fail
+    //                     loadingTimeoutRef.current = setTimeout(() => {
+    //                         const shouldFail = Math.random() > 0.7 // 30% chance of failure
+    //                         if (shouldFail) {
+    //                             setLoadingState("failed")
+    //                             // Show error for 2 more seconds
+    //                             loadingTimeoutRef.current = setTimeout(() => {
+    //                                 setLoadingState("idle")
+    //                             }, 2000)
+    //                         } else {
+
+                              
+
+    //                             setLoadingState("idle")
+    //                         }
+    //                     }, 2000)
+    //                 }
+    //             })
+    //         },
+    //         {
+    //             root: null,
+    //             threshold: 0.01,
+    //             rootMargin: "0px 0px 1000px 0px"
+    //         },
+    //     )
+
+
+    //     if (sentinelRef.current) {
+    //         observer.observe(sentinelRef.current)
+    //     }
+
+    //     return () => {
+    //         observer.disconnect()
+    //     }
+    // }, [mounted])
 
 
 
@@ -161,111 +163,7 @@ export default function ChatsView({ params }: ChatViewProps) {
 
 
 
-    // const handleSendMessage = (
-    //     content: string,
-    //     type?: string,
-    //     audioUrl?: string,
-    //     duration?: string,
-    //     fileData?: { name: string; url: string; type: string },
-    // ) => {
-    //     const timestamp = new Date().toLocaleTimeString("en-US", {
-    //         hour: "numeric",
-    //         minute: "2-digit",
-    //         hour12: true,
-    //     })
-
-    //     if (type === "voice" && audioUrl) {
-    //         const newMessage: Message = {
-    //             id: Date.now().toString(),
-    //             timestamp,
-    //             isSent: true,
-    //             isRead: false,
-    //             type: "voice",
-    //             voiceUrl: audioUrl,
-    //             voiceDuration: duration || "0:00",
-    //             status: "sending",
-    //             replyTo: replyingToMsg
-    //                 ? {
-    //                     name: "You",
-    //                     content: replyingToMsg.content,
-    //                     messageId: replyingToMsg.id,
-    //                 }
-    //                 : undefined,
-    //         }
-    //         setMessages((prev) => [...prev, newMessage])
-    //         setReplyingToMsg(null)
-    //         setTimeout(() => {
-    //             setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
-    //         }, 1000)
-    //     } else if (type === "image" && audioUrl) {
-    //         const newMessage: Message = {
-    //             id: Date.now().toString(),
-    //             timestamp,
-    //             isSent: true,
-    //             isRead: false,
-    //             type: "image",
-    //             imageUrl: audioUrl,
-    //             status: "sending",
-    //             replyTo: replyingToMsg
-    //                 ? {
-    //                     name: "You",
-    //                     content: replyingToMsg.content,
-    //                     messageId: replyingToMsg.id,
-    //                 }
-    //                 : undefined,
-    //         }
-    //         setMessages((prev) => [...prev, newMessage])
-    //         setReplyingToMsg(null)
-    //         setTimeout(() => {
-    //             setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
-    //         }, 1000)
-    //     } else if (type === "document" && fileData) {
-    //         const newMessage: Message = {
-    //             id: Date.now().toString(),
-    //             timestamp,
-    //             isSent: true,
-    //             isRead: false,
-    //             type: "document",
-    //             documentName: fileData.name,
-    //             documentUrl: fileData.url,
-    //             status: "sending",
-    //             replyTo: replyingToMsg
-    //                 ? {
-    //                     name: "You",
-    //                     content: replyingToMsg.content,
-    //                     messageId: replyingToMsg.id,
-    //                 }
-    //                 : undefined,
-    //         }
-    //         setMessages((prev) => [...prev, newMessage])
-    //         setReplyingToMsg(null)
-    //         setTimeout(() => {
-    //             setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
-    //         }, 1000)
-    //     } else if (content.trim()) {
-    //         const newMessage: Message = {
-    //             id: Date.now().toString(),
-    //             content,
-    //             timestamp,
-    //             isSent: true,
-    //             isRead: false,
-    //             type: "text",
-    //             status: "sending",
-    //             replyTo: replyingToMsg
-    //                 ? {
-    //                     name: "You",
-    //                     content: replyingToMsg.content,
-    //                     messageId: replyingToMsg.id,
-    //                 }
-    //                 : undefined,
-    //         }
-    //         setMessages((prev) => [...prev, newMessage])
-    //         setReplyingToMsg(null)
-    //         setTimeout(() => {
-    //             setMessages((prev) => prev.map((msg) => (msg.id === newMessage.id ? { ...msg, status: "sent" as const } : msg)))
-    //         }, 1000)
-    //     }
-    // }
+ 
 
 
 
@@ -364,9 +262,10 @@ export default function ChatsView({ params }: ChatViewProps) {
                                 }}
                             >
                                 <MessageBubble
+                                    message={message}
                                     isHighlighted={highlightedMessageId === message.msgId}
                                     onReplyClick={handleReplyPreviewClick}
-                                    onReply={() => setReplyingToMsg(message)}
+                                    onReply={() => set("replyingToMsg",message)}
                                     status={message.status}
                                 />
                             </div>
@@ -392,7 +291,7 @@ export default function ChatsView({ params }: ChatViewProps) {
                             <p className="text-sm text-foreground truncate">{replyingToMsg.content}</p>
                         </div>
                         <button
-                            onClick={() => setReplyingToMsg(null)}
+                            onClick={() => set("replyingToMsg",null)}
                             className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
                         >
                             ✕
