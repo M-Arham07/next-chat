@@ -7,22 +7,9 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useChatApp } from "@/features/chat/hooks/use-chat-app";
 import { Message } from "@/packages/shared/types";
+import { formatTime } from "@/lib/format-time";
 
 
-
-// export interface ThreadItemProps {
-//   id: number;
-//   name: string;
-//   lastMessage: string;
-//   timestamp: string;
-//   avatar?: string;
-//   initial?: string;
-//   avatarColor?: string;
-//   hasBlueCheck?: boolean;
-//   isGroup?: boolean;
-//   isSelected?: boolean;
-//   onClick?: () => void;
-// }
 
 const avatarColors = [
   "bg-avatar-1",
@@ -97,7 +84,7 @@ const ThreadItem = ({ thread }: { thread: Thread }) => {
               }
             </span>
             <span className="text-xs text-muted-foreground flex-shrink-0 ml-2 font-mono">
-              {"Loading"}
+              {formatTime(lastMessage?.timestamp)}
             </span>
           </div>
           <div className="flex items-center gap-1.5 mt-0.5">
@@ -107,7 +94,7 @@ const ThreadItem = ({ thread }: { thread: Thread }) => {
               <CheckCheck className="w-4 h-4 flex-shrink-0 text-success" color="#09ebd8" />
             )}
             <p className="text-sm text-muted-foreground truncate">
-              {lastMessage?.content}
+              {lastMessage?.type === "text" ? lastMessage?.content : `${lastMessage?.type} message` }
             </p>
           </div>
         </div>

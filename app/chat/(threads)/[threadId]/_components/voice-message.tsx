@@ -6,10 +6,9 @@ import { Avatar } from "@/components/ui/avatar"
 
 interface VoiceMessageProps {
   voiceUrl: string
-  voiceDuration: string
 }
 
-const VoiceMessage = ({ voiceUrl, voiceDuration }: VoiceMessageProps) => {
+const VoiceMessage = ({ voiceUrl }: VoiceMessageProps) => {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)

@@ -1,4 +1,4 @@
-const formatTime = (date: Date): string => {
+const formatTime = (date: Date | undefined): string => {
 
     if (!(date instanceof Date)) return "";
 

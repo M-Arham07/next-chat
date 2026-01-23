@@ -17,32 +17,7 @@ import { Message } from "@/packages/shared/types"
 import { useSession } from "next-auth/react"
 import { useChatApp } from "@/features/chat/hooks/use-chat-app"
 import {formatTime} from "@/lib/format-time"
-// interface MessageBubbleProps {
-//   id: string
-//   content?: string
-//   timestamp: string
-//   isSent: boolean // const isSent = message.sender === session.user.username 
-//   isRead?: boolean // const isRead = readBy.includes(otherUser.username)
-//   type?: "text" | "image" | "voice" | "deleted" | "document"
-//   imageUrl?: string
-//   voiceDuration?: string
-//   voiceUrl?: string
-//   documentName?: string
-//   documentUrl?: string
-//   replyTo?: {
-//     name: string
-//     content: string
-//     messageId: string
-//   }
-//   isHighlighted?: boolean
-//   onReplyClick?: (messageId: string) => void
-//   onReply?: () => void
-//   status?: "sending" | "sent" | "failed"
-//   onRetry?: () => void
-//   onContextMenuReply?: (messageId: string, content: string) => void
-//   onDeleteMessage?: (messageId: string) => void
-//   onContextMenuOpenChange?: (isOpen: boolean, messageId: string) => void
-// }
+
 
 
 
@@ -87,7 +62,9 @@ const MessageBubble = ({
   // if this message is a reply to another message, get the message to which this message is a reply to!
 
  
-  const repliedToMsg: Message | null = messages![message.threadId].find(m => m.msgId === m?.replyToMsgId) ?? null;
+  const repliedToMsg: Message | null = messages![message.threadId].find(m => m.msgId === message?.replyToMsgId) ?? null;
+
+
 
 
   // have i sent this messagee ? 
@@ -272,7 +249,7 @@ const MessageBubble = ({
 
           {message.type === "text" && message.content && <TextMessage content={message.content} />}
           {message.type === "image" && message.content && <ImageMessage imageUrl={message.content} />}
-          {message.type === "voice" && message.content && <VoiceMessage voiceUrl={message.content} voiceDuration={voiceDuration || "0:00"} />}
+          {message.type === "voice" && message.content && <VoiceMessage voiceUrl={message.content} />}
           {message.type === "document" && message.content && (
             <DocumentMessage documentName={"Placeholder name"} documentUrl={message.content} />
           )}

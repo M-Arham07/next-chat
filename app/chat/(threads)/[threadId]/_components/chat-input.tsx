@@ -30,6 +30,7 @@ const ChatInput = ({ onSend }: ChatInputProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     // FOR TEXT MESSAGES ONLY:
     e.preventDefault()
+    
     if (content.trim()) {
       onSend("text", content);
       setContent("");

@@ -29,7 +29,7 @@ const useChatApp = (): ChatAppHook => {
         markMounted, searchQuery, activeFilter,
         setThreads, addMessage,
         selectedThreadId, replyingToMsg,
-        set, updateMessages } = store;
+        set, updateMessageStatus } = store;
 
     const { data: session } = useSession();
 
@@ -122,7 +122,7 @@ const useChatApp = (): ChatAppHook => {
 
 
 
-    useEffect(() => console.log("Threads are: ", store.threads, "Messages are: ", store.messages), [store.messages, store.threads])
+
 
 
 
@@ -177,6 +177,7 @@ const useChatApp = (): ChatAppHook => {
     }
 
 
+    useEffect(() => console.log(store.messages), [store.messages])
     const handleSendMessage = async (
         type: Omit<MessageContentType, "deleted">,
         content: string | File): Promise<void> => {
@@ -194,7 +195,9 @@ const useChatApp = (): ChatAppHook => {
 
 
 
+
             // if file type is Not text and a file, upload it!
+
             let uploadedContentUrl: string | null = null;
 
             if (type !== "text" && content instanceof File) {
@@ -224,6 +227,10 @@ const useChatApp = (): ChatAppHook => {
 
             }
 
+            
+
+
+            
 
             // TODO: PARSE VIA ZOD SCHEMA HERE, throw error if not matches it! 
 
@@ -231,27 +238,19 @@ const useChatApp = (): ChatAppHook => {
             // append the newMessage to the state, for this thread id!
             addMessage(newMessage);
 
+           
+
 
 
             // socket.emit the message , then use ack! 
 
 
 
-            // if all above goes well, update this message's state to sent
-            newMessage.status = "sent";
-
-            // FIND INDEX FOR THIS MESSAGE ID ! 
-            // MESSAGES MUST EXIST HERE!
-
-            const idx: number = messages![newMessage.threadId].findIndex(m => m.msgId === newMessage.msgId);
+            await new Promise<void>(r => setTimeout(() => r(), 1000))
 
 
-
-            let updatedMsgs = [...messages![newMessage.threadId]]
-
-            updatedMsgs[idx] = newMessage;
-
-            updateMessages(updatedMsgs);
+            // if everything goes well, update the status! 
+            updateMessageStatus(newMessage.threadId, newMessage.msgId, "sent");
 
 
 

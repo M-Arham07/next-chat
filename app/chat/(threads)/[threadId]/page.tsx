@@ -33,10 +33,23 @@ export default function ChatsView({ params }: ChatViewProps) {
     const threadId: string | null = use(params)?.threadId ?? null;
 
 
+    useEffect(() => {
+        set("selectedThreadId", threadId);
+
+        
+        return () => {
+            set("selectedThreadId",undefined);
+
+            // EXTREMELY IMPORTANT:
+            set("replyingToMsg",null);
+        }
+    }, [threadId]);
 
 
 
-    const { messages, replyingToMsg, handleSendMessage ,set} = useChatApp()!;
+
+
+    const { messages, replyingToMsg, handleSendMessage, set } = useChatApp()!;
 
 
     const [mounted, setMounted] = useState(false)
@@ -119,7 +132,7 @@ export default function ChatsView({ params }: ChatViewProps) {
     //                             }, 2000)
     //                         } else {
 
-                              
+
 
     //                             setLoadingState("idle")
     //                         }
@@ -163,7 +176,7 @@ export default function ChatsView({ params }: ChatViewProps) {
 
 
 
- 
+
 
 
 
@@ -265,7 +278,7 @@ export default function ChatsView({ params }: ChatViewProps) {
                                     message={message}
                                     isHighlighted={highlightedMessageId === message.msgId}
                                     onReplyClick={handleReplyPreviewClick}
-                                    onReply={() => set("replyingToMsg",message)}
+                                    onReply={() => set("replyingToMsg", message)}
                                     status={message.status}
                                 />
                             </div>
@@ -291,7 +304,7 @@ export default function ChatsView({ params }: ChatViewProps) {
                             <p className="text-sm text-foreground truncate">{replyingToMsg.content}</p>
                         </div>
                         <button
-                            onClick={() => set("replyingToMsg",null)}
+                            onClick={() => set("replyingToMsg", null)}
                             className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
                         >
                             ✕

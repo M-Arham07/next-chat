@@ -1,5 +1,4 @@
 "use client";
-import { ChatAppProvider } from "@/features/chat/hooks/use-chat-app";
 import { ComingSoon } from "../_components/shared";
 import { motion, AnimatePresence } from "framer-motion";
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
