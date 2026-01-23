@@ -134,7 +134,7 @@ const MessageBubble = ({
 
       // Haptic feedback
       if (navigator.vibrate) {
-        navigator.vibrate(300); //CAN BE CHANGED
+        navigator.vibrate(5); //CAN BE CHANGED
       }
 
       // Trigger reply and reset

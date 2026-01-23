@@ -14,7 +14,6 @@ import { useChatApp } from "@/features/chat/hooks/use-chat-app"
 
 
 
-const MESSAGES_PER_LOAD = 10
 
 // Helper to get last N messages
 const getLastNMessages = (messages: Message[], n: number) => {
@@ -295,7 +294,7 @@ export default function ChatsView({ params }: ChatViewProps) {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute bottom-24 left-0 right-0 px-4 z-40"
+                    className="fixed bottom-24 left-0 right-0 px-4 z-40"
                 >
                     <div className="mx-auto max-w-2xl flex items-center gap-3 px-4 py-3 bg-secondary/50 backdrop-blur-sm border border-glass-border rounded-lg">
                         <div className="flex-1 min-w-0">
