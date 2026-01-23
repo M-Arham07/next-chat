@@ -12,4 +12,4 @@ const TextMessage = ({ content }: TextMessageProps) => {
   )
 }
 
-export default TextMessage
+export default TextMessage;

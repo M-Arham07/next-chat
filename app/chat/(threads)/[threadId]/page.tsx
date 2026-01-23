@@ -70,6 +70,10 @@ export default function ChatsView({ params }: ChatViewProps) {
     const mainRef = useRef<HTMLElement>(null)
     const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
+    // TO AUTOMATICALLY FOCUS ON CHAT INPUT WHEN REPLYING TO A MESSAGE
+    const inputRef = useRef<HTMLInputElement | null>(null);
+    
+
 
 
 
@@ -277,7 +281,12 @@ export default function ChatsView({ params }: ChatViewProps) {
                                     message={message}
                                     isHighlighted={highlightedMessageId === message.msgId}
                                     onReplyClick={handleReplyPreviewClick}
-                                    onReply={() => set("replyingToMsg", message)}
+                                    onReply={() => {
+                                        set("replyingToMsg", message)
+                                        // focus the message input so on-screen keyboard shows up
+                                        inputRef?.current?.focus();
+
+                                    }}
                                     status={message.status}
                                 />
                             </div>
@@ -318,7 +327,7 @@ export default function ChatsView({ params }: ChatViewProps) {
             //     transition: "filter 0.2s ease",
             // }}
             >
-                <ChatInput onSend={handleSendMessage} />
+                <ChatInput onSend={handleSendMessage} inputRef={inputRef} />
             </div>
         </div>
     )

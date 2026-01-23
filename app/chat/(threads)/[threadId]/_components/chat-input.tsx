@@ -1,7 +1,7 @@
 "use client"
 
-import type React from "react"
-import { useState, useRef } from "react"
+import type { Ref } from "react"
+import { useState, useRef, RefObject } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Smile, Paperclip, Camera, Mic, Send } from "lucide-react"
 import { Input } from "@/components/ui/input"
@@ -14,9 +14,10 @@ interface ChatInputProps {
     type: Omit<MessageContentType, "deleted">,
     content: string | File,
   ) => Promise<void>
+  inputRef: Ref<HTMLInputElement> | null
 }
 
-const ChatInput = ({ onSend }: ChatInputProps) => {
+const ChatInput = ({ onSend, inputRef }: ChatInputProps) => {
 
   // if text content, send it only on button click/enter, 
   // if document or image, send when selected !
@@ -30,7 +31,7 @@ const ChatInput = ({ onSend }: ChatInputProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     // FOR TEXT MESSAGES ONLY:
     e.preventDefault()
-    
+
     if (content.trim()) {
       onSend("text", content);
       setContent("");
@@ -51,7 +52,7 @@ const ChatInput = ({ onSend }: ChatInputProps) => {
 
     if (!file) return;
 
-    const fileType : string = file.type.startsWith("audio/")
+    const fileType: string = file.type.startsWith("audio/")
       ? "voice"
       : file.type.startsWith("image/")
         ? "image"
@@ -90,6 +91,7 @@ const ChatInput = ({ onSend }: ChatInputProps) => {
         <div className="flex-1 relative min-w-0">
           <Input
             value={content}
+            ref={inputRef}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Message"
             className="w-full bg-secondary/50 border-glass-border rounded-full pl-4 pr-20 py-6 text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary/30 backdrop-blur-sm"
