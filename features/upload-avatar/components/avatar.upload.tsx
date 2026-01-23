@@ -94,7 +94,7 @@ export default function AvatarUpload({
                     // style={{ width: avatarSize, height: avatarSize }}
                     >
                         {/* Blur background glow */}
-                        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 blur-xl -z-10" />
+                        <div className="absolute inset-0 rounded-full bg-linear-to-br from-primary/20 to-primary/5 blur-xl -z-10" />
 
                         {/* Main avatar container */}
                         <div className="relative w-full h-full rounded-full overflow-hidden bg-muted border-2 border-border shadow-lg backdrop-blur-sm">
@@ -126,11 +126,11 @@ export default function AvatarUpload({
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => setIsModalOpen(true)}
-                        className="relative group rounded-full border-2 border-dashed border-border hover:border-primary/50 transition-all flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-muted/30 to-muted/10 hover:from-muted/50 hover:to-muted/30 backdrop-blur-sm"
+                        className="relative group rounded-full border-2 border-dashed border-border hover:border-primary/50 transition-all flex flex-col items-center justify-center gap-3 bg-linear-to-br from-muted/30 to-muted/10 hover:from-muted/50 hover:to-muted/30 backdrop-blur-sm"
                         style={{ width: avatarSize, height: avatarSize }}
                     >
                         {/* Blur background glow */}
-                        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/5 to-transparent blur-xl -z-10 group-hover:from-primary/10 transition-colors" />
+                        <div className="absolute inset-0 rounded-full bg-linear-to-br from-primary/5 to-transparent blur-xl -z-10 group-hover:from-primary/10 transition-colors" />
 
                         <div className="flex flex-col items-center justify-center gap-2">
                             <motion.div

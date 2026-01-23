@@ -313,7 +313,7 @@ export default function ChatsView({ params }: ChatViewProps) {
                         </div>
                         <button
                             onClick={() => set("replyingToMsg", null)}
-                            className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                            className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
                         >
                             ✕
                         </button>

@@ -30,7 +30,7 @@ const ImageViewer = ({ imageUrl, isOpen, onClose }: ImageViewerProps) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[999] bg-background/80 backdrop-blur-md"
+            className="fixed inset-0 z-999 bg-background/80 backdrop-blur-md"
             onClick={onClose}
           />
 
@@ -40,7 +40,7 @@ const ImageViewer = ({ imageUrl, isOpen, onClose }: ImageViewerProps) => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed inset-0 z-[1000] flex items-center justify-center pointer-events-none"
+            className="fixed inset-0 z-1000 flex items-center justify-center pointer-events-none"
           >
             <div
               className="relative w-11/12 h-5/6 max-w-4xl pointer-events-auto"

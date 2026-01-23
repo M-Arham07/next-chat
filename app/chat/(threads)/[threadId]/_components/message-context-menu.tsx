@@ -115,7 +115,7 @@ const MessageContextMenu = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-background/50 backdrop-blur-sm z-[99]"
+            className="fixed inset-0 bg-background/50 backdrop-blur-sm z-99"
           />
 
           {/* Context Menu */}
@@ -134,7 +134,7 @@ const MessageContextMenu = ({
                 }
                 : undefined
             }
-            className="z-[100] bg-secondary backdrop-blur-xl border border-glass-border rounded-2xl shadow-lg overflow-hidden w-64"
+            className="z-100 bg-secondary backdrop-blur-xl border border-glass-border rounded-2xl shadow-lg overflow-hidden w-64"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Icon and label layout */}
@@ -150,7 +150,7 @@ const MessageContextMenu = ({
                     onClick={item.onClick}
                     className={`flex items-center gap-3 px-4 py-3 w-full hover:bg-primary/10 transition-colors text-left ${item.color}`}
                   >
-                    <Icon className="w-6 h-6 flex-shrink-0" />
+                    <Icon className="w-6 h-6 shrink-0" />
                     <span className="font-medium text-base">{item.label}</span>
                   </motion.button>
                 )

@@ -29,7 +29,7 @@ const ChatHeader = ({ name, status = "online", avatarInitial }: ChatHeaderProps)
       </button>
       </Link>
 
-      <Avatar className="w-10 h-10 bg-gradient-to-br from-muted to-accent">
+      <Avatar className="w-10 h-10 bg-linear-to-br from-muted to-accent">
         <AvatarFallback className="bg-transparent text-foreground font-medium">{avatarInitial}</AvatarFallback>
       </Avatar>
 

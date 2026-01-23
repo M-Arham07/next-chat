@@ -82,7 +82,7 @@ const VoiceMessage = ({ voiceUrl }: VoiceMessageProps) => {
             }
 
             try {
-              const source = audioContext.createMediaElementAudioSource(audioRef.current)
+              const source = audioContext.createMediaElementSource(audioRef.current)
               const analyser = audioContext.createAnalyser()
               analyser.fftSize = 256
               analyserRef.current = analyser
@@ -114,13 +114,13 @@ const VoiceMessage = ({ voiceUrl }: VoiceMessageProps) => {
   const remainingTime = duration - currentTime
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 min-w-[220px]">
-      <Avatar className="w-8 h-8 bg-gradient-to-br from-muted to-accent flex-shrink-0">
+    <div className="flex items-center gap-3 px-4 py-3 min-w-55">
+      <Avatar className="w-8 h-8 bg-linear-to-br from-muted to-accent shrink-0">
         <span className="text-xs font-medium text-foreground">M</span>
       </Avatar>
       <button
         onClick={handlePlayVoice}
-        className="p-1 rounded-full hover:bg-secondary/50 transition-colors flex-shrink-0"
+        className="p-1 rounded-full hover:bg-secondary/50 transition-colors shrink-0"
       >
         {isPlaying ? (
           <Pause className="w-5 h-5 text-foreground fill-foreground" />
@@ -132,7 +132,7 @@ const VoiceMessage = ({ voiceUrl }: VoiceMessageProps) => {
         {(waveformData.length > 0 ? waveformData : Array(25).fill(20)).map((value, i) => (
           <div
             key={i}
-            className="w-0.5 bg-gradient-to-t from-muted-foreground to-primary rounded-full transition-all duration-75"
+            className="w-0.5 bg-linear-to-t from-muted-foreground to-primary rounded-full transition-all duration-75"
             style={{ height: `${Math.max(4, value)}px` }}
           />
         ))}

@@ -17,7 +17,7 @@ const ImageMessage = ({ imageUrl }: ImageMessageProps) => {
           src={imageUrl || "/placeholder.svg"}
           alt="Message"
           onClick={() => setIsImageViewerOpen(true)}
-          className="rounded-xl max-w-[250px] sm:max-w-[300px] object-cover cursor-pointer hover:opacity-90 transition-opacity"
+          className="rounded-xl max-w-62.5 sm:max-w-75 object-cover cursor-pointer hover:opacity-90 transition-opacity"
         />
       </div>
       <ImageViewer imageUrl={imageUrl || ""} isOpen={isImageViewerOpen} onClose={() => setIsImageViewerOpen(false)} />

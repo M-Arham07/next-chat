@@ -56,8 +56,9 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
 
         const threadId: string = newMessage.threadId;
-        const currentMessages: Message[] = state.messages?.[threadId] ?? []
-        console.log("updated will be", [...currentMessages, newMessage])
+
+        const currentMessages: Message[] = state.messages?.[threadId] ?? [];
+
 
         return {
             messages: {
@@ -83,7 +84,7 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
 
         // IF THE GIVEN MESSAGE ID ISN'T FOUND IN THE GIVEN THREAD ID:
-        if (idx < 0) return state.messages;
+        if (idx < 0) return { messages: state.messages };
 
 
         let updatedMsgs = [...state.messages![threadId]];
@@ -92,7 +93,7 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
         // UPDATE THE STATUS
         updatedMsgs[idx].status = newStatus;
 
-   
+
 
         // FINALLY, SET STATE TO THE UPDATED MESSSAGES!
 
@@ -113,6 +114,17 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
 
 
+
+
+
+
+
+
+    
+
+
+
+
     // Delete a particular message in a thread 
 
     removeMessage: (messageToDelete: Message) => set((state) => {
@@ -126,17 +138,18 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
         const idx: number = state.messages![threadId].findIndex(m => m.msgId === messageToDelete.msgId);
 
-        if (idx < 0) return { messages: state.messages};
+        if (idx < 0) return { messages: state.messages };
 
 
 
         // updatedMsgs array for this thread id
         let updatedMsgs = [...state.messages![threadId]];
+
         updatedMsgs[idx] = {
             ...updatedMsgs[idx],
             content: "",
             type: "deleted",
-            replyToMsgId: "",
+            replyToMsgId: undefined,
         };
 
 

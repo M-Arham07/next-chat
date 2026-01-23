@@ -51,7 +51,7 @@ const ThreadHeader = ({ isDesktop = false, searchQuery, onSearchChange }: Thread
           }}
           transition={{ duration: 0.2 }}
         >
-          <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          <Search className="w-4 h-4 text-muted-foreground shrink-0" />
           <Input
             type="text"
             placeholder="Search conversations..."

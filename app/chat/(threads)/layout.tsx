@@ -95,7 +95,7 @@ export default function ThreadsLayout({ children }: { children: React.ReactNode 
                         </div>
                     </ResizablePanel>
 
-                    <ResizableHandle className="w-px bg-border/50 hover:bg-foreground/20 transition-colors data-[resize-handle-active]:bg-foreground/30" />
+                    <ResizableHandle className="w-px bg-border/50 hover:bg-foreground/20 transition-colors data-resize-handle-active:bg-foreground/30" />
 
                     <ResizablePanel defaultSize={65}>
                         <motion.div

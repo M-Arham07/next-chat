@@ -46,7 +46,7 @@ export default function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) 
               cancel()
               onCancel()
             }}
-            className="p-2 rounded-full hover:bg-secondary transition-colors flex-shrink-0"
+            className="p-2 rounded-full hover:bg-secondary transition-colors shrink-0"
             aria-label="Close"
           >
             <X className="w-5 h-5 text-foreground" />
@@ -90,7 +90,7 @@ export default function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) 
           whileHover={{ scale: 1.06 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleDelete}
-          className="p-3 rounded-full bg-secondary/50 hover:bg-secondary transition-colors flex-shrink-0"
+          className="p-3 rounded-full bg-secondary/50 hover:bg-secondary transition-colors shrink-0"
           aria-label="Delete recording"
         >
           <Trash2 className="w-6 h-6 text-muted-foreground" />
@@ -108,7 +108,7 @@ export default function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) 
           whileTap={{ scale: 0.95 }}
           onClick={togglePause}
           disabled={!isRecording || isStopping}
-          className="p-3 rounded-full bg-secondary/50 hover:bg-secondary transition-colors flex-shrink-0 disabled:opacity-50 disabled:pointer-events-none"
+          className="p-3 rounded-full bg-secondary/50 hover:bg-secondary transition-colors shrink-0 disabled:opacity-50 disabled:pointer-events-none"
           aria-label={isPaused ? "Resume" : "Pause"}
         >
           {isPaused ? <Play className="w-6 h-6 text-muted-foreground" /> : <Pause className="w-6 h-6 text-muted-foreground" />}
@@ -119,7 +119,7 @@ export default function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) 
           whileTap={{ scale: 0.95 }}
           onClick={handleSend}
           disabled={!isRecording || isStopping}
-          className="p-3 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex-shrink-0 disabled:opacity-50 disabled:pointer-events-none"
+          className="p-3 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shrink-0 disabled:opacity-50 disabled:pointer-events-none"
           aria-label="Send recording"
         >
           <Send className="w-6 h-6" />
