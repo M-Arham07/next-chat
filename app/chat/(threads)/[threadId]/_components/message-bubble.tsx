@@ -139,7 +139,7 @@ const MessageBubble = ({
 
       // Trigger reply and reset
       onReply(message);
-      setSwipeX(0)
+      setSwipeX(0);
     } else {
       // Reset swipe without triggering reply
       setSwipeX(0)
