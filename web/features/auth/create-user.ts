@@ -1,8 +1,8 @@
 "use server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import ConnectDB from "@/lib/db/connect-db";
-import Users, { UserSchemaType } from "@/lib/db/models/user.schema";
+import ConnectDB from "@/packages/shared/db/connect-db";
+import Users, { UserSchemaType } from "@/packages/shared/db/models/user.schema";
 import { UserInterface } from "@/packages/shared/types";
 import { getServerSession } from "next-auth";
 

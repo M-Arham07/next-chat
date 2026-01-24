@@ -1,8 +1,8 @@
 import NextAuth, { NextAuthOptions, User } from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
-import ConnectDB from "@/lib/db/connect-db";
-import Users from "@/lib/db/models/user.schema";
+import ConnectDB from "@/packages/shared/db/connect-db";
+import Users from "@/packages/shared/db/models/user.schema";
 import { JWT } from "next-auth/jwt";
 import { Session } from "next-auth";
 import { UserInterface } from "@/packages/shared/types";

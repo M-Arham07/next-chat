@@ -41,7 +41,7 @@ const useChatApp = (): ChatAppHook => {
 
 
     const API_ENDPOINT: string = "https://mocki.io/v1/353c786f-5fab-4af4-b388-f918b05e923d";
-    const URL = "https://mocki.io/v1/ed454f6d-bf4c-49c9-b8d3-75b7554a31bf";
+    const URL = "https://mocki.io/v1/fe915d25-ce95-476f-8438-f090a84a5e6d";
 
     useEffect(() => {
 
