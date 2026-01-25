@@ -91,8 +91,8 @@ io.on("connection", (socket) => {
     console.log("connected:", socket.id);
 
     socket.on("message", (msg) => {
-        console.log("message:", msg);
-        io.emit("message", msg); // broadcast to everyone
+        console.log("message", msg);
+        io.emit("message_reply", "HI FROM SERVER "+msg ); // broadcast to everyone
     });
 
     socket.on("disconnect", () => {
