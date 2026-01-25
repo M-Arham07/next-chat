@@ -1,9 +1,9 @@
 import { createServer } from "node:http";
+import { Server } from "socket.io";
 
 
-
-const server = createServer((req,res)=>{
-    res.writeHead(200,{'content-type':'text/html'});
+const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' });
     res.end(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -78,6 +78,30 @@ const server = createServer((req,res)=>{
 `);
 });
 
-server.listen(8080,()=>{
+
+
+const io = new Server(server, {
+    cors: {
+        origin: "*", // tighten in production
+        methods: ["GET", "POST"],
+    },
+});
+
+io.on("connection", (socket) => {
+    console.log("connected:", socket.id);
+
+    socket.on("message", (msg) => {
+        console.log("message:", msg);
+        io.emit("message", msg); // broadcast to everyone
+    });
+
+    socket.on("disconnect", () => {
+        console.log("disconnected:", socket.id);
+    });
+});
+
+
+
+server.listen(8080, () => {
     console.log("[WS] Started")
 });
