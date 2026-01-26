@@ -46,6 +46,10 @@ const useChatApp = (): ChatAppHook => {
 
     useEffect(() => {
 
+        if(socket.connected){
+            console.log("Connected")
+        }
+
         if (mounted) return;
 
         markMounted();
@@ -103,6 +107,10 @@ const useChatApp = (): ChatAppHook => {
 
 
         }
+
+
+
+
 
 
 
