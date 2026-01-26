@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { Server } from "socket.io";
-import InitSocket from "./initialize/init-socket.js";
+import InitSocket from "./initialize/init-socket.ts";
 import dotenv from "dotenv";
 dotenv.config({
   path:".env.local"

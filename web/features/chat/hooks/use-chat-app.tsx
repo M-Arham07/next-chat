@@ -46,7 +46,7 @@ const useChatApp = (): ChatAppHook => {
 
     useEffect(() => {
 
-        if(socket.connected){
+        if (socket.connected) {
             console.log("Connected")
         }
 
@@ -167,13 +167,11 @@ const useChatApp = (): ChatAppHook => {
     }
 
 
-    useEffect(() => console.log(store.messages), [store.messages])
+    // useEffect(() => console.log(store.messages), [store.messages])
     const handleSendMessage = async (
         type: Omit<MessageContentType, "deleted">,
         content: string | File): Promise<void> => {
 
-
-        try {
 
             // if message is a file, we'll upload it to supabase, and gets it's url! 
 
@@ -235,32 +233,35 @@ const useChatApp = (): ChatAppHook => {
             // socket.emit the message , then use ack! 
 
 
+            socket.timeout(20000).emit("message:new", newMessage, (err,res) => {
 
-            await new Promise<void>(r => setTimeout(() => r(), 1000))
+                console.log("Res is",res)
 
+                if (err || !res.ok) {
 
-            // if everything goes well, update the status! 
-            updateMessageStatus(newMessage.threadId, newMessage.msgId, "sent");
+                    console.log(err ? "Send timeout!" : "Error from server");
 
+                    updateMessageStatus(newMessage.threadId, newMessage.msgId, "failed");
+                    return;
 
-
-
-
-
-        }
-
-
-        catch (err) {
+                }
 
 
+                
+                // if everything goes well, update the status! 
+                updateMessageStatus(newMessage.threadId, newMessage.msgId, "sent");
 
 
-        }
 
-        finally {
+            });
+
+
+            
+
+ 
             set("replyingToMsg", null);
             return;
-        }
+        
 
 
 

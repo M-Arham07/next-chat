@@ -20,6 +20,7 @@ export default async function ConnectDB(): Promise<void> {
 
     
         await mongoose.connect(process.env.DB_URI);
+        console.log("Connected to DB");
 
         
         return;

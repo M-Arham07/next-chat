@@ -41,6 +41,7 @@
     "moduleDetection": "force",
     "skipLibCheck": true,
     "esModuleInterop": true,
+    "allowImportingTsExtensions":true,
     "paths": {
       "#/*":["../*"]
     }

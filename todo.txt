@@ -7,3 +7,6 @@ TODO: ADD LOADING STATE FOR IMAGE MESSAGE!
 
 TODO :ADD A STATUS LIKE DELETE FAILED AND HANDLE BEHAVIOUR OF RETRY BUTTON DPEENDING ON status? 
 
+WS:
+
+TODO: For multi client support,  socket.emit to all sockets, except the emitter !

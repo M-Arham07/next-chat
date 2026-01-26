@@ -1,7 +1,7 @@
 
 import type { Server as NodeHttpServer } from "node:http";
 import { Server } from "socket.io";
-import { socketMiddleware } from "./socket-auth-middleware.js";
+import { socketMiddleware } from "./socket-auth-middleware.ts";
 import type { ClientToServerEvents, ServerToClientEvents } from "#/web/packages/shared/events.ts"
 
 export default function InitSocket(server: NodeHttpServer) {
@@ -24,14 +24,18 @@ export default function InitSocket(server: NodeHttpServer) {
     io.on("connection", (socket) => {
         console.log("connected:", socket.id);
 
-        socket.on("message:new", (msg) => {
-            console.log("message", msg);
-            io.emit("message:new", msg); // broadcast to everyone
+        socket.on("message:new", (msg, ack) => {
+            console.log("message received:", msg);
+            // io.emit("message:new", msg); // broadcast to everyone
+            ack({ ok: true, data: "sent message" });
         });
-
+        
         socket.on("disconnect", () => {
             console.log("disconnected:", socket.id);
         });
+
+
+
 
 
     });
