@@ -20,7 +20,7 @@ export interface ChatAppStore {
     activeFilter: ActiveFilter,
     markMounted: () => void
     setThreads: (threads: Thread[]) => void
-    addMessage: (newMessage: Message) => void
+    addMessage: (newMessage: Message, resort?: boolean) => void
     updateMessageStatus: (threadId: string, msgId: string, newStatus: MessageStatusType) => void
     removeMessage: (messageToDelete: Message) => void
 }
@@ -52,18 +52,41 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
 
 
-    addMessage: (newMessage: Message) => set((state) => {
+    // Add messages to a threadId (PERFORMS A RESORT BASED ON TIMESTAMP IF sort is true)
+    addMessage: (newMessage: Message, resort: boolean = false) => set((state) => {
 
 
         const threadId: string = newMessage.threadId;
 
         const currentMessages: Message[] = state.messages?.[threadId] ?? [];
 
+        let updatedMsgs : Message[] = [...currentMessages,newMessage];
+
+        if(resort){
+            console.log("resorting msgs")
+
+            updatedMsgs.sort((msgA,msgB)=>{
+
+                // convert to epoch
+                let msgAepoch : number = new Date(msgA.timestamp).getTime();
+                let msgBepoch : number = new Date(msgB.timestamp).getTime();
+
+                
+
+                // if the result is a -ve numver, msgA will come before msgB
+                // if result is a +ve numver ,msgB will come before msgA
+                // if the result is 0 ,order will remain same
+                return msgAepoch - msgBepoch;
+
+            })
+
+        }
+
 
         return {
             messages: {
                 ...(state.messages ?? {}),
-                [threadId]: [...currentMessages, newMessage]
+                [threadId]: updatedMsgs
             }
         }
 
@@ -120,7 +143,7 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
 
 
-    
+
 
 
 

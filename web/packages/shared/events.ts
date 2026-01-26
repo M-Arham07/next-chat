@@ -5,18 +5,33 @@ type Ack = {
   data: string;
 };
 
+// Group all message-related events here
+export const MESSAGE_EVENTS = {
+  NEW: "message:new",
+  RECEIVED:"message:received"
+  // EDIT: "message:edit",
+  // DELETE: "message:delete",
+} as const;
+
+// Runtime array of all message events
+export const MESSAGE = Object.values(MESSAGE_EVENTS);
+
+// Other events
 export const EVENTS = {
-  MESSAGE: "message:new",
+  MESSAGE: MESSAGE_EVENTS,
   JOIN_ROOM: "room:join",
   LEAVE_ROOM: "room:leave",
 } as const;
 
+type MessageEvent = typeof MESSAGE_EVENTS[keyof typeof MESSAGE_EVENTS];
+
 export type ClientToServerEvents = {
-  [EVENTS.MESSAGE]: (message: Message, ack: (res: Ack) => void) => void;
+  [K in MessageEvent]: (message: Message, ack: (res: Ack) => void) => void;
+} & {
   [EVENTS.JOIN_ROOM]: (roomId: string, ack: (res: Ack) => void) => void;
   [EVENTS.LEAVE_ROOM]: (roomId: string, ack: (res: Ack) => void) => void;
 };
 
 export type ServerToClientEvents = {
-  [EVENTS.MESSAGE]: (message: Message) => void;
+  [K in MessageEvent]: (message: Message) => void;
 };

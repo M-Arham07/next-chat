@@ -123,6 +123,8 @@ const useChatApp = (): ChatAppHook => {
 
         return () => {
             setLoading(false);
+            socket.disconnect()
+            socket.off("message:new");
         }
 
     }, []);
@@ -173,95 +175,96 @@ const useChatApp = (): ChatAppHook => {
         content: string | File): Promise<void> => {
 
 
-            // if message is a file, we'll upload it to supabase, and gets it's url! 
+        // if message is a file, we'll upload it to supabase, and gets it's url! 
 
 
-            // NOTE: if a message fails to send, i will not remove it from DB! 
-            // Just let it stay there, user can later click resend! 
-
-
-
+        // NOTE: if a message fails to send, i will not remove it from DB! 
+        // Just let it stay there, user can later click resend! 
 
 
 
-            // if file type is Not text and a file, upload it!
 
-            let uploadedContentUrl: string | null = null;
 
-            if (type !== "text" && content instanceof File) {
 
-                // UPLOAD THE FILE TO SUPABASE!
+        // if file type is Not text and a file, upload it!
 
-                const data = await GetFileUrl(content, type);
+        let uploadedContentUrl: string | null = null;
 
-                if (!data?.url) throw new Error("Uploading file failed at handleSendMessage");
+        if (type !== "text" && content instanceof File) {
 
-                uploadedContentUrl = data.url;
+            // UPLOAD THE FILE TO SUPABASE!
 
+            const data = await GetFileUrl(content, type);
+
+            if (!data?.url) throw new Error("Uploading file failed at handleSendMessage");
+
+            uploadedContentUrl = data.url;
+
+
+        }
+
+
+        let newMessage: Message = {
+
+            msgId: crypto?.randomUUID() || (Date.now() - Math.random()).toString(),
+            threadId: selectedThreadId as string,
+            sender: session?.user?.username || "",
+            type: type as MessageContentType,
+            content: uploadedContentUrl || (content as string),
+            timestamp: new Date(Date.now()),
+            replyToMsgId: replyingToMsg?.msgId,
+            status: "sending"
+
+        }
+
+
+
+
+
+
+        // TODO: PARSE VIA ZOD SCHEMA HERE, throw error if not matches it! 
+
+
+        // append the newMessage to the state, for this thread id!
+        // NO NEED TO RESORT!
+        addMessage(newMessage,false);
+
+
+
+
+
+        // socket.emit the message , then use ack! 
+
+
+        socket.timeout(20000).emit("message:new", newMessage, (err, res) => {
+
+            console.log("Res is", res)
+
+            if (err || !res.ok) {
+
+                console.log(err ? "Send timeout!" : "Error from server");
+
+                updateMessageStatus(newMessage.threadId, newMessage.msgId, "failed");
+                return;
 
             }
 
 
-            let newMessage: Message = {
 
-                msgId: crypto?.randomUUID() || (Date.now() - Math.random()).toString(),
-                threadId: selectedThreadId as string,
-                sender: session?.user?.username || "",
-                type: type as MessageContentType,
-                content: uploadedContentUrl || (content as string),
-                timestamp: new Date(Date.now()),
-                replyToMsgId: replyingToMsg?.msgId,
-                status: "sending"
+            // if everything goes well, update the status! 
+            updateMessageStatus(newMessage.threadId, newMessage.msgId, "sent");
 
-            }
+
+
+        });
 
 
 
 
 
+        set("replyingToMsg", null);
+        return;
 
-            // TODO: PARSE VIA ZOD SCHEMA HERE, throw error if not matches it! 
-
-
-            // append the newMessage to the state, for this thread id!
-            addMessage(newMessage);
-
-
-
-
-
-            // socket.emit the message , then use ack! 
-
-
-            socket.timeout(20000).emit("message:new", newMessage, (err,res) => {
-
-                console.log("Res is",res)
-
-                if (err || !res.ok) {
-
-                    console.log(err ? "Send timeout!" : "Error from server");
-
-                    updateMessageStatus(newMessage.threadId, newMessage.msgId, "failed");
-                    return;
-
-                }
-
-
-                
-                // if everything goes well, update the status! 
-                updateMessageStatus(newMessage.threadId, newMessage.msgId, "sent");
-
-
-
-            });
-
-
-            
-
- 
-            set("replyingToMsg", null);
-            return;
-        
 
 
 
@@ -270,6 +273,34 @@ const useChatApp = (): ChatAppHook => {
 
 
     }
+
+
+
+    const handleReceiveMessage = (receivedMsg: Message) => {
+
+        // ZOD PARSE ?
+        
+        console.log("Received a message from",receivedMsg.sender);
+
+        // CHECK IF THE MESSAGE ALREADY EXISTS IN THE THREAD (SHOULD'NT BE A DUPLICATE)
+
+        const doesExist = messages?.[receivedMsg.threadId]?.find(m=>m.msgId === receivedMsg.msgId);
+
+        if(doesExist) return;
+
+
+        // IF DOESENT EXIST , APPEND IT TO MESSAGES STATE, AND RESORT
+
+        addMessage(receivedMsg,true);
+
+        return;
+
+    }
+
+
+    // ADD LISTENER FOR NEW MESSAGES!
+    socket.on("message:received",handleReceiveMessage);
+
 
 
 
