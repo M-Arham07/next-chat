@@ -19,13 +19,13 @@ export default function Auth() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.4 }}
           transition={{ duration: 1 }}
-          className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-gradient-to-br from-muted to-transparent blur-3xl"
+          className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-linear-to-br from-muted to-transparent blur-3xl"
         />
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.3 }}
           transition={{ duration: 1, delay: 0.2 }}
-          className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-gradient-to-tr from-muted to-transparent blur-3xl"
+          className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-linear-to-tr from-muted to-transparent blur-3xl"
         />
       </div>
 

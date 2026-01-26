@@ -7,6 +7,7 @@ import { GetFileUrl } from "@/features/upload-avatar/get-url";
 import { useSession } from "next-auth/react";
 import { ChatAppStore } from "../store/chatapp.store";
 import filterThreads from "../lib/filter-threads";
+import { socket } from "@/features/chat/lib/socket-client"
 
 interface ChatAppHook extends ChatAppStore {
 
@@ -45,14 +46,10 @@ const useChatApp = (): ChatAppHook => {
 
     useEffect(() => {
 
-
         if (mounted) return;
-
 
         markMounted();
         setLoading(true);
-
-
 
 
         const fetchMockThreads = async () => {
@@ -140,7 +137,7 @@ const useChatApp = (): ChatAppHook => {
         // FIRST SET STATUS TO SENDING  (to show loading)
 
         // TODO :ADD A STATUS LIKE DELETE FAILED AND HANDLE BEHAVIOUR OF RETRY BUTTON DPEENDING ON status? 
-      
+
         // idk why but this isnt working, need to fix it! 
         updateMessageStatus(threadId, msgId, "sending");
         console.log("updated status OK");

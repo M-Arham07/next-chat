@@ -1,6 +1,10 @@
 import { createServer } from "node:http";
 import { Server } from "socket.io";
-
+import InitSocket from "./initialize/init-socket.js";
+import dotenv from "dotenv";
+dotenv.config({
+  path:".env.local"
+});
 
 const server = createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'text/html' });
@@ -80,25 +84,11 @@ const server = createServer((req, res) => {
 
 
 
-const io = new Server(server, {
-    cors: {
-        origin: "*", // tighten in production
-        methods: ["GET", "POST"],
-    },
-});
 
-io.on("connection", (socket) => {
-    console.log("connected:", socket.id);
 
-    socket.on("message", (msg) => {
-        console.log("message", msg);
-        io.emit("message_reply", "HI FROM SERVER "+msg ); // broadcast to everyone
-    });
+InitSocket(server)
 
-    socket.on("disconnect", () => {
-        console.log("disconnected:", socket.id);
-    });
-});
+
 
 
 
