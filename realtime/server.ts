@@ -1,3 +1,4 @@
+import { ConnectDB } from "#/shared/index.ts";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
 import InitSocket from "./initialize/init-socket.ts";
@@ -5,6 +6,9 @@ import dotenv from "dotenv";
 dotenv.config({
   path:".env.local"
 });
+
+
+
 
 const server = createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'text/html' });
