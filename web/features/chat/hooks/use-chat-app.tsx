@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useChatAppStore } from "../store/chatapp.store";
 import { useLoader } from "@/store/loader/use-loader";
-import { Message, MessageContentType, Thread } from "@/packages/shared/types";
+import { Message, MessageContentType, Thread } from "@chat/shared";
 import { MessageState } from "../types";
 import { GetFileUrl } from "@/features/upload-avatar/get-url";
 import { useSession } from "next-auth/react";
@@ -10,6 +10,7 @@ import filterThreads from "../lib/filter-threads";
 import { socket } from "@/features/chat/lib/socket-client"
 
 interface ChatAppHook extends ChatAppStore {
+
 
     handleSendMessage: (type: Omit<MessageContentType, "deleted">,
         content: string | File) => Promise<void>
@@ -25,7 +26,7 @@ interface ChatAppHook extends ChatAppStore {
 }
 const useChatApp = (): ChatAppHook => {
 
-
+    
     const store = useChatAppStore();
 
     const { mounted, messages, threads,
@@ -279,7 +280,7 @@ const useChatApp = (): ChatAppHook => {
     const handleReceiveMessage = (receivedMsg: Message) => {
 
         // ZOD PARSE ?
-        
+
         console.log("Received a message from",receivedMsg.sender);
 
         // CHECK IF THE MESSAGE ALREADY EXISTS IN THE THREAD (SHOULD'NT BE A DUPLICATE)

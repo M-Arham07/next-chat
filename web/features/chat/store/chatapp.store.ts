@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { ActiveFilter, MessageState } from "../types";
-import { Message, MessageStatusType, Thread } from "@/packages/shared/types";
+import { Message, MessageStatusType, Thread } from "#/shared/types";
 import { NavTab } from "@/app/chat/_components/layout";
 
 

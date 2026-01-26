@@ -2,7 +2,7 @@
 import type { Server as NodeHttpServer } from "node:http";
 import { Server } from "socket.io";
 import { socketMiddleware } from "./socket-auth-middleware.ts";
-import type { ClientToServerEvents, ServerToClientEvents } from "#/web/packages/shared/events.ts"
+import type { ClientToServerEvents, ServerToClientEvents } from "#/packages/shared/events.ts"
 
 export default function InitSocket(server: NodeHttpServer) {
     

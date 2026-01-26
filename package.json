@@ -1,0 +1,16 @@
+{
+  "name": "chat-app",
+  "private": true,
+  "workspaces": [
+    "web",
+    "realtime",
+    "shared"
+  ],
+  "devDependencies": {
+    "@types/mongoose": "^5.11.96",
+    "@types/node": "^25.0.10"
+  },
+  "dependencies": {
+    "server-only": "^0.0.1"
+  }
+}

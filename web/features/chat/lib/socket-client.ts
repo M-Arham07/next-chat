@@ -1,7 +1,7 @@
 "use client";
 
 import { io, Socket } from "socket.io-client";
-import type { ClientToServerEvents,ServerToClientEvents } from "@/packages/shared/events";
+import type { ClientToServerEvents,ServerToClientEvents } from "@chat/shared";
 
 
 

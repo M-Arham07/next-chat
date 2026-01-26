@@ -1,11 +1,11 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
-import { ConnectDB } from "@/packages/shared/db/connect-db";
-import { User } from "@/packages/shared/db/models/user.schema";
+import { ConnectDB } from "@chat/shared"
+import { User } from "@chat/shared";
 import { JWT } from "next-auth/jwt";
 import { Session } from "next-auth";
-import { UserInterface } from "@/packages/shared/types";
+import type { UserInterface } from "@chat/shared";
 
 
 export const authOptions: NextAuthOptions = {

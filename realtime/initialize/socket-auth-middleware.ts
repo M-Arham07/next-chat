@@ -53,6 +53,8 @@ export async function socketMiddleware(socket: Socket, next: NextFn): Promise<vo
      
 
         console.log("AUTH_SUCCESS: ",token.username);
+
+        socket.username = token.username as string;
         next()
 
     }

@@ -1,4 +1,4 @@
-import { UserInterface } from "@/packages/shared/types";
+import { UserInterface } from "../../types";
 import mongoose, { models, model } from "mongoose";
 
 
