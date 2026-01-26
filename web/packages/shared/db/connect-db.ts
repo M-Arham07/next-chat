@@ -4,7 +4,7 @@ import mongoose from "mongoose"
 
 // if succeeded then will return true
 
-export default async function ConnectDB(): Promise<void> {
+export async function ConnectDB(): Promise<void> {
 
     try {
        

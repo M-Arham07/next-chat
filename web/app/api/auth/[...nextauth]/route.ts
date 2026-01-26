@@ -1,8 +1,8 @@
-import NextAuth, { NextAuthOptions, User } from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
-import ConnectDB from "@/packages/shared/db/connect-db";
-import Users from "@/packages/shared/db/models/user.schema";
+import { ConnectDB } from "@/packages/shared/db/connect-db";
+import { User } from "@/packages/shared/db/models/user.schema";
 import { JWT } from "next-auth/jwt";
 import { Session } from "next-auth";
 import { UserInterface } from "@/packages/shared/types";
@@ -22,7 +22,7 @@ export const authOptions: NextAuthOptions = {
 
     callbacks: {
 
-        // users.find logic
+        // User.find logic
 
         // signIn: async function ({ user }): Promise<boolean | string> {
 
@@ -32,7 +32,7 @@ export const authOptions: NextAuthOptions = {
         //     try {
         //         await ConnectDB();
 
-        //         const foundUser = await Users.findOne({ email: user.email });
+        //         const foundUser = await User.findOne({ email: user.email });
 
         //         if (!foundUser) {
         //             console.log("User not found, redirecting !");
@@ -58,13 +58,13 @@ export const authOptions: NextAuthOptions = {
         // }
 
 
-        jwt: async function ({ token  }): Promise<JWT> {
+        jwt: async function ({ token }): Promise<JWT> {
 
 
             try {
 
                 await ConnectDB();
-                const foundUser: UserInterface | null = await Users.findOne({ email: token.email });
+                const foundUser: UserInterface | null = await User.findOne({ email: token.email });
 
                 token.username = foundUser?.username;
                 token.image = foundUser?.image;
@@ -104,7 +104,7 @@ export const authOptions: NextAuthOptions = {
 
 
         },
-        session: async function ({ token,session }) : Promise<Session>  {
+        session: async function ({ token, session }): Promise<Session> {
 
 
             // token.username might be undefined , if it is we'll manage it via middleware !
