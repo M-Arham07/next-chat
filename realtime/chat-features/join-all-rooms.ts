@@ -9,6 +9,9 @@ const joinAllRooms = async (socket : Socket): Promise<void> => {
     const threadIds = await getUserThreads(socket.username);
 
     socket.join(threadIds);
+    console.log(`${socket.username} joined threads:${threadIds}`);
+
+    
 
 
 }

@@ -1,6 +1,6 @@
 import { Message } from "./types";
 
-type Ack = {
+export type Ack = {
   ok: boolean;
   data: string;
 };
@@ -20,14 +20,15 @@ export const ROOM_EVENTS = {
 } as const;
 
 
+export type AckFN = (res: Ack) => void
 // Unions
 type MessageEvent = typeof MESSAGE_EVENTS[keyof typeof MESSAGE_EVENTS];
 type RoomEvent = typeof ROOM_EVENTS[keyof typeof ROOM_EVENTS];
 
 export type ClientToServerEvents = {
-  [K in MessageEvent]: (message: Message, ack: (res: Ack) => void) => void;
+  [K in MessageEvent]: (message: Message, ack: AckFN) => void;
 } & {
-  [K in RoomEvent]: (roomId: string, ack: (res: Ack) => void) => void;
+  [K in RoomEvent]: (roomId: string, ack: AckFN) => void;
 };
 
 export type ServerToClientEvents = {

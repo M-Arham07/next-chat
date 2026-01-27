@@ -8,22 +8,23 @@ import mongoose from "mongoose"
 export async function ConnectDB(): Promise<void> {
 
     try {
-       
+
         // if already connected, return !
 
-        if(mongoose.connection.readyState === 1) return;
-       
+        if (mongoose.connection.readyState === 1) return;
 
 
 
 
-        if(!process.env.DB_URI) throw new Error("No DB URI Provided");
 
-    
+        if (!process.env.DB_URI) throw new Error("No DB URI Provided");
+
+
         await mongoose.connect(process.env.DB_URI);
+        mongoose.set({ debug: true });
         console.log("Connected to DB");
 
-        
+
         return;
 
     }

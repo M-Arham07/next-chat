@@ -42,7 +42,7 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
     // =====ACTIONS===
 
     // generic setter for states eg : set("stateName",val);
-    
+
     set: <K extends keyof ChatAppStore>(key: K, value: ChatAppStore[K]) =>
         set({ [key]: value } as Pick<ChatAppStore, K>),
 
@@ -60,7 +60,17 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
         const threadId: string = newMessage.threadId;
 
+
+
         const currentMessages: Message[] = state.messages?.[threadId] ?? [];
+
+        // CHECK IF MESSAGE ALREADY EXISTS? 
+
+        const doesExist = state.messages?.[threadId]?.some(m=>m.msgId === newMessage.msgId);
+
+        console.log("DOES EXIST?",doesExist);
+        // ABORT IF ALREADY EXISTS
+        if(doesExist) return state;
 
         let updatedMsgs: Message[] = [...currentMessages, newMessage];
 
@@ -135,6 +145,7 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
 
     }),
+
 
 
 

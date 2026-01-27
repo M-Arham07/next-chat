@@ -1,7 +1,7 @@
 import { Message } from "../../index";
-import { Schema, model,models} from "mongoose";
+import mongoose from "mongoose";
 
-const messageSchema = new Schema<Message>(
+const messageSchema = new mongoose.Schema<Message>(
   {
     msgId: {
       type: String,
@@ -51,13 +51,13 @@ const messageSchema = new Schema<Message>(
     // THE TIMESTAMP WILL BE PROVIDED BY CLIENT!
     timestamp: {
       type: Date,
-      required:true,
+      required: true,
     },
   },
   {
-    collection:"messages"
+    collection: "messages"
 
   }
 );
 
-export const Messages = models.messageSchema || model("Messages",messageSchema);
+export const Messages = mongoose.models.Messages || mongoose.model<Message>("Messages", messageSchema);

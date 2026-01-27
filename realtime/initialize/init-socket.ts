@@ -2,22 +2,22 @@
 import type { Server as NodeHttpServer } from "node:http";
 import { Server } from "socket.io";
 import { socketMiddleware } from "./socket-auth-middleware.ts";
-import type { ClientToServerEvents, ServerToClientEvents } from "@chat/shared"
-import {registerChatFeatures} from "../chat-features/feature-handler.ts";
+import { registerChatFeatures } from "../chat-features/register-chat-features.ts";
 import { joinAllRooms } from "../chat-features/join-all-rooms.ts";
-  import { ConnectDB } from "@chat/shared";
+import type { TypedIO } from "../types.ts";
 
 export default function InitSocket(server: NodeHttpServer) {
 
-    const ALLOWED_ORIGINS : string[] = process?.env?.ALLOWED_ORIGINS?.split(",") ?? [];
-    
+    const ALLOWED_ORIGINS: string[] = process?.env?.ALLOWED_ORIGINS?.split(",") ?? [];
 
 
-   
 
-    const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
+  
+
+    console.log(ALLOWED_ORIGINS)
+    const io = new Server<TypedIO>(server, {
         cors: {
-            origin: ALLOWED_ORIGINS, // tighten in production
+            origin: (origin,cb)=>cb(null,origin), 
             methods: ["GET", "POST"],
             credentials: true
         }
@@ -28,24 +28,25 @@ export default function InitSocket(server: NodeHttpServer) {
 
     io.use(socketMiddleware);
 
-  
+
 
     io.on("connection", async (socket) => {
         console.log("connected:", socket.id);
 
         // JOIN ALL ROOMS UPON CONNECTION:
 
+
         await joinAllRooms(socket);
 
 
-        
-        registerChatFeatures(io,socket);
 
-      
+        registerChatFeatures(io, socket);
 
-        
-        
-        
+
+
+
+
+
         socket.on("disconnect", () => {
             console.log("disconnected:", socket.id);
         });

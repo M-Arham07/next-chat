@@ -1,4 +1,5 @@
-import { useEffect, useMemo } from "react";
+"use client";
+import { createContext, useContext, useEffect, useMemo } from "react";
 import { useChatAppStore } from "../store/chatapp.store";
 import { useLoader } from "@/store/loader/use-loader";
 import { Message, MessageContentType, Thread } from "@chat/shared";
@@ -8,6 +9,7 @@ import { useSession } from "next-auth/react";
 import { ChatAppStore } from "../store/chatapp.store";
 import filterThreads from "../lib/filter-threads";
 import { socket } from "@/features/chat/lib/socket-client"
+import { GetAllChatsResponse } from "@/app/api/get-all-chats/route";
 
 interface ChatAppHook extends ChatAppStore {
 
@@ -24,10 +26,14 @@ interface ChatAppHook extends ChatAppStore {
 
 
 }
-const useChatApp = (): ChatAppHook => {
 
-    
+const ChatAppContext = createContext<ChatAppHook | undefined>(undefined);
+
+const useChatAppHook = (): ChatAppHook => {
+
+
     const store = useChatAppStore();
+
 
     const { mounted, messages, threads,
         markMounted, searchQuery, activeFilter,
@@ -40,76 +46,86 @@ const useChatApp = (): ChatAppHook => {
     const { setLoading } = useLoader();
 
 
-
-
-    const API_ENDPOINT: string = "https://mocki.io/v1/353c786f-5fab-4af4-b388-f918b05e923d";
-    const URL = "https://mocki.io/v1/fe915d25-ce95-476f-8438-f090a84a5e6d";
-
     useEffect(() => {
 
         if (socket.connected) {
             console.log("Connected to WEBSOCKET [useChatApp (51)]");
+
+            // ADD LISTENER FOR NEW MESSAGES!
+            socket.on("message:received", handleReceiveMessage);
+
+
         }
 
         if (mounted) return;
 
         markMounted();
         setLoading(true);
-            
-        
 
-        const fetchMockThreads = async () => {
-
-                const res = await fetch(API_ENDPOINT, { method: "GET" });
-
-                if (!res.ok) throw new Error("FAILED to fetch threads");
-                const data = await res.json() as Thread[] | null;
-
-                setThreads(data ?? []);
-
-
-        }
-
-
-
-
-        const fetchMockMessages = async (): Promise<void> => {
-            const res = await fetch(URL, { method: "GET" });
-            const messages: Message[] = await res.json();
-
-
-            // TODO: NEED TO FIX DATES!
-
-
-
-            // to convert to state!
-            const result: MessageState = {};
-            for (const msg of messages) {
-
-                msg.timestamp = new Date(msg.timestamp);
-                (result[msg.threadId] ??= []).push(msg);
-
-
-            }
-            // TODO: ZOD VALIDATION HERE!
-
-
-            set("messages", result);
-
-
-        }
 
 
         const load = async () => {
-            try{
+            console.log("FETCHING ALL CHATS ")
 
-                await Promise.all([fetchMockThreads(),fetchMockMessages()]);
+            try {
+
+                const res = await fetch("/api/get-all-chats", {
+                    method: "GET"
+                });
+
+
+                //TODO: ZOD VALIDATE?
+
+
+                if (!res.ok) throw new Error("Bad response from SERVER");
+
+
+                const data: GetAllChatsResponse = await res.json();
+
+                // RETURN TYPE WILL NOT BE NULL IN CASE OF OK RESPONSE
+
+                setThreads(data!.threads);
+
+
+                // TRANSFORM MESSAGES TO message state eg : "threadId" : "message"
+
+
+                let result: MessageState = {};
+
+                for (const msg of data!.messages) {
+                    (result[msg.threadId] ??= []).push(msg);
+
+                }
+
+                set("messages", result);
+
+
+
+
+
                 setLoading(false);
+
+
+            }
+            catch (err) {
+
+
+                if (err instanceof Error) {
+                    console.error("[useChatApp] Error while fetching chats on initial load >>", err.message);
+                }
+
+                setLoading(false);
+
+
+                // handling! 
+
+
+
+
+
             }
 
-            catch(err){
-                setLoading(false);
-            }
+
         }
 
 
@@ -118,13 +134,13 @@ const useChatApp = (): ChatAppHook => {
 
 
 
-       load();
+        load();
 
 
 
 
 
-    
+
 
         return () => {
             setLoading(false);
@@ -232,7 +248,7 @@ const useChatApp = (): ChatAppHook => {
 
         // append the newMessage to the state, for this thread id!
         // NO NEED TO RESORT!
-        addMessage(newMessage,false);
+        addMessage(newMessage, false);
 
 
 
@@ -285,26 +301,22 @@ const useChatApp = (): ChatAppHook => {
 
         // ZOD PARSE ?
 
-        console.log("Received a message from",receivedMsg.sender);
 
-        // CHECK IF THE MESSAGE ALREADY EXISTS IN THE THREAD (SHOULD'NT BE A DUPLICATE)
+        const isEcho = receivedMsg.sender === session?.user.username;
 
-        const doesExist = messages?.[receivedMsg.threadId]?.find(m=>m.msgId === receivedMsg.msgId);
+       
+        console.log(`Received a message from ${receivedMsg.sender}! isEcho ${isEcho} ` );
 
-        if(doesExist) return;
+        
 
+        // IF MESSAGE DOESENT EXIST ALREADY, IT WILL BE APPENDED TO MESSAGES STATE, AND RESORTED (as flag is true)
 
-        // IF DOESENT EXIST , APPEND IT TO MESSAGES STATE, AND RESORT
-
-        addMessage(receivedMsg,true);
+        addMessage(receivedMsg, true);
 
         return;
 
     }
 
-
-    // ADD LISTENER FOR NEW MESSAGES!
-    socket.on("message:received",handleReceiveMessage);
 
 
 
@@ -329,5 +341,19 @@ const useChatApp = (): ChatAppHook => {
 
 
 
+export function ChatAppProvider({ children }: { children: React.ReactNode }) {
 
-export { useChatApp };
+    const value = useChatAppHook();
+
+    return <ChatAppContext.Provider value={value}>{children}</ChatAppContext.Provider>
+}
+
+
+export function useChatApp() : ChatAppHook {
+
+    const ctx = useContext(ChatAppContext)!;
+
+    if(!ctx) throw new Error("Please wrap your /chat route's layout.tsx with ChatAppProvider")
+    return ctx;
+
+}

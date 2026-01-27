@@ -16,9 +16,7 @@ import { useChatApp } from "@/features/chat/hooks/use-chat-app";
 export default function MobileThreadPage() {
 
   const { activeTab,
-
     searchQuery,
-
     filteredThreads,
     selectedThreadId,
 

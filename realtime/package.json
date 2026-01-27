@@ -8,6 +8,7 @@
   "main": "server.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "test-build":"npx esbuild ./server.ts --bundle --platform=node --minify --target=node18 --outfile=./dist/realtime.js",
     "start": "node dist/server.js",
     "dev": "tsx watch server.ts"
   },
