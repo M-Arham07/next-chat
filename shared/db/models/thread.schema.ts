@@ -1,5 +1,5 @@
-import mongoose, { Schema, HydratedDocument } from "mongoose";
-import type { Thread } from "../../types";
+import mongoose, { Schema, type HydratedDocument } from "mongoose";
+import type { Thread } from "../../types/index.ts";
 
 type ThreadSchemaType = Omit<Thread, "createdAt">; // createdAt comes from timestamps
 type ThreadDoc = HydratedDocument<ThreadSchemaType>;
@@ -91,4 +91,4 @@ const threadSchema = new Schema<ThreadSchemaType>(
     { timestamps: true, collection: "threads" }
 );
 
-export const Threads = mongoose.models.Thread || mongoose.model("Thread", threadSchema);
+export const Threads = mongoose.models.Thread || mongoose.model<ThreadSchemaType>("Thread", threadSchema);

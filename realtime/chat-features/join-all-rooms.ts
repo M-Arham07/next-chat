@@ -1,16 +1,14 @@
 import type { Socket } from "socket.io";
-import { getUserRooms } from "./lib/getUserRooms.ts";
+import { getUserThreads } from "./lib/getUserThreads.ts";
 
 
 const joinAllRooms = async (socket : Socket): Promise<void> => {
 
     
-    // GET ALL ROOMS_IDS FOR THIS USER_ID
-    const roomIds = await getUserRooms(socket.username);
+    // GET ALL THREAD_IDS FOR THIS USER_ID
+    const threadIds = await getUserThreads(socket.username);
 
-    socket.join(roomIds);
-    
-
+    socket.join(threadIds);
 
 
 }

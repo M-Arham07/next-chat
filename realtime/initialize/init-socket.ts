@@ -37,7 +37,7 @@ export default function InitSocket(server: NodeHttpServer) {
 
         await joinAllRooms(socket);
 
-    
+
         
         registerChatFeatures(io,socket);
 

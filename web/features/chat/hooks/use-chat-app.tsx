@@ -65,14 +65,8 @@ const useChatApp = (): ChatAppHook => {
                 if (!res.ok) throw new Error("FAILED to fetch threads");
                 const data = await res.json() as Thread[] | null;
 
-
                 setThreads(data ?? []);
 
-
-                
-
-            
-           
 
         }
 
