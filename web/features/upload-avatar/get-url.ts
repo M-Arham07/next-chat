@@ -1,5 +1,5 @@
 "use server";
-import { MessageContentType } from "@/packages/shared/types";
+import { MessageContentType } from "@chat/shared";
 import { supabase } from "@/supabase/supabase-client";
 
 
@@ -27,7 +27,7 @@ export async function GetFileUrl(
       .upload(filePath, file, {
         cacheControl: "3600",
         upsert: false,
-        contentType: type as string || file.type, // if file type specified then use it!
+        contentType: (type || file.type) as string, // if file type specified then use it!
       });
 
     if (error) throw error;

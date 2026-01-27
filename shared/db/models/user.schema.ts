@@ -1,5 +1,5 @@
-import { UserInterface } from "../../types";
-import mongoose  from "mongoose";
+import type { UserInterface } from "../../types/index.ts"
+import mongoose from "mongoose";
 
 
 

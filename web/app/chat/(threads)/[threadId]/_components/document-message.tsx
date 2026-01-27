@@ -29,7 +29,7 @@ const DocumentMessage = ({ documentName, documentUrl }: DocumentMessageProps) =>
       </div>
       <button
         onClick={handleDownloadDocument}
-        className="p-2 rounded-lg hover:bg-secondary/50 transition-colors flex-shrink-0"
+        className="p-2 rounded-lg hover:bg-secondary/50 transition-colors shrink-0"
         title="Download document"
       >
         <Download className="w-5 h-5 text-primary" />

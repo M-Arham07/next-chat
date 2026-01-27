@@ -1,9 +1,7 @@
 "use server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import ConnectDB from "@/packages/shared/db/connect-db";
-import Users, { UserSchemaType } from "@/packages/shared/db/models/user.schema";
-import { UserInterface } from "@/packages/shared/types";
+import { ConnectDB, User } from "@chat/shared";
 import { getServerSession } from "next-auth";
 
 
@@ -30,23 +28,23 @@ const CreateUser = async (username: string, newImage?: string): Promise<CreateUs
         // append with previous session data, also append newImage (if it exists, otherwise use the previous one! )
 
 
-    
+
         await ConnectDB();
 
         const newUser = { ...session.user, username: username, image: newImage || session.user.image };
 
-        
+
 
         // check if user exists before !
-        const doesExist = await Users.findOne({ username: username });
+        const doesExist = await User.findOne({ username: username });
 
         if (doesExist) {
             throw new Error("DUPLICATE_USERNAME");
         }
 
-        await Users.create(newUser);
+        await User.create(newUser);
 
-        
+
         return { success: true };
 
     }

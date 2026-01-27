@@ -11,7 +11,7 @@ export async function socketMiddleware(socket: Socket, next: NextFn): Promise<vo
 
     try {
 
-        console.log("RUNNING MIDDELWARE")
+        console.log("RUNNING MIDDELWARE");
         const cookie = socket.handshake.headers.cookie
 
         // Convert the cookie string into a key value pair ! 

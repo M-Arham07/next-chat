@@ -9,21 +9,29 @@ export async function getUserRooms(username: string): Promise<string[]> {
     try {
 
         await ConnectDB();
-        const threads = await Threads.findOne({
+        const threads : string[] | null = await Threads.findOne({
             "particpant.username": username
         });
 
-        console.log("threads are",threads);
+        if (!threads || threads?.length === 0) {
+            throw new Error("No rooms found, aborting... ");
+        }
 
 
-         
+        return threads;
 
 
 
     }
     catch (err) {
 
+        console.log("[getUserRooms] Failed to get user rooms! Logs: ",err?.message);
+
+        return [];
+
+
     }
+
 
 
 }

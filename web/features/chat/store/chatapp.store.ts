@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { ActiveFilter, MessageState } from "../types";
-import { Message, MessageStatusType, Thread } from "#/shared/types";
+import { Message, MessageStatusType, Thread } from "@chat/shared";
 import { NavTab } from "@/app/chat/_components/layout";
 
 
@@ -39,11 +39,13 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
 
 
-    // ACTIONS 
+    // =====ACTIONS===
 
-    // generic setter
-    set: (key: string, value: string) =>
-        set({ [key]: value } as any),
+    // generic setter for states eg : set("stateName",val);
+    
+    set: <K extends keyof ChatAppStore>(key: K, value: ChatAppStore[K]) =>
+        set({ [key]: value } as Pick<ChatAppStore, K>),
+
 
     markMounted: () => set(() => ({ mounted: true })),
     setThreads: (threads: Thread[] | null) => set(() => ({ threads: threads })),
@@ -60,18 +62,18 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
         const currentMessages: Message[] = state.messages?.[threadId] ?? [];
 
-        let updatedMsgs : Message[] = [...currentMessages,newMessage];
+        let updatedMsgs: Message[] = [...currentMessages, newMessage];
 
-        if(resort){
+        if (resort) {
             console.log("resorting msgs")
 
-            updatedMsgs.sort((msgA,msgB)=>{
+            updatedMsgs.sort((msgA, msgB) => {
 
                 // convert to epoch
-                let msgAepoch : number = new Date(msgA.timestamp).getTime();
-                let msgBepoch : number = new Date(msgB.timestamp).getTime();
+                let msgAepoch: number = new Date(msgA.timestamp).getTime();
+                let msgBepoch: number = new Date(msgB.timestamp).getTime();
 
-                
+
 
                 // if the result is a -ve numver, msgA will come before msgB
                 // if result is a +ve numver ,msgB will come before msgA

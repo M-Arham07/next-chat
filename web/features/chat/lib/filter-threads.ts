@@ -1,4 +1,4 @@
-import { Thread } from "@/packages/shared/types/threads";
+import { Thread } from "@chat/shared";
 import { ActiveFilter } from "../types";
 import { MessageState } from "../types/message-state";
 import { Session } from "next-auth";

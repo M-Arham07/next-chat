@@ -1,4 +1,4 @@
-import { Message } from "@/packages/shared/types"
+import { Message } from "@chat/shared"
 
 
 export interface MessageState {

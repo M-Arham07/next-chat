@@ -1,6 +1,6 @@
 "use client"
 import { useChatApp } from "@/features/chat/hooks/use-chat-app"
-import { Message } from "@/packages/shared/types"
+import { Message } from "@chat/shared"
 import { motion, AnimatePresence } from "framer-motion"
 import { Reply, Copy, Trash2, MoreHorizontal } from "lucide-react"
 import { useState, useEffect, useRef } from "react"

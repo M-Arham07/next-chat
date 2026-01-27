@@ -8,7 +8,7 @@ import ChatInput from "./_components/chat-input"
 import MessageBubble from "./_components/message-bubble"
 import DateSeparator from "./_components/date-separator"
 import { useTheme } from "next-themes"
-import { Message } from "@/packages/shared/types"
+import { Message } from "@chat/shared"
 import { useChatApp } from "@/features/chat/hooks/use-chat-app"
 
 

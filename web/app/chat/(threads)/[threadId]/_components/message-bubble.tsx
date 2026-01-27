@@ -6,20 +6,21 @@ import { motion } from "framer-motion"
 import { Check, CheckCheck } from "lucide-react"
 import { useState, useRef } from "react"
 
-const MAX_SWIPE_THRESHOLD = 80
+
 import TextMessage from "./text-message"
 import ImageMessage from "./image-message"
 import VoiceMessage from "./voice-message"
 import DocumentMessage from "./document-message"
 import MessageContextMenu from "./message-context-menu"
 import TypingIndicator from "./typing-indicator"
-import { Message } from "@/packages/shared/types"
+import { Message } from "@chat/shared"
 import { useSession } from "next-auth/react"
 import { useChatApp } from "@/features/chat/hooks/use-chat-app"
 import {formatTime} from "@/lib/format-time"
 
 
 
+const MAX_SWIPE_THRESHOLD : number = 80;
 
 
 interface MessageBubbleProps {

@@ -2,10 +2,14 @@ import type { Socket } from "socket.io";
 import { getUserRooms } from "./lib/getUserRooms.ts";
 
 
-const joinAllRooms = async (): Promise<void> => {
+const joinAllRooms = async (socket : Socket): Promise<void> => {
 
-    // const rooms = await getro
+    
+    // GET ALL ROOMS_IDS FOR THIS USER_ID
+    const roomIds = await getUserRooms(socket.username);
 
+    socket.join(roomIds);
+    
 
 
 

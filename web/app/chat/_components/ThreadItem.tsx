@@ -2,11 +2,10 @@
 import { CheckCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { motion } from "framer-motion";
-import { particpant, Thread } from "@/packages/shared/types/threads";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useChatApp } from "@/features/chat/hooks/use-chat-app";
-import { Message } from "@/packages/shared/types";
+import { Message, Thread,particpant } from "@chat/shared";
 import { formatTime } from "@/lib/format-time";
 
 

@@ -2,7 +2,7 @@
 import ThreadItem from "./ThreadItem";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-import { Thread } from "@/packages/shared/types/threads";
+import { Thread } from "@chat/shared";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface ThreadListProps {

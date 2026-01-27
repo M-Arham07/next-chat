@@ -48,19 +48,18 @@ const useChatApp = (): ChatAppHook => {
     useEffect(() => {
 
         if (socket.connected) {
-            console.log("Connected")
+            console.log("Connected to WEBSOCKET [useChatApp (51)]");
         }
 
         if (mounted) return;
 
         markMounted();
         setLoading(true);
-
+            
+        
 
         const fetchMockThreads = async () => {
 
-
-            try {
                 const res = await fetch(API_ENDPOINT, { method: "GET" });
 
                 if (!res.ok) throw new Error("FAILED to fetch threads");
@@ -70,13 +69,10 @@ const useChatApp = (): ChatAppHook => {
                 setThreads(data ?? []);
 
 
-                setLoading(false);
+                
 
-            }
-            catch (err) {
-
-                setLoading(false);
-            }
+            
+           
 
         }
 
@@ -110,17 +106,31 @@ const useChatApp = (): ChatAppHook => {
         }
 
 
+        const load = async () => {
+            try{
+
+                await Promise.all([fetchMockThreads(),fetchMockMessages()]);
+                setLoading(false);
+            }
+
+            catch(err){
+                setLoading(false);
+            }
+        }
 
 
 
 
 
-        Promise.all([fetchMockThreads(), fetchMockMessages()]);
+
+
+       load();
 
 
 
 
 
+    
 
         return () => {
             setLoading(false);

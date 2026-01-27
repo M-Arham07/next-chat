@@ -7,7 +7,7 @@ import { Smile, Paperclip, Camera, Mic, Send } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import VoiceRecorder from "./voice-recorder"
 import { useChatApp } from "@/features/chat/hooks/use-chat-app"
-import { MessageContentType } from "@/packages/shared/types"
+import { MessageContentType } from "@chat/shared"
 
 interface ChatInputProps {
   onSend: (
