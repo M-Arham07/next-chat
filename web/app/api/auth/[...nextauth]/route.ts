@@ -58,7 +58,7 @@ export const authOptions: NextAuthOptions = {
         // }
 
 
-        jwt: async function ({ token }): Promise<JWT> {
+        jwt: async function ({ token, account }): Promise<JWT> {
 
 
             try {
@@ -69,6 +69,11 @@ export const authOptions: NextAuthOptions = {
                 token.username = foundUser?.username;
                 token.image = foundUser?.image;
 
+
+
+
+
+
                 // if foundUser doesent exist ie : foundUser is null, token.username will be null
 
                 // (WE'LL ONLY SAVE USER TO DATABASE AFTER ONBOARDING HAS COMPLETED!)
@@ -77,6 +82,8 @@ export const authOptions: NextAuthOptions = {
 
 
                 return token;
+
+
 
 
 
@@ -110,6 +117,8 @@ export const authOptions: NextAuthOptions = {
             // token.username might be undefined , if it is we'll manage it via middleware !
             session.user.username = token?.username;
             session.user.image = token?.image;
+
+            
             return session;
 
 

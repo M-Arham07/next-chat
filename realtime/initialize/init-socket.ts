@@ -17,7 +17,7 @@ export default function InitSocket(server: NodeHttpServer) {
     console.log(ALLOWED_ORIGINS)
     const io = new Server<TypedIO>(server, {
         cors: {
-            origin: (origin,cb)=>cb(null,origin), 
+            origin: ALLOWED_ORIGINS, 
             methods: ["GET", "POST"],
             credentials: true
         }

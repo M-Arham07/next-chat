@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useEffect, useMemo } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef } from "react";
 import { useChatAppStore } from "../store/chatapp.store";
 import { useLoader } from "@/store/loader/use-loader";
 import { Message, MessageContentType, Thread } from "@chat/shared";
@@ -8,7 +8,7 @@ import { GetFileUrl } from "@/features/upload-avatar/get-url";
 import { useSession } from "next-auth/react";
 import { ChatAppStore } from "../store/chatapp.store";
 import filterThreads from "../lib/filter-threads";
-import { socket } from "@/features/chat/lib/socket-client"
+import { getSocket, type SocketClientType } from "@/features/chat/lib/socket-client"
 import { GetAllChatsResponse } from "@/app/api/get-all-chats/route";
 
 interface ChatAppHook extends ChatAppStore {
@@ -46,25 +46,57 @@ const useChatAppHook = (): ChatAppHook => {
     const { setLoading } = useLoader();
 
 
+    const socketRef = useRef<SocketClientType | null>(null);
+
+
+
+
+
     useEffect(() => {
 
-        if (socket.connected) {
-            console.log("Connected to WEBSOCKET [useChatApp (51)]");
-
-            // ADD LISTENER FOR NEW MESSAGES!
-            socket.on("message:received", handleReceiveMessage);
-
-
-        }
-
-        if (mounted) return;
-
-        markMounted();
-        setLoading(true);
-
-
-
         const load = async () => {
+
+
+
+
+
+
+
+            if (!socketRef.current) {
+                
+          
+                const res = await fetch("/api/auth/get-session-token", { method: "GET" });
+
+                const sessionToken = await res.json() as string;
+
+                socketRef.current = getSocket(sessionToken);
+
+                
+
+
+            }
+
+
+
+
+            if (socketRef.current.connected) {
+                console.log("Connected to WEBSOCKET [useChatApp (51)]");
+
+                // ADD LISTENER FOR NEW MESSAGES!
+                socketRef.current.on("message:received", handleReceiveMessage);
+
+            }
+
+
+
+            if (mounted) return;
+
+            markMounted();
+            setLoading(true);
+
+
+
+
             console.log("FETCHING ALL CHATS ")
 
             try {
@@ -144,11 +176,14 @@ const useChatAppHook = (): ChatAppHook => {
 
         return () => {
             setLoading(false);
-            socket.disconnect()
-            socket.off("message:new");
+            socketRef?.current?.off("message:new");
+            socketRef?.current?.disconnect()
+            socketRef.current = null;
+
+
         }
 
-    }, []);
+    }, [session]);
 
 
 
@@ -254,10 +289,10 @@ const useChatAppHook = (): ChatAppHook => {
 
 
 
-        // socket.emit the message , then use ack! 
+        // socketRef.current.emit the message , then use ack! 
 
 
-        socket.timeout(20000).emit("message:new", newMessage, (err, res) => {
+        socketRef?.current?.timeout(20000).emit("message:new", newMessage, (err, res) => {
 
             console.log("Res is", res)
 
@@ -304,10 +339,10 @@ const useChatAppHook = (): ChatAppHook => {
 
         const isEcho = receivedMsg.sender === session?.user.username;
 
-       
-        console.log(`Received a message from ${receivedMsg.sender}! isEcho ${isEcho} ` );
 
-        
+        console.log(`Received a message from ${receivedMsg.sender}! isEcho ${isEcho} `);
+
+
 
         // IF MESSAGE DOESENT EXIST ALREADY, IT WILL BE APPENDED TO MESSAGES STATE, AND RESORTED (as flag is true)
 
@@ -349,11 +384,11 @@ export function ChatAppProvider({ children }: { children: React.ReactNode }) {
 }
 
 
-export function useChatApp() : ChatAppHook {
+export function useChatApp(): ChatAppHook {
 
     const ctx = useContext(ChatAppContext)!;
 
-    if(!ctx) throw new Error("Please wrap your /chat route's layout.tsx with ChatAppProvider")
+    if (!ctx) throw new Error("Please wrap your /chat route's layout.tsx with ChatAppProvider")
     return ctx;
 
 }

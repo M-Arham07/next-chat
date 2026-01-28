@@ -11,48 +11,27 @@ export async function socketMiddleware(socket: Socket, next: NextFn): Promise<vo
 
     try {
 
-        console.log("RUNNING MIDDELWARE");
-        const cookie = socket.handshake.headers.cookie
 
-        // Convert the cookie string into a key value pair ! 
+        const { sessionToken } = socket?.handshake?.auth || {};
 
-        const requiredCookieNames = ["__Secure-next-auth.session-token", "next-auth.session-token"];
-
-
-        let cookieAuthToken: string = "";
-
-        cookie?.split("; ")?.forEach(c => {
-            // c.split("=") / ["cookie1","val1","cookie2","val2"];
-            console.log(c.split("="))
-            const [cookieName, cookieVal] = c.split("=");
-
-            
-
-            if (requiredCookieNames.includes(cookieName ?? "")) {
-                cookieAuthToken = cookieVal ?? "";
-            }
-
-
-        });
-
-        if (!cookieAuthToken) throw new Error("No auth token found!");
+        if (!sessionToken) throw new Error("NO_SESSION_TOKEN");
 
 
 
         const token = await getToken({
             req: {
                 headers: {
-                    authorization: `Bearer ${cookieAuthToken}`
+                    authorization: `Bearer ${sessionToken}`
                 }
             } as any,
             secret: process.env.NEXTAUTH_SECRET!
         });
 
         if (!token) throw new Error("INVALID_AUTH");
-        if(!token?.username) throw new Error("ONBOARDING_INCOMPLETE");
-     
+        if (!token?.username) throw new Error("ONBOARDING_INCOMPLETE");
 
-        console.log("AUTH_SUCCESS: ",token.username);
+
+        console.log("AUTH_SUCCESS: ", token.username);
 
         socket.username = token.username as string;
         next()
