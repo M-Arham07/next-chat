@@ -66,9 +66,9 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
         // CHECK IF MESSAGE ALREADY EXISTS? 
 
-        const doesExist = state.messages?.[threadId]?.some(m=>m.msgId === newMessage.msgId);
+        const doesExist = currentMessages.some(m=>m.msgId === newMessage.msgId);
 
-        console.log("DOES EXIST?",doesExist);
+       
         // ABORT IF ALREADY EXISTS
         if(doesExist) return state;
 
@@ -79,16 +79,22 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
             updatedMsgs.sort((msgA, msgB) => {
 
+                
                 // convert to epoch
                 let msgAepoch: number = new Date(msgA.timestamp).getTime();
                 let msgBepoch: number = new Date(msgB.timestamp).getTime();
 
 
-
-                // if the result is a -ve numver, msgA will come before msgB
+          
+                // if the result is a -ve number, msgA will come before msgB
                 // if result is a +ve numver ,msgB will come before msgA
                 // if the result is 0 ,order will remain same
-                return msgAepoch - msgBepoch;
+
+                // Epoch of a newer message is MORE than epoch of an older message
+
+            
+
+                return msgBepoch - msgAepoch;
 
             })
 

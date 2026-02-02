@@ -11,5 +11,5 @@ export interface Message {
     replyToMsgId?: string, // if this msg is a reply to another message
     readBy?: string, // string of usernames
     status: MessageStatusType
-    timestamp: Date
+    timestamp: string
 }

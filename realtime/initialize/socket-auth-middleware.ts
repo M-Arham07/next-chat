@@ -39,7 +39,11 @@ export async function socketMiddleware(socket: Socket, next: NextFn): Promise<vo
     }
     catch (err) {
 
-        console.log("AUTH_FAIL", err?.message)
+
+        if (err instanceof Error) {
+            console.log("AUTH_FAIL", err?.message);
+        }
+
 
         next(new Error("NOT AUTHENTICATED"));
 

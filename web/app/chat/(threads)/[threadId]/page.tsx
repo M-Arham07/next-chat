@@ -15,17 +15,10 @@ import { useChatApp } from "@/features/chat/hooks/use-chat-app"
 
 
 
-// Helper to get last N messages
-const getLastNMessages = (messages: Message[], n: number) => {
-    return messages.slice(-n)
-}
-
-
-
 interface ChatViewProps {
     params: Promise<{ threadId: string }>
 }
-export default function ChatsView({ params }: ChatViewProps) {
+export default function MessagesView({ params }: ChatViewProps) {
 
     // TO RENDER THE MESSAGES FOR THE OPENED THREAD ID:
 
@@ -48,7 +41,11 @@ export default function ChatsView({ params }: ChatViewProps) {
 
 
 
+
     const { messages, replyingToMsg, handleSendMessage, set } = useChatApp()!;
+    
+
+
 
 
     const [mounted, setMounted] = useState(false)
@@ -86,7 +83,7 @@ export default function ChatsView({ params }: ChatViewProps) {
         if (mounted && messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: "auto" })
         }
-    }, [mounted]);
+    }, [mounted,messages]);
 
     // Cleanup loading timeout on unmount
     useEffect(() => {
@@ -298,7 +295,9 @@ export default function ChatsView({ params }: ChatViewProps) {
             </motion.main>
 
 
-            {replyingToMsg && (
+            {replyingToMsg && 
+            
+              (
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}

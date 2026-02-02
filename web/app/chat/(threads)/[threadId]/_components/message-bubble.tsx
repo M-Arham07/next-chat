@@ -4,7 +4,7 @@ import type React from "react"
 
 import { motion } from "framer-motion"
 import { Check, CheckCheck } from "lucide-react"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 
 
 import TextMessage from "./text-message"
@@ -56,13 +56,15 @@ const MessageBubble = ({
 
   const { data: session } = useSession();
   const { messages } = useChatApp()!;
+  
+
 
 
 
 
   // if this message is a reply to another message, get the message to which this message is a reply to!
 
- 
+  
   const repliedToMsg: Message | null = messages![message.threadId].find(m => m.msgId === message?.replyToMsgId) ?? null;
 
 
@@ -240,7 +242,7 @@ const MessageBubble = ({
           {/* Message reply preview section: */}
           {repliedToMsg && (
             <div
-              onClick={() => onReplyClick(repliedToMsg.msgId)}
+              onClick={() => onReplyClick(repliedToMsg.msgId || "")}
               className="px-3 pt-2 pb-1 border-l-2 border-primary/50 mx-2 mt-2 bg-secondary/30 rounded cursor-pointer hover:bg-secondary/50 transition-colors"
             >
               <p className="text-xs font-medium text-primary">{repliedToMsg.sender === session?.user?.username ? "You" : repliedToMsg.sender}</p>

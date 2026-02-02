@@ -15,6 +15,8 @@ COPY . .
 RUN npx tsc -p tsconfig.json --outDir dist || \
     npx tsc server.ts --outDir dist --module commonjs --target ES2020 --esModuleInterop
 
+    
+
 # ---------- RUNTIME STAGE ----------
 FROM node:20-alpine AS runner
 WORKDIR /app

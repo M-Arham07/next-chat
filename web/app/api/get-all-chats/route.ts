@@ -78,6 +78,8 @@ export async function GET(request: NextApiRequest): Promise<NextResponse<GetAllC
                                 }
                             },
                             { $match: { rn: { $lte: messagesLimitPerThread } } },
+
+                            { $sort: { threadId: 1, timestamp: 1 } },
                             {
                                 $project: {
                                     _id: 0,
@@ -114,7 +116,7 @@ export async function GET(request: NextApiRequest): Promise<NextResponse<GetAllC
         // BOTH ARE EMPTY ARRAYS IN CASE OF NEW (or lonely) USERS!
 
 
-        
+
 
         // VALIDATE VIA ZOD HERE (IF NEEDED)!   
 

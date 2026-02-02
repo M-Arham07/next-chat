@@ -83,9 +83,12 @@ const useChatAppHook = (): ChatAppHook => {
                 console.log("Connected to WEBSOCKET [useChatApp (51)]");
 
                 // ADD LISTENER FOR NEW MESSAGES!
-                socketRef.current.on("message:received", handleReceiveMessage);
+                
+                console.log("LISTENING")
+                socketRef.current.on("message:received",handleReceiveMessage);
 
             }
+            socketRef.current.on("message:received",handleReceiveMessage);
 
 
 
@@ -230,6 +233,7 @@ const useChatAppHook = (): ChatAppHook => {
         type: Omit<MessageContentType, "deleted">,
         content: string | File): Promise<void> => {
 
+         
 
         // if message is a file, we'll upload it to supabase, and gets it's url! 
 
@@ -267,11 +271,13 @@ const useChatAppHook = (): ChatAppHook => {
             sender: session?.user?.username || "",
             type: type as MessageContentType,
             content: uploadedContentUrl || (content as string),
-            timestamp: new Date(Date.now()),
+            timestamp: new Date(Date.now()).toISOString(),
             replyToMsgId: replyingToMsg?.msgId,
             status: "sending"
 
         }
+
+        console.log("TIME_STAMP ISS::",newMessage.timestamp)
 
 
 
@@ -333,6 +339,7 @@ const useChatAppHook = (): ChatAppHook => {
 
 
     const handleReceiveMessage = (receivedMsg: Message) => {
+        console.log("received a message");
 
         // ZOD PARSE ?
 
