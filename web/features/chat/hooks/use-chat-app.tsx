@@ -10,6 +10,8 @@ import { ChatAppStore } from "../store/chatapp.store";
 import filterThreads from "../lib/filter-threads";
 import { getSocket, type SocketClientType } from "@/features/chat/lib/socket-client"
 import { GetAllChatsResponse } from "@/app/api/get-all-chats/route";
+import { deleteMessage } from "../lib/delete-message";
+import { threadId } from "worker_threads";
 
 interface ChatAppHook extends ChatAppStore {
 
@@ -17,7 +19,9 @@ interface ChatAppHook extends ChatAppStore {
     handleSendMessage: (type: Omit<MessageContentType, "deleted">,
         content: string | File) => Promise<void>
 
-    handleDeleteMessage: (messageToDelete: Message) => Promise<void>
+    handleDeleteMessage: (messageToDelete: Message) => Promise<void>,
+
+    handleRetryMessage: (message: Message) => Promise<void>
 
     filteredThreads: Thread[] | null
 
@@ -63,15 +67,15 @@ const useChatAppHook = (): ChatAppHook => {
 
 
             if (!socketRef.current) {
-                
-          
+
+
                 const res = await fetch("/api/auth/get-session-token", { method: "GET" });
 
                 const sessionToken = await res.json() as string;
 
                 socketRef.current = getSocket(sessionToken);
 
-                
+
 
 
             }
@@ -83,12 +87,12 @@ const useChatAppHook = (): ChatAppHook => {
                 console.log("Connected to WEBSOCKET [useChatApp (51)]");
 
                 // ADD LISTENER FOR NEW MESSAGES!
-                
+
                 console.log("LISTENING")
-                socketRef.current.on("message:received",handleReceiveMessage);
+                socketRef.current.on("message:received", handleReceiveMessage);
 
             }
-            socketRef.current.on("message:received",handleReceiveMessage);
+            socketRef.current.on("message:received", handleReceiveMessage);
 
 
 
@@ -196,11 +200,14 @@ const useChatAppHook = (): ChatAppHook => {
 
     const handleDeleteMessage = async (messageToDelete: Message): Promise<void> => {
 
+
         // TODO : BLOCK DELETION IF MESSAGE.SENDER !== SESSION.USER.USERNAME
         // A user can only delete his OWN messages! 
 
 
-        const { threadId, msgId } = messageToDelete;
+        const { threadId, msgId, sender } = messageToDelete;
+
+        if (sender !== session?.user?.username) return;
 
 
         // FIRST SET STATUS TO SENDING  (to show loading)
@@ -214,7 +221,9 @@ const useChatAppHook = (): ChatAppHook => {
 
         // API CALL + OTHER THINGS
 
-        await new Promise<void>(r => setTimeout(() => r(), 500));
+        await deleteMessage(threadId, msgId, sender);
+
+
 
 
         // if above success, UPDATE THE STATE
@@ -233,7 +242,7 @@ const useChatAppHook = (): ChatAppHook => {
         type: Omit<MessageContentType, "deleted">,
         content: string | File): Promise<void> => {
 
-         
+
 
         // if message is a file, we'll upload it to supabase, and gets it's url! 
 
@@ -277,7 +286,7 @@ const useChatAppHook = (): ChatAppHook => {
 
         }
 
-        console.log("TIME_STAMP ISS::",newMessage.timestamp)
+        console.log("TIME_STAMP ISS::", newMessage.timestamp)
 
 
 
@@ -298,7 +307,7 @@ const useChatAppHook = (): ChatAppHook => {
         // socketRef.current.emit the message , then use ack! 
 
 
-        socketRef?.current?.timeout(20000).emit("message:new", newMessage, (err, res) => {
+        socketRef?.current?.timeout(10000).emit("message:new", newMessage, (err, res) => {
 
             console.log("Res is", res)
 
@@ -337,6 +346,27 @@ const useChatAppHook = (): ChatAppHook => {
     }
 
 
+    const handleRetryMessage = async (message: Message): Promise<void> => {
+
+
+        const { threadId, msgId, sender, type, content } = message;
+
+        // Completely nuke the message from state ! 
+
+        removeMessage(message, true);
+
+
+        // Now re-send the message ! 
+
+
+        await handleSendMessage(type, content);
+
+
+
+
+    }
+
+
 
     const handleReceiveMessage = (receivedMsg: Message) => {
         console.log("received a message");
@@ -353,7 +383,7 @@ const useChatAppHook = (): ChatAppHook => {
 
         // (WE WILL ALREADY RECEIVE SORTED MESSAGES FROM BACKEND!)
 
-        addMessage(receivedMsg, true);
+        addMessage(receivedMsg, false);
 
         return;
 
@@ -373,7 +403,13 @@ const useChatAppHook = (): ChatAppHook => {
 
 
 
-    return { ...store, handleSendMessage, filteredThreads, handleDeleteMessage };
+    return {
+        ...store,
+        handleSendMessage,
+        filteredThreads,
+        handleDeleteMessage,
+        handleRetryMessage
+    };
 
 
 

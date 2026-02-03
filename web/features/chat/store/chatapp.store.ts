@@ -22,7 +22,7 @@ export interface ChatAppStore {
     setThreads: (threads: Thread[]) => void
     addMessage: (newMessage: Message, resort?: boolean) => void
     updateMessageStatus: (threadId: string, msgId: string, newStatus: MessageStatusType) => void
-    removeMessage: (messageToDelete: Message) => void
+    removeMessage: (messageToDelete: Message, nuke?: boolean) => void
 }
 
 export const useChatAppStore = create<ChatAppStore>((set) => ({
@@ -66,11 +66,11 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
         // CHECK IF MESSAGE ALREADY EXISTS? 
 
-        const doesExist = currentMessages.some(m=>m.msgId === newMessage.msgId);
+        const doesExist = currentMessages.some(m => m.msgId === newMessage.msgId);
 
-       
+
         // ABORT IF ALREADY EXISTS
-        if(doesExist) return state;
+        if (doesExist) return state;
 
         let updatedMsgs: Message[] = [...currentMessages, newMessage];
 
@@ -79,20 +79,20 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
             updatedMsgs.sort((msgA, msgB) => {
 
-                
+
                 // convert to epoch
                 let msgAepoch: number = new Date(msgA.timestamp).getTime();
                 let msgBepoch: number = new Date(msgB.timestamp).getTime();
 
 
-          
+
                 // if the result is a -ve number, msgA will come before msgB
                 // if result is a +ve numver ,msgB will come before msgA
                 // if the result is 0 ,order will remain same
 
                 // Epoch of a newer message is MORE than epoch of an older message
 
-            
+
 
                 return msgBepoch - msgAepoch;
 
@@ -169,7 +169,7 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
     // Delete a particular message in a thread 
 
-    removeMessage: (messageToDelete: Message) => set((state) => {
+    removeMessage: (messageToDelete: Message, nuke?: boolean) => set((state) => {
 
 
         // state.messages must exist before for a message to be deleted!
@@ -187,12 +187,22 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
         // updatedMsgs array for this thread id
         let updatedMsgs = [...state.messages![threadId]];
 
-        updatedMsgs[idx] = {
-            ...updatedMsgs[idx],
-            content: "",
-            type: "deleted",
-            replyToMsgId: undefined,
-        };
+
+
+        // if mode is nuke,  COMPLETELY DELETE THE MESSAGE (NO TRACES LEFT!)
+        // this will be used when retrying to send a message!
+        if (nuke) {
+            updatedMsgs = updatedMsgs.filter(m => m.msgId !== messageToDelete.msgId);
+        }
+
+        else {
+            updatedMsgs[idx] = {
+                ...updatedMsgs[idx],
+                content: "",
+                type: "deleted",
+                replyToMsgId: undefined,
+            };
+        }
 
 
 

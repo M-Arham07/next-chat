@@ -16,11 +16,11 @@ import TypingIndicator from "./typing-indicator"
 import { Message } from "@chat/shared"
 import { useSession } from "next-auth/react"
 import { useChatApp } from "@/features/chat/hooks/use-chat-app"
-import {formatTime} from "@/lib/format-time"
+import { formatTime } from "@/lib/format-time"
 
 
 
-const MAX_SWIPE_THRESHOLD : number = 80;
+const MAX_SWIPE_THRESHOLD: number = 80;
 
 
 interface MessageBubbleProps {
@@ -28,7 +28,7 @@ interface MessageBubbleProps {
   isHighlighted: boolean
   onReplyClick: (messageId: string) => void
   onReply: (message: Message) => void
-  status : string
+  status: string
 
 }
 const MessageBubble = ({
@@ -55,8 +55,8 @@ const MessageBubble = ({
   const hasTriggeredReply = useRef(false);
 
   const { data: session } = useSession();
-  const { messages } = useChatApp()!;
-  
+  const { messages, handleRetryMessage } = useChatApp()!;
+
 
 
 
@@ -64,7 +64,7 @@ const MessageBubble = ({
 
   // if this message is a reply to another message, get the message to which this message is a reply to!
 
-  
+
   const repliedToMsg: Message | null = messages![message.threadId].find(m => m.msgId === message?.replyToMsgId) ?? null;
 
 
@@ -80,7 +80,7 @@ const MessageBubble = ({
   const { handleSendMessage } = useChatApp()!;
 
 
-  
+
 
 
 
@@ -170,7 +170,7 @@ const MessageBubble = ({
   // if (otherUserTyping is true) {
   //   return <TypingIndicator isSent={isSent} />
   // }
-  
+
 
   if (message.type === "deleted") {
     return (
@@ -277,15 +277,17 @@ const MessageBubble = ({
 
         {isSent && status === "failed" && (
           <button
-            // Show retry button in case message sending failed, JUST re-use handleSendMessage
+            // Show retry button in case message sending failed
             // WE'LL SEND THE MESSAGE WITH LATEST TIMESTAMP!
-            onClick={() => handleSendMessage(message.type,message.content)}
-        className="ml-2 px-3 py-1 text-xs font-medium text-red-500 bg-red-500/10 border border-red-500/30 rounded hover:bg-red-500/20 transition-colors opacity-0 group-hover:opacity-100"
+            onClick={async () => {
+             await handleRetryMessage(message);
+            }}
+            className="ml-2 px-3 py-1 text-xs font-medium text-red-500 bg-red-500/10 border border-red-500/30 rounded hover:bg-red-500/20 transition-colors opacity-0 group-hover:opacity-100"
           >
-        Retry
-      </button>
+            Retry
+          </button>
         )}
-    </motion.div >
+      </motion.div >
 
       <MessageContextMenu
         message={message}
