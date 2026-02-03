@@ -351,7 +351,7 @@ const useChatAppHook = (): ChatAppHook => {
 
 
 
-        // IF MESSAGE DOESENT EXIST ALREADY, IT WILL BE APPENDED TO MESSAGES STATE, AND RESORTED (as flag is true)
+        // (WE WILL ALREADY RECEIVE SORTED MESSAGES FROM BACKEND!)
 
         addMessage(receivedMsg, true);
 
