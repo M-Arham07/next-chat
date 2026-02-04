@@ -22,7 +22,7 @@ export interface ChatAppStore {
     setThreads: (threads: Thread[]) => void
     addMessage: (newMessage: Message, resort?: boolean) => void
     updateMessageStatus: (threadId: string, msgId: string, newStatus: MessageStatusType) => void
-    removeMessage: (messageToDelete: Message, nuke?: boolean) => void
+    removeMessage: (threadId: string, msgId: string, nuke?: boolean) => void
 }
 
 export const useChatAppStore = create<ChatAppStore>((set) => ({
@@ -169,16 +169,15 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
     // Delete a particular message in a thread 
 
-    removeMessage: (messageToDelete: Message, nuke?: boolean) => set((state) => {
+    removeMessage: (threadId: string, msgId: string, nuke?: boolean) => set((state) => {
 
 
         // state.messages must exist before for a message to be deleted!
 
-        const threadId: string = messageToDelete.threadId;
 
         // FIND INDEX OF THE MESSAGE IN THE THREAD
 
-        const idx: number = state.messages![threadId].findIndex(m => m.msgId === messageToDelete.msgId);
+        const idx: number = state.messages![threadId].findIndex(m => m.msgId === msgId);
 
         if (idx < 0) return { messages: state.messages };
 
@@ -192,7 +191,7 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
         // if mode is nuke,  COMPLETELY DELETE THE MESSAGE (NO TRACES LEFT!)
         // this will be used when retrying to send a message!
         if (nuke) {
-            updatedMsgs = updatedMsgs.filter(m => m.msgId !== messageToDelete.msgId);
+            updatedMsgs = updatedMsgs.filter(m => m.msgId !== msgId);
         }
 
         else {

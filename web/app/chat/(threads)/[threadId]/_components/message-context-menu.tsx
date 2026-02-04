@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from "react"
 
 interface MessageContextMenuProps {
   message: Message
+  isMe:boolean
   position: { x: number; y: number } | null
   handleReplyToMsg: () => void
   onClose: () => void
@@ -14,6 +15,7 @@ interface MessageContextMenuProps {
 
 const MessageContextMenu = ({
   message,
+  isMe,
   position,
   handleReplyToMsg,
   onClose,
@@ -84,25 +86,27 @@ const MessageContextMenu = ({
       icon: Reply,
       label: "Reply",
       onClick: handleReply,
-      color: "text-foreground",
+      colorClass: "text-foreground",
     },
     {
       icon: Copy,
       label: "Copy",
       onClick: handleCopy,
-      color: "text-foreground",
+      colorClass: "text-foreground",
     },
+
+    // Hide delete icon if message.sender isnt session.user.username! 
     {
       icon: Trash2,
       label: "Delete",
       onClick: handleDelete,
-      color: "text-destructive",
+      colorClass: isMe ? "text-destructive" : "hidden",
     },
     {
       icon: MoreHorizontal,
       label: "More",
-      onClick: () => console.log("More options"),
-      color: "text-foreground",
+      onClick: () => alert("More options triggered"),
+      colorClass: "text-foreground",
     },
   ]
 
@@ -148,7 +152,7 @@ const MessageContextMenu = ({
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
                     onClick={item.onClick}
-                    className={`flex items-center gap-3 px-4 py-3 w-full hover:bg-primary/10 transition-colors text-left ${item.color}`}
+                    className={`flex items-center gap-3 px-4 py-3 w-full hover:bg-primary/10 transition-colors text-left ${item.colorClass}`}
                   >
                     <Icon className="w-6 h-6 shrink-0" />
                     <span className="font-medium text-base">{item.label}</span>

@@ -1,5 +1,5 @@
-import { Message } from "../../index";
-import mongoose from "mongoose";
+import type { Message } from "#/shared/types/message.ts";
+import mongoose, { Model } from "mongoose";
 
 const messageSchema = new mongoose.Schema<Message>(
   {
@@ -50,7 +50,7 @@ const messageSchema = new mongoose.Schema<Message>(
 
     // THE TIMESTAMP WILL BE PROVIDED BY CLIENT!
     timestamp: {
-      type: Date,
+      type: String,
       required: true,
     },
   },
@@ -60,4 +60,4 @@ const messageSchema = new mongoose.Schema<Message>(
   }
 );
 
-export const Messages = mongoose.models.Messages || mongoose.model<Message>("Messages", messageSchema);
+export const Messages = mongoose.models.Messages || mongoose.model<Message>("Messages", messageSchema) as Model<Message> ;

@@ -291,6 +291,7 @@ const MessageBubble = ({
 
       <MessageContextMenu
         message={message}
+        isMe={isSent} // is this message from me?
         position={contextMenuPosition}
         handleReplyToMsg={() => onReply(message)}
         onClose={() => setContextMenuPosition(null)} />

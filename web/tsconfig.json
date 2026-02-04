@@ -30,6 +30,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "../realtime/chat-features/lib/delete-message.ts"  ],
   "exclude": ["node_modules"]
 }

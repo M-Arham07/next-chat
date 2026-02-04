@@ -1,5 +1,6 @@
 import mongoose, { Schema, type HydratedDocument } from "mongoose";
-import type { Thread } from "../../types/index.ts";
+import type { Thread } from "@chat/shared";
+
 
 type ThreadSchemaType = Omit<Thread, "createdAt">; // createdAt comes from timestamps
 type ThreadDoc = HydratedDocument<ThreadSchemaType>;

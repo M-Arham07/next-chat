@@ -10,8 +10,9 @@ import { ChatAppStore } from "../store/chatapp.store";
 import filterThreads from "../lib/filter-threads";
 import { getSocket, type SocketClientType } from "@/features/chat/lib/socket-client"
 import { GetAllChatsResponse } from "@/app/api/get-all-chats/route";
-import { deleteMessage } from "../lib/delete-message";
 import { threadId } from "worker_threads";
+import { deleteMessage } from "../../../../realtime/chat-features/lib/delete-message";
+
 
 interface ChatAppHook extends ChatAppStore {
 
@@ -84,15 +85,17 @@ const useChatAppHook = (): ChatAppHook => {
 
 
             if (socketRef.current.connected) {
-                console.log("Connected to WEBSOCKET [useChatApp (51)]");
-
-                // ADD LISTENER FOR NEW MESSAGES!
-
-                console.log("LISTENING")
-                socketRef.current.on("message:received", handleReceiveMessage);
-
+                console.log("Connected to WEBSOCKET [useChatApp]");
             }
+
+
+
+            // LISTENERS::: 
+
+            
+
             socketRef.current.on("message:received", handleReceiveMessage);
+            socketRef.current.on("message:deleted",removeMessage);
 
 
 
@@ -204,7 +207,6 @@ const useChatAppHook = (): ChatAppHook => {
         // TODO : BLOCK DELETION IF MESSAGE.SENDER !== SESSION.USER.USERNAME
         // A user can only delete his OWN messages! 
 
-
         const { threadId, msgId, sender } = messageToDelete;
 
         if (sender !== session?.user?.username) return;
@@ -216,18 +218,30 @@ const useChatAppHook = (): ChatAppHook => {
 
         // idk why but this isnt working, need to fix it! 
         updateMessageStatus(threadId, msgId, "sending");
-        console.log("updated status OK");
 
 
         // API CALL + OTHER THINGS
 
-        await deleteMessage(threadId, msgId, sender);
+
+        socketRef.current?.emit("message:delete", messageToDelete, (res) => {
+            if (!res.ok) {
+
+                // if failed, restore original state:
+                updateMessageStatus(threadId, msgId, "sent");
+                return;
+            }
 
 
+            // if all goes well, update the state for this user:
+
+            removeMessage(threadId, msgId);
 
 
-        // if above success, UPDATE THE STATE
-        removeMessage(messageToDelete);
+            return;
+
+
+        })
+
 
 
 
@@ -353,7 +367,7 @@ const useChatAppHook = (): ChatAppHook => {
 
         // Completely nuke the message from state ! 
 
-        removeMessage(message, true);
+        removeMessage(threadId, msgId, true);
 
 
         // Now re-send the message ! 
