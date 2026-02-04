@@ -10,8 +10,6 @@ import { ChatAppStore } from "../store/chatapp.store";
 import filterThreads from "../lib/filter-threads";
 import { getSocket, type SocketClientType } from "@/features/chat/lib/socket-client"
 import { GetAllChatsResponse } from "@/app/api/get-all-chats/route";
-import { threadId } from "worker_threads";
-import { deleteMessage } from "../../../../realtime/chat-features/lib/delete-message";
 
 
 interface ChatAppHook extends ChatAppStore {
@@ -42,7 +40,7 @@ const useChatAppHook = (): ChatAppHook => {
 
     const { mounted, messages, threads,
         markMounted, searchQuery, activeFilter,
-        setThreads, addMessage,
+        setThreads, addMessages,
         selectedThreadId, replyingToMsg,
         set, updateMessageStatus, removeMessage } = store;
 
@@ -299,12 +297,7 @@ const useChatAppHook = (): ChatAppHook => {
             status: "sending"
 
         }
-
-        console.log("TIME_STAMP ISS::", newMessage.timestamp)
-
-
-
-
+        
 
 
         // TODO: PARSE VIA ZOD SCHEMA HERE, throw error if not matches it! 
@@ -312,7 +305,7 @@ const useChatAppHook = (): ChatAppHook => {
 
         // append the newMessage to the state, for this thread id!
         // NO NEED TO RESORT!
-        addMessage(newMessage, false);
+        addMessages([newMessage]);
 
 
 
@@ -397,7 +390,7 @@ const useChatAppHook = (): ChatAppHook => {
 
         // (WE WILL ALREADY RECEIVE SORTED MESSAGES FROM BACKEND!)
 
-        addMessage(receivedMsg, false);
+        addMessages([receivedMsg]);
 
         return;
 

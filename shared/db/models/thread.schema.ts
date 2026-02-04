@@ -1,4 +1,4 @@
-import mongoose, { Schema, type HydratedDocument } from "mongoose";
+import mongoose, { Model, Schema, type HydratedDocument } from "mongoose";
 import type { Thread } from "@chat/shared";
 
 
@@ -92,4 +92,4 @@ const threadSchema = new Schema<ThreadSchemaType>(
     { timestamps: true, collection: "threads" }
 );
 
-export const Threads = mongoose.models.Thread || mongoose.model<ThreadSchemaType>("Thread", threadSchema);
+export const Threads = mongoose.models.Thread || mongoose.model<ThreadSchemaType>("Thread", threadSchema) as Model<Thread>;

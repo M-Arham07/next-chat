@@ -11,16 +11,18 @@ export async function getUserThreads(username: string): Promise<string[]> {
 
         await ConnectDB();
 
-        // ONLY GET THREAD IDS!
-        const threads = await Threads.find({
+        // ONLY GET THREAD IDS!x
+        const threadIds = await Threads.distinct("threadId",{
             "particpants.username": username
         });
 
-        const threadIds = threads.map(thread => thread.threadId);
+        
 
         if (!threadIds || threadIds.length === 0) {
             throw new Error("No thread found, aborting... ");
         }
+
+        console.log(`${username} joined ${threadIds}`)
 
 
         return threadIds;

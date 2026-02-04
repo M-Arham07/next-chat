@@ -10,6 +10,7 @@ import DateSeparator from "./_components/date-separator"
 import { useTheme } from "next-themes"
 import { Message } from "@chat/shared"
 import { useChatApp } from "@/features/chat/hooks/use-chat-app"
+import { LastTenMsgsResponse } from "@/app/api/last-ten-msgs/route"
 
 
 
@@ -28,12 +29,12 @@ export default function MessagesView({ params }: ChatViewProps) {
     useEffect(() => {
         set("selectedThreadId", threadId);
 
-        
+
         return () => {
-            set("selectedThreadId",undefined);
+            set("selectedThreadId", undefined);
 
             // EXTREMELY IMPORTANT:
-            set("replyingToMsg",null);
+            set("replyingToMsg", null);
         }
     }, [threadId]);
 
@@ -42,8 +43,8 @@ export default function MessagesView({ params }: ChatViewProps) {
 
 
 
-    const { messages, replyingToMsg, handleSendMessage, set } = useChatApp()!;
-    
+    const { messages, replyingToMsg, handleSendMessage, selectedThreadId, set, addMessages } = useChatApp()!;
+
 
 
 
@@ -59,17 +60,21 @@ export default function MessagesView({ params }: ChatViewProps) {
 
 
     const [loadingState, setLoadingState] = useState<"idle" | "loading" | "failed">("idle")
-    const [loadingCount, setLoadingCount] = useState(0)
+
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const messageRefsMap = useRef<{ [key: string]: HTMLDivElement | null }>({})
-    const sentinelRef = useRef<HTMLDivElement>(null)
-    const loadTriggerCountRef = useRef(0)
-    const mainRef = useRef<HTMLElement>(null)
-    const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+    const sentinelRef = useRef<HTMLDivElement>(null);
+    const mainRef = useRef<HTMLElement>(null);
+    const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const skipMessagesRef = useRef<number>(10);
+    const allFetchedRef = useRef<boolean>(false);
+
 
     // TO AUTOMATICALLY FOCUS ON CHAT INPUT WHEN REPLYING TO A MESSAGE
     const inputRef = useRef<HTMLInputElement | null>(null);
-    
+
+
+
 
 
 
@@ -83,7 +88,7 @@ export default function MessagesView({ params }: ChatViewProps) {
         if (mounted && messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: "auto" })
         }
-    }, [mounted,messages]);
+    }, [mounted]);
 
     // Cleanup loading timeout on unmount
     useEffect(() => {
@@ -95,67 +100,87 @@ export default function MessagesView({ params }: ChatViewProps) {
     }, []);
 
 
-    // // Intersection Observer for infinite scroll at top
-    // useEffect(() => {
-    //     if (!sentinelRef.current || !mainRef.current || !mounted) return
+    // Intersection Observer for infinite scroll at top
+    useEffect(() => {
+        if (!sentinelRef.current || !mainRef.current || !mounted) return;
 
 
-    //     const observer = new IntersectionObserver(
-    //         (entries) => {
-    //             entries.forEach((entry) => {
-    //                 console.log("[v0] Sentinel visibility:", entry.isIntersecting, "ratio:", entry.intersectionRatio)
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach(async (entry) => {
 
-    //                 // Only trigger when sentinel becomes visible (enters viewport)
-    //                 if (entry.isIntersecting) {
-    //                     loadTriggerCountRef.current += 1
-    //                     console.log("[v0] Load trigger count:", loadTriggerCountRef.current)
+                    // early exit if the div isnt intersecting or all messages are fetched! 
+                    if(!entry.isIntersecting || allFetchedRef.current) return;
+
+                        // Clear any existing timeout
+                        if (loadingTimeoutRef.current) {
+                            clearTimeout(loadingTimeoutRef.current)
+                        }
+
+                        
+
+                        setLoadingState("loading");
 
 
+                        const res = await fetch(`/api/last-ten-msgs?threadId=${selectedThreadId}&skip=${skipMessagesRef.current}`, { method: "GET" });
 
-    //                     // Clear any existing timeout
-    //                     if (loadingTimeoutRef.current) {
-    //                         clearTimeout(loadingTimeoutRef.current)
-    //                     }
-
-    //                     // Show loading state
-    //                     setLoadingState("loading")
-    //                     setLoadingCount(loadTriggerCountRef.current)
-
-    //                     // Simulate loading for 2 seconds, then randomly succeed or fail
-    //                     loadingTimeoutRef.current = setTimeout(() => {
-    //                         const shouldFail = Math.random() > 0.7 // 30% chance of failure
-    //                         if (shouldFail) {
-    //                             setLoadingState("failed")
-    //                             // Show error for 2 more seconds
-    //                             loadingTimeoutRef.current = setTimeout(() => {
-    //                                 setLoadingState("idle")
-    //                             }, 2000)
-    //                         } else {
+                        if (!res.ok) {
+                            setLoadingState("failed");
+                            clearTimeout(loadingTimeoutRef.current ?? "");
+                            return;
+                        }
 
 
 
-    //                             setLoadingState("idle")
-    //                         }
-    //                     }, 2000)
-    //                 }
-    //             })
-    //         },
-    //         {
-    //             root: null,
-    //             threshold: 0.01,
-    //             rootMargin: "0px 0px 1000px 0px"
-    //         },
-    //     )
+                        const { messages: newMsgs }: LastTenMsgsResponse = await res.json();
 
 
-    //     if (sentinelRef.current) {
-    //         observer.observe(sentinelRef.current)
-    //     }
 
-    //     return () => {
-    //         observer.disconnect()
-    //     }
-    // }, [mounted])
+                        // TODO: ZOD VALIDATE :
+
+
+
+
+
+                        // append to start cuz received messages will be older than existing msgs! 
+                        addMessages(newMsgs, { appendToStart: true });
+
+                        setLoadingState("idle");
+
+                        // ONLY UPDATE THE COUNT IF SOMETHING WAS ADDED : 
+
+                        if (newMsgs.length === 0) {
+                            // SET all messages fetched flag to true, to block further API requests! 
+                            allFetchedRef.current = true;
+                        }
+                        else {
+
+                            skipMessagesRef.current += 10
+
+                        }
+
+                        return;
+
+
+                    
+                })
+            },
+            {
+                root: null,
+                threshold: 0.01,
+                rootMargin: "0px 0px 1000px 0px"
+            },
+        )
+
+
+        if (sentinelRef.current) {
+            observer.observe(sentinelRef.current)
+        }
+
+        return () => {
+            observer.disconnect()
+        }
+    }, [mounted])
 
 
 
@@ -224,7 +249,7 @@ export default function MessagesView({ params }: ChatViewProps) {
                                     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                                     className="w-4 h-4 rounded-full border-2 border-transparent border-t-foreground"
                                 />
-                                <span className="text-sm font-medium">Loading Messages +{loadingCount}</span>
+                                <span className="text-sm font-medium">Loading Messages </span>
                             </>
                         )}
 
@@ -295,30 +320,30 @@ export default function MessagesView({ params }: ChatViewProps) {
             </motion.main>
 
 
-            {replyingToMsg && 
-            
-              (
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="fixed bottom-24 left-0 right-0 px-4 z-40"
-                >
-                    <div className="mx-auto max-w-2xl flex items-center gap-3 px-4 py-3 bg-secondary/50 backdrop-blur-sm border border-glass-border rounded-lg">
-                        <div className="flex-1 min-w-0">
+            {replyingToMsg &&
 
-                            <p className="text-xs font-medium text-primary">Replying to {replyingToMsg.sender}</p>
-                            <p className="text-sm text-foreground truncate">{replyingToMsg.content}</p>
+                (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="fixed bottom-24 left-0 right-0 px-4 z-40"
+                    >
+                        <div className="mx-auto max-w-2xl flex items-center gap-3 px-4 py-3 bg-secondary/50 backdrop-blur-sm border border-glass-border rounded-lg">
+                            <div className="flex-1 min-w-0">
+
+                                <p className="text-xs font-medium text-primary">Replying to {replyingToMsg.sender}</p>
+                                <p className="text-sm text-foreground truncate">{replyingToMsg.content}</p>
+                            </div>
+                            <button
+                                onClick={() => set("replyingToMsg", null)}
+                                className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                ✕
+                            </button>
                         </div>
-                        <button
-                            onClick={() => set("replyingToMsg", null)}
-                            className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                            ✕
-                        </button>
-                    </div>
-                </motion.div>
-            )}
+                    </motion.div>
+                )}
 
             <div
             // style={{
@@ -326,7 +351,11 @@ export default function MessagesView({ params }: ChatViewProps) {
             //     transition: "filter 0.2s ease",
             // }}
             >
-                <ChatInput onSend={handleSendMessage} inputRef={inputRef} />
+                <ChatInput onSend={async (type, content) => {
+                    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+                    await handleSendMessage(type, content);
+
+                }} inputRef={inputRef} />
             </div>
         </div>
     )

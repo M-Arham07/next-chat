@@ -20,7 +20,7 @@ export interface ChatAppStore {
     activeFilter: ActiveFilter,
     markMounted: () => void
     setThreads: (threads: Thread[]) => void
-    addMessage: (newMessage: Message, resort?: boolean) => void
+    addMessages: (newMessages: Message[], options?: { resort?: boolean, appendToStart?: boolean }) => void
     updateMessageStatus: (threadId: string, msgId: string, newStatus: MessageStatusType) => void
     removeMessage: (threadId: string, msgId: string, nuke?: boolean) => void
 }
@@ -55,26 +55,50 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
 
     // Add messages to a threadId (PERFORMS A RESORT BASED ON TIMESTAMP IF sort is true)
-    addMessage: (newMessage: Message, resort: boolean = false) => set((state) => {
+    // If append to back is true, the newMessages array will be appended at start,
+    // otherwise they'll be appended at end! 
+    addMessages: (newMessages: Message[], options?: { resort?: boolean, appendToStart?: boolean }) => set((state) => {
 
 
-        const threadId: string = newMessage.threadId;
+        const threadId: string = newMessages[0]?.threadId;
 
 
 
         const currentMessages: Message[] = state.messages?.[threadId] ?? [];
 
-        // CHECK IF MESSAGE ALREADY EXISTS? 
-
-        const doesExist = currentMessages.some(m => m.msgId === newMessage.msgId);
 
 
-        // ABORT IF ALREADY EXISTS
-        if (doesExist) return state;
+        let updatedMsgs: Message[] = options?.appendToStart ? [...newMessages, ...currentMessages] : [...currentMessages,...newMessages];
 
-        let updatedMsgs: Message[] = [...currentMessages, newMessage];
 
-        if (resort) {
+        // Remove duplicates:
+
+        // set will keep track of added message ids
+        const addedMsgIds = new Set<string>();
+
+
+        updatedMsgs = updatedMsgs.filter(m => {
+
+
+            // if this msg id is already appended to the set, remove it from updated messages:
+            if (addedMsgIds.has(m.msgId)) return false;
+
+
+            // if not already added, append it to m.msgId: 
+            addedMsgIds.add(m.msgId);
+
+            // hence include the current object in updatedMsgs! 
+
+            return true;
+
+
+        });
+
+
+
+
+
+        if (options?.resort) {
             console.log("resorting msgs")
 
             updatedMsgs.sort((msgA, msgB) => {
