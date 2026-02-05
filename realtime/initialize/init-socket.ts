@@ -8,7 +8,11 @@ import type { TypedIO } from "../types.ts";
 
 export default function InitSocket(server: NodeHttpServer) {
 
+
     const ALLOWED_ORIGINS: string[] = process?.env?.ALLOWED_ORIGINS?.split(",") ?? [];
+
+
+   
 
 
 
@@ -17,7 +21,7 @@ export default function InitSocket(server: NodeHttpServer) {
     console.log(ALLOWED_ORIGINS)
     const io = new Server<TypedIO>(server, {
         cors: {
-            origin: "*", 
+            origin: process.env.NODE_ENV === "production" ? ALLOWED_ORIGINS : "*", 
             methods: ["GET", "POST"],
             credentials: true
         }
