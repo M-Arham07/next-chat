@@ -2,5 +2,11 @@
   "name": "@chat/shared",
   "version": "0.0.1",
   "private": true,
-  "type": "module"
+  "type": "module",
+   "scripts": {
+    "build": "echo ok"
+  },
+  "dependencies": {
+    "mongoose": "^9.1.6"
+  }
 }

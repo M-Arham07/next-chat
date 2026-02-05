@@ -1,4 +1,4 @@
-
+"use server"
 import mongoose from "mongoose"
 // this function will throw an error if connection not succeded ! 
 // it will be catched by the try catch block!

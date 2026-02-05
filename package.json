@@ -6,11 +6,14 @@
     "realtime",
     "shared"
   ],
+  "scripts": {
+    "build": "npm run -w shared build && npm run -w web build"
+  },
   "devDependencies": {
     "@types/node": "^25.0.10",
     "esbuild": "^0.27.2"
   },
   "dependencies": {
-    "mongoose": "^9.1.5"
+    "mongoose": "^9.1.6"
   }
 }
