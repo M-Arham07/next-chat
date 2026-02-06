@@ -8,9 +8,13 @@ export async function GET(request: NextApiRequest): Promise<NextResponse<string>
 
     const cookieStore = await cookies();
 
-    const cookieName = process.env.NODE_ENV === "production" ? "__Secure-next-auth.session-token" : "next-auth.session-token";
+    
+
+    const cookieName = process.env.VERCEL ? "__Secure-next-auth.session-token" : "next-auth.session-token";
 
     const sessionToken = cookieStore?.get(cookieName)?.value ?? "";
+
+
 
     return NextResponse.json(sessionToken, { status: sessionToken ? 200 : 403 });
 

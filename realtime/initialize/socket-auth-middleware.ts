@@ -16,6 +16,8 @@ export async function socketMiddleware(socket: Socket, next: NextFn): Promise<vo
 
         if (!sessionToken) throw new Error("NO_SESSION_TOKEN");
 
+        
+        console.log("RECEIVED_TOKEN",sessionToken);
 
 
         const token = await getToken({
