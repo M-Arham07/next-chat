@@ -3,8 +3,6 @@ import { Socket, type ExtendedError } from "socket.io";
 import { getToken } from "next-auth/jwt"
 
 
-type CookiePairType = Record<string, string>;
-
 
 type NextFn = (err?: ExtendedError) => void;
 export async function socketMiddleware(socket: Socket, next: NextFn): Promise<void> {
@@ -12,9 +10,16 @@ export async function socketMiddleware(socket: Socket, next: NextFn): Promise<vo
     try {
 
 
-        const { sessionToken } = socket?.handshake?.auth || {};
+        if(!process.env.NEXTAUTH_SECRET) throw new Error("NO_AUTH_SECRET");
+
+
+        const { sessionToken } = socket?.handshake?.auth;
+        
+       
+       
 
         if (!sessionToken) throw new Error("NO_SESSION_TOKEN");
+
 
         
         console.log("RECEIVED_TOKEN",sessionToken);

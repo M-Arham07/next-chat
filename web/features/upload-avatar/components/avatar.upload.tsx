@@ -5,9 +5,9 @@ import { motion } from "framer-motion"
 import { Upload } from "lucide-react"
 import AvatarUploadModal from "./avatar-upload-modal"
 import { useLoader } from "@/store/loader/use-loader"
-import { GetFileUrl } from "../get-url"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
+import { GetFileUrlResponse } from "@/app/api/get-file-url/route"
 
 interface AvatarUploadProps {
     displayPicture: string | null
@@ -49,20 +49,33 @@ export default function AvatarUpload({
         setLoading(true);
         setIsModalOpen(false);
 
-        const data = await GetFileUrl(file);
 
-        if (!data) {
+        // Convert to formData so image file can be sent properly! 
+        const formData = new FormData();
+
+        formData.append("file", file);
+
+        const res = await fetch("/api/get-file-url", {
+            method: "POST",
+            body: formData
+        });
+
+
+        if (!res.ok) {
             setLoading(false);
             setError("Failed to Upload Image!");
-
             return;
         }
 
+        const data = (await res.json()) as GetFileUrlResponse;
 
-        setDisplayPicture(data.url);
 
-       
-        setSuccess("Profile Image Uploaded")
+
+
+        setDisplayPicture(data!.url);
+
+
+        setSuccess("Profile Image Uploaded");
 
 
         setLoading(false);
@@ -148,15 +161,15 @@ export default function AvatarUpload({
                 )}
             </div>
 
-            
-                <Button
-                    variant="outline"
-                    onClick={() => setIsModalOpen(true)}
-                    className="mt-2 px-3 py-1 dark:hover:bg-primary cursor-pointer"
-                >
-                    Change Image
-                </Button>
-            
+
+            <Button
+                variant="outline"
+                onClick={() => setIsModalOpen(true)}
+                className="mt-2 px-3 py-1 dark:hover:bg-primary cursor-pointer"
+            >
+                Change Image
+            </Button>
+
 
 
             <AvatarUploadModal

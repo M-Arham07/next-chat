@@ -16,7 +16,7 @@ export default function InitSocket(server: NodeHttpServer) {
 
 
 
-  
+
 
     console.log(ALLOWED_ORIGINS)
     const io = new Server<TypedIO>(server, {

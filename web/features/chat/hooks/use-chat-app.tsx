@@ -4,12 +4,12 @@ import { useChatAppStore } from "../store/chatapp.store";
 import { useLoader } from "@/store/loader/use-loader";
 import { Message, MessageContentType, Thread } from "@chat/shared";
 import { MessageState } from "../types";
-import { GetFileUrl } from "@/features/upload-avatar/get-url";
 import { useSession } from "next-auth/react";
 import { ChatAppStore } from "../store/chatapp.store";
 import filterThreads from "../lib/filter-threads";
 import { getSocket, type SocketClientType } from "@/features/chat/lib/socket-client"
 import { GetAllChatsResponse } from "@/app/api/get-all-chats/route";
+import { GetFileUrlResponse } from "@/app/api/get-file-url/route";
 
 
 interface ChatAppHook extends ChatAppStore {
@@ -90,10 +90,10 @@ const useChatAppHook = (): ChatAppHook => {
 
             // LISTENERS::: 
 
-            
+
 
             socketRef.current.on("message:received", handleReceiveMessage);
-            socketRef.current.on("message:deleted",removeMessage);
+            socketRef.current.on("message:deleted", removeMessage);
 
 
 
@@ -273,13 +273,23 @@ const useChatAppHook = (): ChatAppHook => {
 
         if (type !== "text" && content instanceof File) {
 
-            // UPLOAD THE FILE TO SUPABASE!
+            // UPLOAD THE FILE TO SUPABASE USING API ROUTE!
 
-            const data = await GetFileUrl(content, type);
+            // Convert to formData: 
 
-            if (!data?.url) throw new Error("Uploading file failed at handleSendMessage");
+            const formData = new FormData();
+            formData.append("file", content);
 
-            uploadedContentUrl = data.url;
+            const res = await fetch("/api/get-file-url", {
+                method: "POST",
+                body: formData
+            });
+
+            if (!res.ok) throw new Error("Unexpected response while uploading file");
+
+            const data = (await res.json()) as GetFileUrlResponse;
+
+            uploadedContentUrl = data!.url;
 
 
         }
@@ -297,7 +307,7 @@ const useChatAppHook = (): ChatAppHook => {
             status: "sending"
 
         }
-        
+
 
 
         // TODO: PARSE VIA ZOD SCHEMA HERE, throw error if not matches it! 

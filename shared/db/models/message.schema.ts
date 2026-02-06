@@ -1,4 +1,4 @@
-import type { Message } from "#/shared/types/message.ts";
+import type { Message } from "../../types";
 import mongoose, { Model } from "mongoose";
 
 const messageSchema = new mongoose.Schema<Message>(

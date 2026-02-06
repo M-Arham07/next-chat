@@ -8,8 +8,6 @@ import { deleteMessage } from "./lib/delete-message.ts";
 
 export function registerChatFeatures(io: TypedIO, socket: TypedSocket) {
 
-
-
     socket.on("message:new", async (newMessage, ack) => {
         await handleNewMessage(socket, newMessage, ack);
     });
