@@ -77,8 +77,6 @@ const MessageBubble = ({
   const isRead = true; // FOR NOW, I'LL USE PLACEHOLDER TRUE!;
 
 
-  const { handleSendMessage } = useChatApp()!;
-
 
 
 
@@ -167,9 +165,7 @@ const MessageBubble = ({
 
 
 
-  // if (otherUserTyping is true) {
-  //   return <TypingIndicator isSent={isSent} />
-  // }
+ 
 
 
   if (message.type === "deleted") {

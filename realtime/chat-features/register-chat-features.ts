@@ -4,22 +4,28 @@ import { handleNewMessage } from "./lib/handle-new-message.ts";
 import type { Ack, Message } from "#/shared/index.ts";
 import type { TypedIO, TypedSocket } from "../types.ts";
 import { deleteMessage } from "./lib/delete-message.ts";
+import { handleTypingStart, handleTypingStop } from "./handle-typing.ts";
 
 
 export function registerChatFeatures(io: TypedIO, socket: TypedSocket) {
 
     socket.on("message:new", async (newMessage, ack) => {
-        await handleNewMessage(socket, newMessage, ack);
+        handleNewMessage(socket, newMessage, ack);
     });
 
 
-    socket.on("message:delete", async (msgToDelete, ack) => {
+    socket.on("message:delete", (msgToDelete, ack) => {
 
-        console.log("received message to delete:",msgToDelete);
+        console.log("received message to delete:", msgToDelete);
 
-        await deleteMessage(socket, msgToDelete, ack);
+        deleteMessage(socket, msgToDelete, ack);
 
-    })
+    });
+
+
+    // Realtime typing indicator: 
+    socket.on("typing:start", (threadId, username) => handleTypingStart(socket, threadId, username));
+    socket.on("typing:stop", (threadId, username) => handleTypingStop(socket, threadId, username));
 
 
 

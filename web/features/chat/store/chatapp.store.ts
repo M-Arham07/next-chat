@@ -18,12 +18,23 @@ export interface ChatAppStore {
     searchQuery: string,
     selectedThreadId: string | undefined,
     activeFilter: ActiveFilter,
+    typingUsers: Record<string, Set<string>>, // eg: "thread1":["user1","user3"],
+
+
+
     markMounted: () => void
     setThreads: (threads: Thread[]) => void
     addMessages: (newMessages: Message[], options?: { resort?: boolean, appendToStart?: boolean }) => void
     updateMessageStatus: (threadId: string, msgId: string, newStatus: MessageStatusType) => void
     removeMessage: (threadId: string, msgId: string, nuke?: boolean) => void
+
+    addTypingUser: (threadId: string, username: string) => void
+    removeTypingUser: (threadId: string, username: string) => void
+
 }
+
+
+
 
 export const useChatAppStore = create<ChatAppStore>((set) => ({
 
@@ -36,6 +47,7 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
     searchQuery: "",
     selectedThreadId: undefined,
     activeFilter: "all",
+    typingUsers: {},
 
 
 
@@ -68,7 +80,7 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
 
 
-        let updatedMsgs: Message[] = options?.appendToStart ? [...newMessages, ...currentMessages] : [...currentMessages,...newMessages];
+        let updatedMsgs: Message[] = options?.appendToStart ? [...newMessages, ...currentMessages] : [...currentMessages, ...newMessages];
 
 
         // Remove duplicates:
@@ -240,7 +252,62 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
 
 
+    }),
+
+    addTypingUser: (threadId: string, username: string): void => set((state) => {
+
+        const currentlyTyping = state.typingUsers ?? {};
+        const currentlyTypingInThread = new Set(currentlyTyping[threadId] ?? []);
+
+        currentlyTypingInThread.add(username);
+
+
+        return {
+
+            typingUsers: {
+                ...currentlyTyping,
+                [threadId]: currentlyTypingInThread
+            }
+
+        }
+
+
+
+
+
+
+    }),
+
+
+    removeTypingUser: (threadId: string, username: string): void => set((state) => {
+
+        const currentlyTyping = state.typingUsers ?? {};
+        const currentlyTypingInThread = new Set(currentlyTyping[threadId] ?? []);
+
+
+        currentlyTypingInThread.delete(username);
+ 
+
+
+        return {
+
+            typingUsers: {
+                ...currentlyTyping,
+                [threadId]: currentlyTypingInThread
+            }
+
+        }
+
+
+
+
+
+
     })
+
+
+
+
 
 
 

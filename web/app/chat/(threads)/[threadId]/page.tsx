@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, use } from "react"
 import { motion } from "framer-motion"
-import { Moon, Sun } from "lucide-react"
 import ChatHeader from "./_components/chat-header"
 import ChatInput from "./_components/chat-input"
 import MessageBubble from "./_components/message-bubble"
@@ -11,6 +10,7 @@ import { useTheme } from "next-themes"
 import { Message } from "@chat/shared"
 import { useChatApp } from "@/features/chat/hooks/use-chat-app"
 import { LastTenMsgsResponse } from "@/app/api/last-ten-msgs/route"
+import TypingIndicator from "./_components/typing-indicator"
 
 
 
@@ -43,7 +43,7 @@ export default function MessagesView({ params }: ChatViewProps) {
 
 
 
-    const { messages, replyingToMsg, handleSendMessage, selectedThreadId, set, addMessages } = useChatApp()!;
+    const { messages, replyingToMsg, handleSendMessage, selectedThreadId,handleTyping, set, addMessages,typingUsers } = useChatApp()!;
 
 
 
@@ -110,59 +110,59 @@ export default function MessagesView({ params }: ChatViewProps) {
                 entries.forEach(async (entry) => {
 
                     // early exit if the div isnt intersecting or all messages are fetched! 
-                    if(!entry.isIntersecting || allFetchedRef.current) return;
+                    if (!entry.isIntersecting || allFetchedRef.current) return;
 
-                        // Clear any existing timeout
-                        if (loadingTimeoutRef.current) {
-                            clearTimeout(loadingTimeoutRef.current)
-                        }
-
-                        
-
-                        setLoadingState("loading");
-
-
-                        const res = await fetch(`/api/last-ten-msgs?threadId=${selectedThreadId}&skip=${skipMessagesRef.current}`, { method: "GET" });
-
-                        if (!res.ok) {
-                            setLoadingState("failed");
-                            clearTimeout(loadingTimeoutRef.current ?? "");
-                            return;
-                        }
+                    // Clear any existing timeout
+                    if (loadingTimeoutRef.current) {
+                        clearTimeout(loadingTimeoutRef.current)
+                    }
 
 
 
-                        const { messages: newMsgs }: LastTenMsgsResponse = await res.json();
+                    setLoadingState("loading");
 
 
+                    const res = await fetch(`/api/last-ten-msgs?threadId=${selectedThreadId}&skip=${skipMessagesRef.current}`, { method: "GET" });
 
-                        // TODO: ZOD VALIDATE :
-
-
-
-
-
-                        // append to start cuz received messages will be older than existing msgs! 
-                        addMessages(newMsgs, { appendToStart: true });
-
-                        setLoadingState("idle");
-
-                        // ONLY UPDATE THE COUNT IF SOMETHING WAS ADDED : 
-
-                        if (newMsgs.length === 0) {
-                            // SET all messages fetched flag to true, to block further API requests! 
-                            allFetchedRef.current = true;
-                        }
-                        else {
-
-                            skipMessagesRef.current += 10
-
-                        }
-
+                    if (!res.ok) {
+                        setLoadingState("failed");
+                        clearTimeout(loadingTimeoutRef.current ?? "");
                         return;
+                    }
 
 
-                    
+
+                    const { messages: newMsgs }: LastTenMsgsResponse = await res.json();
+
+
+
+                    // TODO: ZOD VALIDATE :
+
+
+
+
+
+                    // append to start cuz received messages will be older than existing msgs! 
+                    addMessages(newMsgs, { appendToStart: true });
+
+                    setLoadingState("idle");
+
+                    // ONLY UPDATE THE COUNT IF SOMETHING WAS ADDED : 
+
+                    if (newMsgs.length === 0) {
+                        // SET all messages fetched flag to true, to block further API requests! 
+                        allFetchedRef.current = true;
+                    }
+                    else {
+
+                        skipMessagesRef.current += 10
+
+                    }
+
+                    return;
+
+
+
                 })
             },
             {
@@ -280,11 +280,7 @@ export default function MessagesView({ params }: ChatViewProps) {
 
                     {messages?.[threadId]?.map((message) => {
 
-                        // const isContextMenuOpen = contextMenuOpenMessageId !== null
-
-
-                        // const isThisMessageOpen = contextMenuOpenMessageId === message.msgId
-                        // const shouldBlur = isContextMenuOpen && !isThisMessageOpen
+                    
 
                         return (
                             <div
@@ -314,6 +310,11 @@ export default function MessagesView({ params }: ChatViewProps) {
                             </div>
                         )
                     }) || <h1>NO MESSAGES FOUND FOR THIS THREAD</h1>}
+
+
+                    {typingUsers[threadId]?.size > 0 && <TypingIndicator />}
+
+                    
 
                     <div ref={messagesEndRef} />
                 </div>
@@ -351,11 +352,13 @@ export default function MessagesView({ params }: ChatViewProps) {
             //     transition: "filter 0.2s ease",
             // }}
             >
-                <ChatInput onSend={async (type, content) => {
-                    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-                    await handleSendMessage(type, content);
-
-                }} inputRef={inputRef} />
+                <ChatInput
+                    onSend={(type, content) => {
+                        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+                        handleSendMessage(type, content);
+                    }}
+                    handleTyping={handleTyping}
+                    inputRef={inputRef} />
             </div>
         </div>
     )

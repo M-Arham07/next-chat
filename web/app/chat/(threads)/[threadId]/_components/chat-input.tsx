@@ -6,18 +6,18 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Smile, Paperclip, Camera, Mic, Send } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import VoiceRecorder from "./voice-recorder"
-import { useChatApp } from "@/features/chat/hooks/use-chat-app"
 import { MessageContentType } from "@chat/shared"
 
 interface ChatInputProps {
   onSend: (
     type: Omit<MessageContentType, "deleted">,
     content: string | File,
-  ) => Promise<void>
+  ) => void
+  handleTyping: () => void
   inputRef: Ref<HTMLInputElement> | null
 }
 
-const ChatInput = ({ onSend, inputRef }: ChatInputProps) => {
+const ChatInput = ({ onSend, handleTyping,inputRef }: ChatInputProps) => {
 
   // if text content, send it only on button click/enter, 
   // if document or image, send when selected !
@@ -45,6 +45,17 @@ const ChatInput = ({ onSend, inputRef }: ChatInputProps) => {
     onSend("voice", audioUrl);
     setIsRecording(false);
   }
+
+
+
+
+
+
+
+
+
+
+
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
 
@@ -92,7 +103,10 @@ const ChatInput = ({ onSend, inputRef }: ChatInputProps) => {
           <Input
             value={content}
             ref={inputRef}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(e) => {
+              setContent(e.target.value);
+              handleTyping();
+            }}
             placeholder="Message"
             className="w-full bg-secondary/50 border-glass-border rounded-full pl-4 pr-20 py-6 text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary/30 backdrop-blur-sm"
           />

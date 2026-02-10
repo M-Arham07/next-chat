@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useEffect, useMemo, useRef } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useChatAppStore } from "../store/chatapp.store";
 import { useLoader } from "@/store/loader/use-loader";
 import { Message, MessageContentType, Thread } from "@chat/shared";
@@ -22,6 +22,8 @@ interface ChatAppHook extends ChatAppStore {
 
     handleRetryMessage: (message: Message) => Promise<void>
 
+    handleTyping: () => void
+
     filteredThreads: Thread[] | null
 
 
@@ -42,7 +44,7 @@ const useChatAppHook = (): ChatAppHook => {
         markMounted, searchQuery, activeFilter,
         setThreads, addMessages,
         selectedThreadId, replyingToMsg,
-        set, updateMessageStatus, removeMessage } = store;
+        set, updateMessageStatus, removeMessage,addTypingUser,removeTypingUser } = store;
 
     const { data: session } = useSession();
 
@@ -68,6 +70,9 @@ const useChatAppHook = (): ChatAppHook => {
             if (!socketRef.current) {
 
 
+                console.log("NO CURRENT SOKCET")
+
+
                 const res = await fetch("/api/auth/get-session-token", { method: "GET" });
 
                 const sessionToken = await res.json() as string;
@@ -88,12 +93,12 @@ const useChatAppHook = (): ChatAppHook => {
 
 
 
-            // LISTENERS::: 
-
-
+            // REGISTER LISTENERS::: 
 
             socketRef.current.on("message:received", handleReceiveMessage);
             socketRef.current.on("message:deleted", removeMessage);
+            socketRef.current.on("typing:start",addTypingUser);
+            socketRef.current.on("typing:stop",removeTypingUser)
 
 
 
@@ -184,10 +189,10 @@ const useChatAppHook = (): ChatAppHook => {
 
         return () => {
             setLoading(false);
-            socketRef?.current?.off("message:new");
-            socketRef?.current?.disconnect()
-            socketRef.current = null;
-
+            // socketRef?.current?.off("message:new");
+            // socketRef?.current?.disconnect()
+            // socketRef.current = null;
+            // console.log("UNMOUNTED_CHAT_APP");   
 
         }
 
@@ -197,6 +202,69 @@ const useChatAppHook = (): ChatAppHook => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const isTypingRef = useRef(false);
+
+    const handleTyping = () => {
+
+
+        // edge case:
+        if (!selectedThreadId || !session?.user?.username) return;
+
+        if (!isTypingRef.current) {
+            isTypingRef.current = true;
+            console.log("TYPING START");
+
+
+            // emit! 
+            socketRef.current?.emit("typing:start", selectedThreadId, session.user.username!);
+
+        }
+
+        // STOP (debounced)
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+        typingTimeoutRef.current = setTimeout(() => {
+            isTypingRef.current = false;
+            typingTimeoutRef.current = null;
+            console.log("TYPING STOP");
+
+            socketRef.current?.emit("typing:stop", selectedThreadId, session.user.username!);
+
+
+
+
+        }, 800);
+    };
+
+
+
+
+
+
+
+
+    
+
+
+    
+
+
+   
 
 
     const handleDeleteMessage = async (messageToDelete: Message): Promise<void> => {
@@ -424,6 +492,7 @@ const useChatAppHook = (): ChatAppHook => {
         ...store,
         handleSendMessage,
         filteredThreads,
+        handleTyping,
         handleDeleteMessage,
         handleRetryMessage
     };

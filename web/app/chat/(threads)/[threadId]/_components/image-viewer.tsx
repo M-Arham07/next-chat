@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion"
 import { X } from "lucide-react"
+import Image from "next/image"
 import { useEffect, useState } from "react"
 import { createPortal } from "react-dom"
 
@@ -46,10 +47,13 @@ const ImageViewer = ({ imageUrl, isOpen, onClose }: ImageViewerProps) => {
               className="relative w-11/12 h-5/6 max-w-4xl pointer-events-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <img
+              <Image
                 src={imageUrl || "/placeholder.svg"}
                 alt="Full screen view"
                 className="w-full h-full object-contain rounded-xl shadow-2xl"
+                loading="eager"
+                width={500}
+                height={500}
               />
               <button
                 onClick={onClose}
