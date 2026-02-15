@@ -7,6 +7,7 @@ import NextAuthProvider from "@/providers/next-auth";
 import GlobalLoader from "@/store/loader/GlobalLoader";
 import { LoaderContextProvider } from "@/store/loader/use-loader";
 import { Viewport } from "next";
+import { Toaster } from "@/components/ui/sonner";
 
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -57,6 +58,7 @@ export default function RootLayout({
             <LoaderContextProvider>
               <GlobalLoader loader="LoaderOne" />
               {children}
+              <Toaster />
             </LoaderContextProvider>
           </ThemeProvider>
         </NextAuthProvider>

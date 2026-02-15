@@ -47,7 +47,10 @@ export default async function proxy(request: NextRequest) {
     //         return NextResponse.redirect(new URL("/register", request.url));
     //     }
     // }
+    
 
+
+    
 
 
 
