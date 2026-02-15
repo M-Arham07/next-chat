@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { Dispatch, SetStateAction, useState } from 'react'
 import { UserInterface } from '@chat/shared'
 import AvatarUpload from '@/features/upload-avatar/components/avatar.upload'
 import {
@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { motion } from 'framer-motion'
 import { Loader2, ChevronLeft, X } from 'lucide-react'
+import { fakeDelay } from '@/features/chat/lib/fake-delay'
 
 interface CreateGroupModalProps {
 
@@ -23,7 +24,7 @@ interface CreateGroupModalProps {
 
   // Functions : 
   onClose: () => void
-  onSuccess: () => void
+  onCreateGroup: (groupName: string, groupImage: string, setIsCreating: Dispatch<SetStateAction<boolean>>,) => Promise<void>
   onRemoveUser: (username: string) => void
 }
 
@@ -32,11 +33,11 @@ type ModalStep = 'review' | 'details' | 'confirm'
 export function CreateGroupModal({
   selectedUsers,
   onClose,
-  onSuccess,
+  onCreateGroup,
   onRemoveUser
 }: CreateGroupModalProps) {
 
-  
+
   const [step, setStep] = useState<ModalStep>('review')
   const [groupName, setGroupName] = useState('')
   const [groupImage, setGroupImage] = useState<string | null>(null)
@@ -72,13 +73,6 @@ export function CreateGroupModal({
 
 
 
-  const handleCreateGroup = async () => {
-    setIsCreating(true)
-    const usernames = selectedUsers.map((u) => u.username)
-    console.log({ groupName, usernames, groupImage });
-    setIsCreating(false)
-    onSuccess();
-  }
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -256,7 +250,7 @@ export function CreateGroupModal({
                   Back
                 </Button>
                 <Button
-                  onClick={handleCreateGroup}
+                  onClick={() => onCreateGroup(groupName, (groupImage as string), setIsCreating)}
                   disabled={isCreating}
                   className="gap-2 flex-1"
                 >

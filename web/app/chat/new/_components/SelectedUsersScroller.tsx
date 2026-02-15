@@ -14,14 +14,14 @@ interface SelectedUsersScrollerProps {
 
   // Functions: 
   onRemoveUser: (userId: string) => void
-  onCreateGroup: () => void
+  onStartCreatingGroup: () => void
   onCancel: () => void
 }
 
 export function SelectedUsersScroller({
   selectedUsers,
   onRemoveUser,
-  onCreateGroup,
+  onStartCreatingGroup,
   onCancel,
 }: SelectedUsersScrollerProps) {
 
@@ -98,7 +98,7 @@ export function SelectedUsersScroller({
 
       <div className="flex gap-2 pt-2">
         <Button
-          onClick={onCreateGroup}
+          onClick={onStartCreatingGroup}
           className="flex-1"
         >
           Next: Name Group

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, Dispatch, SetStateAction } from 'react'
 import { UserInterface, type Thread } from '@chat/shared'
 import { debounce } from '@/lib/debounce'
 import { SearchBar } from './SearchBar'
@@ -8,6 +8,8 @@ import { ResultsList } from './ResultsList'
 import { SelectedUsersScroller } from './SelectedUsersScroller'
 import { CreateGroupModal } from './CreateGroupModal'
 import { toast } from 'sonner'
+import { createNewThread } from '@/features/chat/lib/create-thread'
+import { useRouter } from 'next/navigation'
 
 export function StartMessagingClient() {
   const [query, setQuery] = useState('')
@@ -19,6 +21,8 @@ export function StartMessagingClient() {
   const [isGroupCreationMode, setIsGroupCreationMode] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const debouncedSearchRef = useRef<((query: string) => void) | null>(null);
+
+  const router = useRouter();
 
 
   // Initialize debounced search
@@ -104,10 +108,11 @@ export function StartMessagingClient() {
   }
 
 
-  const handleCreateGroupClick = () => {
+  const handeStartCreatingGroup = () => {
 
-    if (selectedUsers.length === 0) {
-      toast.error('Select at least one user to create a group')
+
+    if (selectedUsers.length < 2) {
+      toast.error('Select at least two users to create a group', { position: "top-center" });
       return;
     }
     setShowModal(true)
@@ -121,6 +126,34 @@ export function StartMessagingClient() {
     setIsGroupCreationMode(false)
   }
 
+
+
+  const handleCreateGroup = async (groupName: string, groupImage: string, setIsCreating: Dispatch<SetStateAction<boolean>>): Promise<void> => {
+
+    setIsCreating(true);
+
+    const particpantUsernames = [...new Set<string>(selectedUsers.map(u => u.username))];
+
+    const createdThreadId = await createNewThread({ type: "group", particpantUsernames, groupName, groupImage });
+
+    if (!createdThreadId) {
+      toast.error("Failed to create group! Please try again");
+      setIsCreating(false);
+      return;
+    }
+
+    setShowModal(false)
+    setSelectedUsers([])
+    setIsGroupCreationMode(false)
+    toast.success('Group created successfully');
+
+    router.push(`/chat/${createdThreadId}`);
+
+    return;
+
+
+
+  }
   return (
     <>
 
@@ -135,7 +168,7 @@ export function StartMessagingClient() {
         <SelectedUsersScroller
           selectedUsers={selectedUsers}
           onRemoveUser={handleUserRemove}
-          onCreateGroup={handleCreateGroupClick}
+          onStartCreatingGroup={handeStartCreatingGroup}
           onCancel={handleCancelGroupCreation}
         />
       )}
@@ -166,12 +199,7 @@ export function StartMessagingClient() {
         <CreateGroupModal
           selectedUsers={selectedUsers}
           onClose={() => setShowModal(false)}
-          onSuccess={() => {
-            setShowModal(false)
-            setSelectedUsers([])
-            setIsGroupCreationMode(false)
-            toast.success('Group created successfully')
-          }}
+          onCreateGroup={handleCreateGroup}
           onRemoveUser={handleUserRemove}
         />
       )}

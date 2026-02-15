@@ -20,11 +20,7 @@ const participantSchema = new Schema(
         },
 
         leftAt: {
-            type: Date,
-            required: function (this: any) {
-                const thread = this.ownerDocument() as ThreadDoc;
-                return thread?.type === "group";
-            }
+            type: Date
         }
     },
     { _id: false }
