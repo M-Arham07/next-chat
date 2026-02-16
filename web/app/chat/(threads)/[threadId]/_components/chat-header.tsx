@@ -1,16 +1,17 @@
 "use client"
 
 import { ArrowLeft, Phone, MoreVertical, Video } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback,AvatarImage } from "@/components/ui/avatar"
 import Link from "next/link"
 
 interface ChatHeaderProps {
-  name: string
+  username?: string
+  image?: string
   status?: string
-  avatarInitial: string
 }
 
-const ChatHeader = ({ name, status = "online", avatarInitial }: ChatHeaderProps) => {
+const ChatHeader = ({ username = "Loading...", image, status = "online" }: ChatHeaderProps) => {
+
   return (
     <header
       className="
@@ -21,17 +22,21 @@ const ChatHeader = ({ name, status = "online", avatarInitial }: ChatHeaderProps)
       "
     >
       <Link href="/chat">
-      <button className="p-2 rounded-full hover:bg-secondary transition-colors">
-        <ArrowLeft className="w-5 h-5 text-foreground" />
-      </button>
+        <button className="p-2 rounded-full hover:bg-secondary transition-colors">
+          <ArrowLeft className="w-5 h-5 text-foreground" />
+        </button>
       </Link>
 
       <Avatar className="w-10 h-10 bg-linear-to-br from-muted to-accent">
-        <AvatarFallback className="bg-transparent text-foreground font-medium">{avatarInitial}</AvatarFallback>
+        <AvatarImage
+          src={image}
+          alt="DP"
+        />
+        <AvatarFallback className="bg-transparent text-foreground font-medium">{username.charAt(0).toUpperCase()}</AvatarFallback>
       </Avatar>
 
       <div className="flex-1 min-w-0">
-        <h1 className="text-foreground font-semibold truncate">{name}</h1>
+        <h1 className="text-foreground font-semibold truncate">{username}</h1>
         <p className="text-xs text-muted-foreground">{status}</p>
       </div>
 

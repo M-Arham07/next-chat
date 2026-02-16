@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, Ref, RefObject, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useChatAppStore } from "../store/chatapp.store";
 import { useLoader } from "@/store/loader/use-loader";
 import { Message, MessageContentType, Thread } from "@chat/shared";
@@ -16,8 +16,10 @@ import { toast } from "sonner";
 interface ChatAppHook extends ChatAppStore {
 
 
-    handleSendMessage: (type: Omit<MessageContentType, "deleted">,
-        content: string | File) => Promise<void>
+    handleSendMessage: (
+        type: Omit<MessageContentType, "deleted">,
+        content: string | File,
+    ) => Promise<void>,
 
     handleDeleteMessage: (messageToDelete: Message) => Promise<void>,
 
@@ -94,7 +96,7 @@ const useChatAppHook = (): ChatAppHook => {
 
 
 
-         
+
             // REGISTER LISTENERS::: 
             socketRef.current.on("message:received", handleReceiveMessage);
             socketRef.current.on("message:deleted", removeMessage);
@@ -324,7 +326,8 @@ const useChatAppHook = (): ChatAppHook => {
     // useEffect(() => console.log(store.messages), [store.messages])
     const handleSendMessage = async (
         type: Omit<MessageContentType, "deleted">,
-        content: string | File): Promise<void> => {
+        content: string | File)
+        : Promise<void> => {
 
 
 
@@ -333,9 +336,6 @@ const useChatAppHook = (): ChatAppHook => {
 
         // NOTE: if a message fails to send, i will not remove it from DB! 
         // Just let it stay there, user can later click resend! 
-
-
-
 
 
 
