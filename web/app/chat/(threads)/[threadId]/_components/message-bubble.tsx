@@ -191,10 +191,11 @@ const MessageBubble = ({
     <>
       <motion.div
         ref={containerRef}
-        initial={{ opacity: 0, scale: 0.8, x: isSent ? 20 : -20 }}
-        animate={{ opacity: 1, scale: 1, x: isSent ? -swipeX : swipeX }}
+        animate={{ x: isSent ? -swipeX : swipeX }}
         transition={swipeX === 0 ? { type: "spring", stiffness: 500, damping: 30 } : { type: "tween", duration: 0, ease: "linear" }}
         className={`flex ${isSent ? "justify-end" : "justify-start"} px-4 py-1 group relative`}
+  
+        
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}

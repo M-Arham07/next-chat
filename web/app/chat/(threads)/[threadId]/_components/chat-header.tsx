@@ -1,6 +1,5 @@
 "use client"
 
-import { motion } from "framer-motion"
 import { ArrowLeft, Phone, MoreVertical, Video } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import Link from "next/link"
@@ -13,9 +12,7 @@ interface ChatHeaderProps {
 
 const ChatHeader = ({ name, status = "online", avatarInitial }: ChatHeaderProps) => {
   return (
-    <motion.header
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
+    <header
       className="
         fixed md:absolute top-0 left-0 right-0 z-50
         flex items-center gap-3 px-2 py-3
@@ -49,7 +46,7 @@ const ChatHeader = ({ name, status = "online", avatarInitial }: ChatHeaderProps)
           <MoreVertical className="w-5 h-5 text-foreground" />
         </button>
       </div>
-    </motion.header>
+    </header>
   )
 }
 

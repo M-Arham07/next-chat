@@ -38,7 +38,6 @@ export const createNewThread: createNewThreadFn = async ({ type, particpantUsern
 
 
 
-        // DO NOT ALLOW TO CREATE
 
 
         // DO NOT ALLOW TO CREATE if type is private and particpant length is less than 2

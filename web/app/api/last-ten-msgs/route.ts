@@ -13,6 +13,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<LastTenMsg
 
     try {
 
+       
 
         const session = await getServerSession(authOptions);
 
@@ -20,8 +21,10 @@ export async function GET(request: NextRequest): Promise<NextResponse<LastTenMsg
 
 
         const threadId = request.nextUrl.searchParams.get("threadId") || "";
+        console.log(request.nextUrl.searchParams.get("skip"))
         const skipOffset = parseInt(request.nextUrl.searchParams.get("skip") ?? "");
 
+          
 
         
 
@@ -30,6 +33,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<LastTenMsg
         if (typeof skipOffset !== "number" || skipOffset < 0) throw new Error("No skip offset provided !");
 
 
+      
 
 
         await ConnectDB();
@@ -37,7 +41,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<LastTenMsg
 
 
 
-        const isFound = await Threads.findOne({
+        const isFound = await Threads.distinct("threadId",{
             threadId: threadId,
             "particpants.username": session.user.username
         });
@@ -53,6 +57,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<LastTenMsg
 
 
         // if user exists in this thread, get the messages: 
+
+   
 
 
         const msgs: Message[] = await Messages.find({

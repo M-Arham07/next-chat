@@ -10,6 +10,7 @@ import filterThreads from "../lib/filter-threads";
 import { getSocket, type SocketClientType } from "@/features/chat/lib/socket-client"
 import { GetAllChatsResponse } from "@/app/api/get-all-chats/route";
 import { GetFileUrlResponse } from "@/app/api/get-file-url/route";
+import { toast } from "sonner";
 
 
 interface ChatAppHook extends ChatAppStore {
@@ -44,7 +45,7 @@ const useChatAppHook = (): ChatAppHook => {
         markMounted, searchQuery, activeFilter,
         setThreads, addMessages,
         selectedThreadId, replyingToMsg,
-        set, updateMessageStatus, removeMessage,addTypingUser,removeTypingUser } = store;
+        set, updateMessageStatus, removeMessage, addTypingUser, removeTypingUser } = store;
 
     const { data: session } = useSession();
 
@@ -93,12 +94,15 @@ const useChatAppHook = (): ChatAppHook => {
 
 
 
+         
             // REGISTER LISTENERS::: 
-
             socketRef.current.on("message:received", handleReceiveMessage);
             socketRef.current.on("message:deleted", removeMessage);
-            socketRef.current.on("typing:start",addTypingUser);
-            socketRef.current.on("typing:stop",removeTypingUser)
+            socketRef.current.on("typing:start", addTypingUser);
+            socketRef.current.on("typing:stop", removeTypingUser);
+
+            // document.addEventListener("visibilitychange",()=>toast.error("visivility change"));
+
 
 
 
@@ -258,13 +262,13 @@ const useChatAppHook = (): ChatAppHook => {
 
 
 
-    
 
 
-    
 
 
-   
+
+
+
 
 
     const handleDeleteMessage = async (messageToDelete: Message): Promise<void> => {
@@ -365,7 +369,7 @@ const useChatAppHook = (): ChatAppHook => {
 
         let newMessage: Message = {
 
-            msgId: crypto?.randomUUID() || (Date.now() - Math.random()).toString(),
+            msgId: process.env.NODE_ENV === "production" ? crypto.randomUUID() : (Date.now() - Math.random()).toString(),
             threadId: selectedThreadId as string,
             sender: session?.user?.username || "",
             type: type as MessageContentType,

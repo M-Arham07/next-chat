@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useRef, use } from "react"
-import { motion } from "framer-motion"
 import ChatHeader from "./_components/chat-header"
 import ChatInput from "./_components/chat-input"
 import MessageBubble from "./_components/message-bubble"
@@ -207,7 +206,7 @@ export default function MessagesView({ params }: ChatViewProps) {
 
 
     if (!mounted) {
-        return null
+        return<h1>Loading...</h1>
     }
 
     return (
@@ -230,10 +229,8 @@ export default function MessagesView({ params }: ChatViewProps) {
 
             {/* Loading state display below header */}
             {loadingState !== "idle" && (
-                <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
+                <div
+             
                     className="absolute top-20 left-0 right-0 z-40 flex justify-center px-4"
                 >
                     <div
@@ -244,10 +241,8 @@ export default function MessagesView({ params }: ChatViewProps) {
                     >
                         {loadingState === "loading" && (
                             <>
-                                <motion.div
-                                    animate={{ rotate: 360 }}
-                                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                    className="w-4 h-4 rounded-full border-2 border-transparent border-t-foreground"
+                                <div
+                                    className="w-4 h-4 rounded-full border-2 border-transparent border-t-foreground animate-spin"
                                 />
                                 <span className="text-sm font-medium">Loading Messages </span>
                             </>
@@ -262,13 +257,13 @@ export default function MessagesView({ params }: ChatViewProps) {
                             </>
                         )}
                     </div>
-                </motion.div>
+                </div>
             )}
 
-            <motion.main
+            <main
                 ref={mainRef}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+          
+             
                 className="flex-1 min-h-0 overflow-y-auto pt-20 pb-24 flex flex-col custom-scrollbar"
             >
                 <div ref={sentinelRef} className="border h-2"></div>
@@ -318,16 +313,15 @@ export default function MessagesView({ params }: ChatViewProps) {
 
                     <div ref={messagesEndRef} />
                 </div>
-            </motion.main>
+            </main>
 
 
             {replyingToMsg &&
 
                 (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
+                    <div
+                
+              
                         className="fixed bottom-24 left-0 right-0 px-4 z-40"
                     >
                         <div className="mx-auto max-w-2xl flex items-center gap-3 px-4 py-3 bg-secondary/50 backdrop-blur-sm border border-glass-border rounded-lg">
@@ -343,7 +337,7 @@ export default function MessagesView({ params }: ChatViewProps) {
                                 ✕
                             </button>
                         </div>
-                    </motion.div>
+                    </div>
                 )}
 
             <div

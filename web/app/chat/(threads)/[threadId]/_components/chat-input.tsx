@@ -2,8 +2,8 @@
 
 import type { Ref } from "react"
 import { useState, useRef, RefObject } from "react"
-import { motion, AnimatePresence } from "framer-motion"
 import { Smile, Paperclip, Camera, Mic, Send } from "lucide-react"
+import {motion} from "framer-motion";
 import { Input } from "@/components/ui/input"
 import VoiceRecorder from "./voice-recorder"
 import { MessageContentType } from "@chat/shared"
@@ -107,6 +107,7 @@ const ChatInput = ({ onSend, handleTyping,inputRef }: ChatInputProps) => {
               setContent(e.target.value);
               handleTyping();
             }}
+            type="text"
             placeholder="Message"
             className="w-full bg-secondary/50 border-glass-border rounded-full pl-4 pr-20 py-6 text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary/30 backdrop-blur-sm"
           />
@@ -131,7 +132,7 @@ const ChatInput = ({ onSend, handleTyping,inputRef }: ChatInputProps) => {
           </div>
         </div>
 
-        <AnimatePresence mode="wait">
+      
           {content.trim().length > 0 ? (
             <motion.button
               key="send"
@@ -158,7 +159,7 @@ const ChatInput = ({ onSend, handleTyping,inputRef }: ChatInputProps) => {
               <Mic className="w-5 h-5" />
             </motion.button>
           )}
-        </AnimatePresence>
+  
       </form>
     </motion.div>
   )
