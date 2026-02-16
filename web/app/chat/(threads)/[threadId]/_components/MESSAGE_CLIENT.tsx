@@ -10,6 +10,7 @@ import TypingIndicator from "./typing-indicator"
 import { particpant } from "@chat/shared";
 import { useSession } from "next-auth/react";
 import { useInfiniteScroll } from "@/features/chat/hooks/use-infinite-scroll";
+import Loading from "../loading";
 
 
 
@@ -111,7 +112,7 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
 
 
     if (!mounted) {
-        return <h1>Loading...</h1>
+        return <Loading />
     }
 
 
