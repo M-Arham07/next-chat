@@ -110,9 +110,9 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
 
 
 
-    // if (!mounted) {
-    //     return <h1>Loading...</h1>
-    // }
+    if (!mounted) {
+        return <h1>Loading...</h1>
+    }
 
 
 
