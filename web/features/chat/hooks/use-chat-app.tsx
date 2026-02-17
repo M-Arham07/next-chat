@@ -195,10 +195,13 @@ const useChatAppHook = (): ChatAppHook => {
 
         return () => {
             setLoading(false);
+            socketRef.current?.emit("typing:stop", selectedThreadId ?? "", session?.user?.username! || "");
             // socketRef?.current?.off("message:new");
             // socketRef?.current?.disconnect()
             // socketRef.current = null;
             // console.log("UNMOUNTED_CHAT_APP");   
+
+
 
         }
 

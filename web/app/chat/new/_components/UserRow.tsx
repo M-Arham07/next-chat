@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 
 interface UserRowProps {
   user: UserInterface
-  onChat?: (userId: string) => void
+  onChat: (username: string) => void
   onAdd?: (user: UserInterface) => void
   isGroupCreationMode?: boolean
   isSelected?: boolean
@@ -25,25 +25,6 @@ export function UserRow({
 
 
 
-  const handleChat = () => {
-    if (onChat) {
-      const thread: Thread = {
-        threadId: process.env.NODE_ENV === "production" ? crypto.randomUUID() : (Math.random() - Date.now()).toString(),
-        type: 'direct',
-        particpants: [
-          {
-            username: user.username,
-            image: user.image,
-            role: 'member',
-          },
-        ],
-        createdAt: new Date(),
-      }
-      console.log(thread)
-      toast.success(`Starting chat with ${user.name}`)
-      onChat(user._id.toString())
-    }
-  }
 
   const handleAdd = () => {
     if (onAdd) {
@@ -94,7 +75,7 @@ export function UserRow({
         <Button
           variant="outline"
           size="sm"
-          onClick={handleChat}
+          onClick={()=>onChat(user.username)}
           className="gap-2"
         >
           <MessageCircle className="h-4 w-4" />

@@ -26,7 +26,7 @@ export async function GET(request: NextApiRequest): Promise<NextResponse<GetAllC
 
 
         const session = await getServerSession(authOptions);
-        
+
 
         if (!session?.user?.username) throw new Error("INVALID_AUTH");
 
@@ -124,7 +124,7 @@ export async function GET(request: NextApiRequest): Promise<NextResponse<GetAllC
 
 
 
-        return NextResponse.json(data, { status: 200 });
+        return NextResponse.json((data ?? { threads: [], messages: [] }), { status: 200 });
 
 
 

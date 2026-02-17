@@ -8,6 +8,7 @@ import { useLoader } from "@/store/loader/use-loader"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { GetFileUrlResponse } from "@/app/api/get-file-url/route"
+import Image from "next/image"
 
 interface AvatarUploadProps {
     displayPicture: string | null
@@ -111,7 +112,7 @@ export default function AvatarUpload({
 
                         {/* Main avatar container */}
                         <div className="relative w-full h-full rounded-full overflow-hidden bg-muted border-2 border-border shadow-lg backdrop-blur-sm">
-                            <img
+                            <Image
                                 src={displayPicture || "/placeholder.svg"}
                                 alt="Display picture preview"
                                 className="w-full h-full object-cover"

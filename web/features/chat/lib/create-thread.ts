@@ -6,14 +6,14 @@ import { getServerSession } from "next-auth";
 
 type createNewThreadFn = (params: {
     type: ThreadType
-    particpantUsernames: string[],
+    otherParticpantUsernames: string[],
     groupName?: string,
     groupImage?: string
-}) => Promise<string | null>
+}) => Promise<Thread | null>
 
 
 
-export const createNewThread: createNewThreadFn = async ({ type, particpantUsernames, groupName, groupImage }) => {
+export const createNewThread: createNewThreadFn = async ({ type, otherParticpantUsernames, groupName, groupImage }) => {
 
     try {
 
@@ -23,28 +23,21 @@ export const createNewThread: createNewThreadFn = async ({ type, particpantUsern
 
         if (!session) throw new Error("No session found! ");
 
+        otherParticpantUsernames = [...otherParticpantUsernames, session.user.username!];
 
         // Remove duplicates (hence if session.username is two times, dont include ! )
 
-        particpantUsernames = [...new Set<string>(particpantUsernames)];
+        otherParticpantUsernames = [...new Set<string>(otherParticpantUsernames)];
 
 
-        // THE partcipantUsernames ARRAY MUST INCLUDE THE SESSION.USER.USERNAME WHEN SENT FROM FRONTEND! 
-
-        if (!particpantUsernames.includes(session.user.username!)) {
-            throw new Error("Unknown person tried to create thread ! ");
-        }
-
-
-
+        
 
 
 
         // DO NOT ALLOW TO CREATE if type is private and particpant length is less than 2
 
-        if (type === "direct" && particpantUsernames.length < 2) {
+        if (type === "direct" && otherParticpantUsernames.length < 2) {
             throw new Error("For Direct chat, particpant length must be greater than 2 ! ");
-
         }
 
 
@@ -60,7 +53,7 @@ export const createNewThread: createNewThreadFn = async ({ type, particpantUsern
 
 
             // DO NOT ALLOW TO CREATE if type is group and total particpant length is less than 3
-            if (particpantUsernames.length < 3) {
+            if (otherParticpantUsernames.length < 3) {
                 throw new Error("For Group chat, particpant length must be greater than 3 ! ");
             }
 
@@ -81,24 +74,25 @@ export const createNewThread: createNewThreadFn = async ({ type, particpantUsern
 
 
         const usersToAdd: UserInterface[] = await User.find({
-            username: { $in: particpantUsernames }
+            username: { $in: otherParticpantUsernames }
         });
 
 
-        if (usersToAdd.length !== particpantUsernames.length) throw new Error("Ghost user was tried to be added!");
+        if (usersToAdd.length !== otherParticpantUsernames.length) throw new Error("Ghost user was tried to be added!");
 
 
 
         // Check if thread b/w the same users already exists! 
 
-        const [existing]: string[] = await Threads.distinct("threadId", {
+        const existing: Thread = await Threads.findOne({
             $and: [
-                { "particpant.username": { $all: particpantUsernames } },
-                { particpant: { $size: particpantUsernames.length } }
+                { "particpants.username": { $all: otherParticpantUsernames } },
+                { particpants: { $size: otherParticpantUsernames.length } }
             ]
         }).lean();
 
-        if (existing) return existing;
+   
+        if (existing) return JSON.parse(JSON.stringify(existing));
 
         // otherwise create a new thread !
 
@@ -117,7 +111,7 @@ export const createNewThread: createNewThreadFn = async ({ type, particpantUsern
 
         const newThread: Thread = {
             threadId: process.env.NODE_ENV === "production" ? crypto.randomUUID() : (Math.random() * Date.now() + 1).toString(),
-            type: particpantUsernames.length > 2 ? "group" : "direct",
+            type: otherParticpantUsernames.length > 2 ? "group" : "direct",
 
             particpants: usersToAdd.map(user => ({
                 username: user.username,
@@ -156,7 +150,7 @@ export const createNewThread: createNewThreadFn = async ({ type, particpantUsern
         // finally, return the newly created thread's id! , so user is instantly routed to /chat/${threadId}
 
 
-        return newThread.threadId;
+        return newThread;
 
     }
 

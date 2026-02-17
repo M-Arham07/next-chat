@@ -11,7 +11,7 @@ interface ResultsListProps {
   results: UserInterface[] | Thread[]
   isLoading: boolean
   isError: boolean
-  onUserChat?: (userId: string) => void
+  onUserChat: (username: string) => void
   onGroupJoin?: (threadId: string) => void
   onUserAdd?: (user: UserInterface) => void
   isGroupCreationMode?: boolean

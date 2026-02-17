@@ -25,7 +25,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         // idk how this regex work lol
         const escaped = username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-        const foundUsers = await User.find({ username: { $regex: escaped, $options: "i" } }).lean();
+        const foundUsers = await User.find({ username: { $regex: escaped, $options: "i", $ne: session.user.username } }).lean();
 
         console.log("FOUND USER RES", foundUsers)
 

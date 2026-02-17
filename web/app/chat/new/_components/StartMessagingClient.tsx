@@ -10,6 +10,7 @@ import { CreateGroupModal } from './CreateGroupModal'
 import { toast } from 'sonner'
 import { createNewThread } from '@/features/chat/lib/create-thread'
 import { useRouter } from 'next/navigation'
+import { useChatApp } from '@/features/chat/hooks/use-chat-app'
 
 export function StartMessagingClient() {
   const [query, setQuery] = useState('')
@@ -24,6 +25,7 @@ export function StartMessagingClient() {
 
   const router = useRouter();
 
+  const { addThread } = useChatApp();
 
   // Initialize debounced search
   useEffect(() => {
@@ -118,13 +120,6 @@ export function StartMessagingClient() {
     setShowModal(true)
   }
 
-  const handleCancelGroupCreation = () => {
-    if (selectedUsers.length > 0) {
-      toast.error('Clear your selection first')
-      return
-    }
-    setIsGroupCreationMode(false)
-  }
 
 
 
@@ -132,28 +127,63 @@ export function StartMessagingClient() {
 
     setIsCreating(true);
 
-    const particpantUsernames = [...new Set<string>(selectedUsers.map(u => u.username))];
+    const otherParticpantUsernames = [...new Set<string>(selectedUsers.map(u => u.username))];
 
-    const createdThreadId = await createNewThread({ type: "group", particpantUsernames, groupName, groupImage });
+    const createdThread = await createNewThread({ type: "group", otherParticpantUsernames, groupName, groupImage });
 
-    if (!createdThreadId) {
+    if (!createdThread) {
       toast.error("Failed to create group! Please try again");
       setIsCreating(false);
       return;
     }
+
+
+
 
     setShowModal(false)
     setSelectedUsers([])
     setIsGroupCreationMode(false)
     toast.success('Group created successfully');
 
-    router.push(`/chat/${createdThreadId}`);
+
+    // add new thread to state !
+
+    addThread(createdThread, { appendToStart: true });
+
+    router.push(`/chat/${createdThread.threadId}`);
 
     return;
 
 
 
   }
+
+  const handleUserChat = async (username: string): Promise<void> => {
+
+    const createdThread = await createNewThread({ type: "direct", otherParticpantUsernames: [username] });
+
+    if (!createdThread?.threadId) {
+      toast.error(`Failed to start chat with ${username}`);
+      return;
+    }
+
+
+
+    toast.success(`Starting chat with ${username}`);
+
+    // add new thread to state !
+
+    addThread(createdThread, { appendToStart: true });
+
+
+
+    return router.push(`/chat/${createdThread.threadId}`)
+
+
+
+  }
+
+
   return (
     <>
 
@@ -169,7 +199,7 @@ export function StartMessagingClient() {
           selectedUsers={selectedUsers}
           onRemoveUser={handleUserRemove}
           onStartCreatingGroup={handeStartCreatingGroup}
-          onCancel={handleCancelGroupCreation}
+          onCancel={() => setIsGroupCreationMode(false)}
         />
       )}
 
@@ -178,7 +208,7 @@ export function StartMessagingClient() {
         results={results}
         isLoading={isLoading}
         isError={isError}
-        onUserChat={() => { }}
+        onUserChat={handleUserChat}
         onGroupJoin={() => { }}
         onUserAdd={handleUserAdd}
         isGroupCreationMode={isGroupCreationMode}

@@ -24,6 +24,7 @@ export interface ChatAppStore {
 
     markMounted: () => void
     setThreads: (threads: Thread[]) => void
+    addThread: (newThread: Thread, options: { appendToStart: boolean }) => void
     addMessages: (newMessages: Message[], options?: { resort?: boolean, appendToStart?: boolean }) => void
     updateMessageStatus: (threadId: string, msgId: string, newStatus: MessageStatusType) => void
     removeMessage: (threadId: string, msgId: string, nuke?: boolean) => void
@@ -61,6 +62,29 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
     markMounted: () => set(() => ({ mounted: true })),
     setThreads: (threads: Thread[] | null) => set(() => ({ threads: threads })),
+
+
+    addThread: (newThread, options) => set((state) => {
+
+        const { appendToStart } = options;
+
+        // BLOCK IF ALREADY EXISTS! 
+
+        const doesExist = state.threads?.some(t => t.threadId === newThread.threadId);
+    
+
+
+        if (doesExist) return state;
+
+        const updatedThreads = appendToStart ? [newThread, ...(state.threads ?? []),] : [...(state.threads ?? []), newThread]
+        return {
+            threads: updatedThreads
+        }
+
+
+    }),
+
+
     setMessages: (messages: MessageState) => set(() => ({ messages: messages })),
 
 
@@ -286,7 +310,7 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
 
         currentlyTypingInThread.delete(username);
- 
+
 
 
         return {
