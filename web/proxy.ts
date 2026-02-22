@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getServerSession } from 'next-auth';
 import { authOptions } from './app/api/auth/[...nextauth]/route';
+import path from 'path';
 
 // This function can be marked `async` if using `await` inside
 export default async function proxy(request: NextRequest) {
@@ -9,9 +10,9 @@ export default async function proxy(request: NextRequest) {
     const session = await getServerSession(authOptions);
     const pathname: string = request.nextUrl.pathname;
 
-    
 
-  
+
+
     // run only if pathname doesent start with register !
 
     if (!pathname.startsWith("/register")) {
@@ -47,11 +48,14 @@ export default async function proxy(request: NextRequest) {
     //         return NextResponse.redirect(new URL("/register", request.url));
     //     }
     // }
-    
 
 
-    
 
+
+
+    if (pathname === "/") {
+        return NextResponse.rewrite(new URL("/chat", request.url));
+    }
 
 
 

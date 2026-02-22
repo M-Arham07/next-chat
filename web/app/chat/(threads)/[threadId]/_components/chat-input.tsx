@@ -13,11 +13,11 @@ interface ChatInputProps {
     type: Omit<MessageContentType, "deleted">,
     content: string | File,
   ) => void
-  handleTyping: () => void
+  onTyping: () => void
   inputRef: Ref<HTMLInputElement> | null
 }
 
-const ChatInput = ({ onSend, handleTyping,inputRef }: ChatInputProps) => {
+const ChatInput = ({ onSend, onTyping,inputRef }: ChatInputProps) => {
 
   // if text content, send it only on button click/enter, 
   // if document or image, send when selected !
@@ -105,7 +105,7 @@ const ChatInput = ({ onSend, handleTyping,inputRef }: ChatInputProps) => {
             ref={inputRef}
             onChange={(e) => {
               setContent(e.target.value);
-              handleTyping();
+              onTyping();
             }}
             type="text"
             placeholder="Message"

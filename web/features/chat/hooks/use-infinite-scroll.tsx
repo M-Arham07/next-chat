@@ -7,6 +7,7 @@ import { useChatApp } from "./use-chat-app";
 
 
 type useInfiniteScrollProps = (
+    threadId: string,
     sentinelRef: RefObject<HTMLDivElement | null>,
     mainRef: RefObject<HTMLElement | null>,
     mounted: boolean,
@@ -14,13 +15,13 @@ type useInfiniteScrollProps = (
 
 ) => void
 
-export const useInfiniteScroll: useInfiniteScrollProps = (sentinelRef, mainRef, mounted, setLoadingState) => {
+export const useInfiniteScroll: useInfiniteScrollProps = (threadId, sentinelRef, mainRef, mounted, setLoadingState) => {
 
     const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const skipMessagesRef = useRef<number>(10);
     const allFetchedRef = useRef<boolean>(false);
 
-    const {selectedThreadId,addMessages} = useChatApp();
+    const { addMessages } = useChatApp();
 
 
 
@@ -46,7 +47,7 @@ export const useInfiniteScroll: useInfiniteScrollProps = (sentinelRef, mainRef, 
                     setLoadingState("loading");
 
 
-                    const res = await fetch(`/api/last-ten-msgs?threadId=${selectedThreadId}&skip=${skipMessagesRef.current}`, { method: "GET" });
+                    const res = await fetch(`/api/last-ten-msgs?threadId=${threadId}&skip=${skipMessagesRef.current}`, { method: "GET" });
 
                     if (!res.ok) {
                         setLoadingState("failed");

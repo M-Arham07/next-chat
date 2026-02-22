@@ -16,7 +16,6 @@ export interface ChatAppStore {
     threads: Thread[] | null,
     activeTab: NavTab,
     searchQuery: string,
-    selectedThreadId: string | undefined,
     activeFilter: ActiveFilter,
     typingUsers: Record<string, Set<string>>, // eg: "thread1":["user1","user3"],
 
@@ -46,7 +45,6 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
     threads: null,
     activeTab: "threads",
     searchQuery: "",
-    selectedThreadId: undefined,
     activeFilter: "all",
     typingUsers: {},
 

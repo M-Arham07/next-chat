@@ -19,7 +19,6 @@ export default function ThreadsLayout({ children }: { children: React.ReactNode 
     const { activeTab,
         searchQuery,
         filteredThreads,
-        selectedThreadId,
         mounted,
         activeFilter, set
 

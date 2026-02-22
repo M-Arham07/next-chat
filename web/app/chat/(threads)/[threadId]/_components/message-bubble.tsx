@@ -36,10 +36,6 @@ const MessageBubble = ({
 
   message,
   isHighlighted,
-
-
-
-
   onReplyClick,
   status = "sent",
   onReply
@@ -75,18 +71,6 @@ const MessageBubble = ({
 
   // is the message read ? 
   const isRead = true; // FOR NOW, I'LL USE PLACEHOLDER TRUE!;
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

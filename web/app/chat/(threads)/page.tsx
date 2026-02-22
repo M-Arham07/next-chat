@@ -18,7 +18,6 @@ export default function MobileThreadPage() {
   const { activeTab,
     searchQuery,
     filteredThreads,
-    selectedThreadId,
 
     set
   } = useChatApp()!;

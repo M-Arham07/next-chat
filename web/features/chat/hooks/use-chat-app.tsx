@@ -17,6 +17,7 @@ interface ChatAppHook extends ChatAppStore {
 
 
     handleSendMessage: (
+        threadId: string,
         type: Omit<MessageContentType, "deleted">,
         content: string | File,
     ) => Promise<void>,
@@ -25,7 +26,9 @@ interface ChatAppHook extends ChatAppStore {
 
     handleRetryMessage: (message: Message) => Promise<void>
 
-    handleTyping: () => void
+    handleTyping: (threadId: string) => void
+
+    stopTypingEmit: (threadId: string) => void
 
     filteredThreads: Thread[] | null
 
@@ -46,7 +49,7 @@ const useChatAppHook = (): ChatAppHook => {
     const { mounted, messages, threads,
         markMounted, searchQuery, activeFilter,
         setThreads, addMessages,
-        selectedThreadId, replyingToMsg,
+        replyingToMsg,
         set, updateMessageStatus, removeMessage, addTypingUser, removeTypingUser } = store;
 
     const { data: session } = useSession();
@@ -100,7 +103,14 @@ const useChatAppHook = (): ChatAppHook => {
             // REGISTER LISTENERS::: 
             socketRef.current.on("message:received", handleReceiveMessage);
             socketRef.current.on("message:deleted", removeMessage);
-            socketRef.current.on("typing:start", addTypingUser);
+            socketRef.current.on("typing:start", (threadId, username) => {
+
+                if (session?.user.username !== username) {
+                    addTypingUser(threadId, username);
+
+                }
+
+            });
             socketRef.current.on("typing:stop", removeTypingUser);
 
             // document.addEventListener("visibilitychange",()=>toast.error("visivility change"));
@@ -195,7 +205,7 @@ const useChatAppHook = (): ChatAppHook => {
 
         return () => {
             setLoading(false);
-            socketRef.current?.emit("typing:stop", selectedThreadId ?? "", session?.user?.username! || "");
+
             // socketRef?.current?.off("message:new");
             // socketRef?.current?.disconnect()
             // socketRef.current = null;
@@ -228,11 +238,11 @@ const useChatAppHook = (): ChatAppHook => {
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const isTypingRef = useRef(false);
 
-    const handleTyping = () => {
+    const handleTyping = (threadId: string) => {
 
 
         // edge case:
-        if (!selectedThreadId || !session?.user?.username) return;
+        if (!threadId || !session?.user?.username) return;
 
         if (!isTypingRef.current) {
             isTypingRef.current = true;
@@ -240,7 +250,7 @@ const useChatAppHook = (): ChatAppHook => {
 
 
             // emit! 
-            socketRef.current?.emit("typing:start", selectedThreadId, session.user.username!);
+            socketRef.current?.emit("typing:start", threadId, session.user.username!);
 
         }
 
@@ -252,7 +262,7 @@ const useChatAppHook = (): ChatAppHook => {
             typingTimeoutRef.current = null;
             console.log("TYPING STOP");
 
-            socketRef.current?.emit("typing:stop", selectedThreadId, session.user.username!);
+            stopTypingEmit(threadId);
 
 
 
@@ -263,10 +273,11 @@ const useChatAppHook = (): ChatAppHook => {
 
 
 
+    const stopTypingEmit = (threadId: string) => {
 
+        socketRef.current?.emit("typing:stop", threadId, session?.user?.username! || "");
 
-
-
+    }
 
 
 
@@ -328,6 +339,7 @@ const useChatAppHook = (): ChatAppHook => {
 
     // useEffect(() => console.log(store.messages), [store.messages])
     const handleSendMessage = async (
+        threadId: string,
         type: Omit<MessageContentType, "deleted">,
         content: string | File)
         : Promise<void> => {
@@ -373,7 +385,7 @@ const useChatAppHook = (): ChatAppHook => {
         let newMessage: Message = {
 
             msgId: process.env.NODE_ENV === "production" ? crypto.randomUUID() : (Date.now() - Math.random()).toString(),
-            threadId: selectedThreadId as string,
+            threadId: threadId,
             sender: session?.user?.username || "",
             type: type as MessageContentType,
             content: uploadedContentUrl || (content as string),
@@ -451,7 +463,7 @@ const useChatAppHook = (): ChatAppHook => {
         // Now re-send the message ! 
 
 
-        await handleSendMessage(type, content);
+        await handleSendMessage(threadId, type, content);
 
 
 
@@ -500,6 +512,7 @@ const useChatAppHook = (): ChatAppHook => {
         handleSendMessage,
         filteredThreads,
         handleTyping,
+        stopTypingEmit,
         handleDeleteMessage,
         handleRetryMessage
     };
