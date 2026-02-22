@@ -80,8 +80,6 @@ export default function MessagesViewClient({ params }: { params: Promise<{ threa
 
 
 
-
-
     // Intersection Observer for infinite scroll at top
     useInfiniteScroll(threadId,sentinelRef, mainRef, mounted, setLoadingState);
 
