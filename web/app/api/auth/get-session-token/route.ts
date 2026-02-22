@@ -1,9 +1,8 @@
-import { NextApiRequest, NextApiResponse } from "next";
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 
-export async function GET(request: NextApiRequest): Promise<NextResponse<string>> {
+export async function GET(request: NextRequest): Promise<NextResponse<string>> {
 
 
     const cookieStore = await cookies();

@@ -1,4 +1,4 @@
-export default function MessageViewLoading(){
+export default function Loading(){
      return (
    
       <div className="h-full bg-background relative overflow-hidden flex flex-col">

@@ -1,9 +1,8 @@
 
 import { ConnectDB, Messages, Threads, type Thread, type Message } from "@chat/shared";
-import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 
 
@@ -16,7 +15,7 @@ export type GetAllChatsResponse = {
     messages: Message[]
 
 } | null
-export async function GET(request: NextApiRequest): Promise<NextResponse<GetAllChatsResponse>> {
+export async function GET(request: NextRequest): Promise<NextResponse<GetAllChatsResponse>> {
     console.log("REQ", request.url);
 
 

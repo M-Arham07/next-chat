@@ -54,7 +54,13 @@ export default function RootLayout({
       </head>
       <body className={`font-sans antialiased`}>
         <NextAuthProvider>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+         {/* @ts-ignore */}
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
             <LoaderContextProvider>
               <GlobalLoader loader="LoaderOne" />
               {children}

@@ -18,6 +18,7 @@ export async function deleteMessage(socket: TypedSocket, msgToDelete: Message, a
         const { threadId, msgId, sender } = msgToDelete;
 
 
+        // @ts-ignore
         if (!threadId || !msgId || !sender || (sender !== socket.username)) {
             throw new Error("Delete not allowed!");
         }

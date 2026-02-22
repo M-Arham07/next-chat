@@ -17,7 +17,7 @@ const ThreadFilterTabs = ({ activeFilter, onFilterChange }: ThreadFilterTabsProp
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.15, duration: 0.3 }}
     >
-      <Tabs value={activeFilter} onValueChange={(value)=>onFilterChange(value as ActiveFilter)}>
+      <Tabs value={activeFilter} onValueChange={(value : string)=>onFilterChange(value as ActiveFilter)}>
         <TabsList
           className="
             inline-flex h-auto w-full sm:w-auto items-center gap-1.5 p-1
