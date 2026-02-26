@@ -21,12 +21,6 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
 
 
 
-
-
-
-
-
-
     const { messages, replyingToMsg, handleSendMessage, handleTyping, set, stopTypingEmit, threads, typingUsers } = useChatApp()!;
 
     const { data: session } = useSession();
@@ -57,12 +51,6 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
     const inputRef = useRef<HTMLInputElement | null>(null);
 
 
-    
-    const doesThreadExist = threads?.find(t=>t.threadId === threadId);
-
-    if(!doesThreadExist) {
-        return notFound();
-    }
 
 
 
@@ -163,7 +151,7 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
 
             <main
                 ref={mainRef}
-                className="flex-1 min-h-0 overflow-y-scroll pt-20 pb-24 flex flex-col custom-scrollbar"
+                className="flex-1 min-h-0 overflow-x-hidden pt-20 pb-24 flex flex-col custom-scrollbar"
             >
 
                 <div ref={sentinelRef}> </div>
@@ -174,7 +162,7 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
                 <div className="space-y-1 relative">
                     {/* {contextMenuOpenMessageId && <div className="absolute inset-0 pointer-events-none z-40" />} */}
 
-                    {messages?.[threadId]?.map((message) => (
+                    {messages?.[threadId]?.map((message, idx) => (
 
                         <div
                             key={message.msgId}
@@ -198,6 +186,17 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
                                     inputRef?.current?.focus();
 
                                 }}
+
+
+                                displayPic={
+                                    {
+                                        url: thisThread?.particpants.find(p => p.username === message.sender)?.image,
+
+                                        // if previous message was of the same user ,dont show his dp again 
+
+                                        show: messages?.[threadId][idx - 1]?.sender !== message.sender
+                                    }
+                                }
                                 status={message.status}
                             />
                         </div>
@@ -205,7 +204,10 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
                     )) || <h1>Start a conversation </h1>}
 
 
-                    {typingUsers[threadId]?.size > 0 && <TypingIndicator />}
+                    {/* Render typing bubbles: */}
+                    {[...(typingUsers?.[threadId] ?? [])].map(typingUsername => (
+                        <TypingIndicator isSent={typingUsername === session?.user.username} />
+                    ))}
 
 
 

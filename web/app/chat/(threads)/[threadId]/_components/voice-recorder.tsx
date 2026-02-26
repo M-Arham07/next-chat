@@ -8,7 +8,7 @@ import { Trash2, Play, Pause, Send, X, RefreshCcw } from "lucide-react"
 import { useVoiceRecorder } from "@/features/chat/hooks/message-bubble/use-voice-recorder"
 
 interface VoiceRecorderProps {
-  onSend: (audioUrl: string) => void
+  onSend: (audioUrl: File) => void
   onCancel: () => void
 }
 
@@ -28,7 +28,7 @@ export default function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) 
   }
 
   const handleSend = () => {
-    send((url, durationLabel) => onSend(url))
+    send((audioFile) => onSend(audioFile))
   }
 
   if (error) {

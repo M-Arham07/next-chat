@@ -29,7 +29,7 @@ export type UseVoiceRecorderReturn = {
   start: () => Promise<void>
   togglePause: () => void
   cancel: () => void
-  send: (onSend: (audioUrl: string, durationLabel: string) => void) => void
+  send: (onSend: (audioFile: File) => void) => void
   resetError: () => void
 }
 
@@ -65,12 +65,12 @@ const hardStopStream = (s?: MediaStream | null) => {
     s.getTracks().forEach((t) => {
       try {
         t.enabled = false
-      } catch {}
+      } catch { }
       try {
         t.stop()
-      } catch {}
+      } catch { }
     })
-  } catch {}
+  } catch { }
 }
 
 export function useVoiceRecorder(autoStart = true): UseVoiceRecorderReturn {
@@ -108,7 +108,7 @@ export function useVoiceRecorder(autoStart = true): UseVoiceRecorderReturn {
         mr.ondataavailable = null
         mr.onstop = null
         mr.stop()
-      } catch {}
+      } catch { }
     }
 
     // stop mic (releases indicator)
@@ -118,7 +118,7 @@ export function useVoiceRecorder(autoStart = true): UseVoiceRecorderReturn {
     try {
       const anyMr = mr as any
       if (anyMr?.stream) hardStopStream(anyMr.stream as MediaStream)
-    } catch {}
+    } catch { }
 
     mediaRecorderRef.current = null
     streamRef.current = null
@@ -173,7 +173,7 @@ export function useVoiceRecorder(autoStart = true): UseVoiceRecorderReturn {
         setIsPaused(true)
         stopTimer()
       }
-    } catch {}
+    } catch { }
   }, [isPaused, isStopping, startTimer, stopTimer])
 
   const cancel = useCallback(() => {
@@ -181,7 +181,7 @@ export function useVoiceRecorder(autoStart = true): UseVoiceRecorderReturn {
   }, [cleanup])
 
   const send = useCallback(
-    (onSend: (audioUrl: string, durationLabel: string) => void) => {
+    (onSend: (audioFile: File) => void) => {
       const mr = mediaRecorderRef.current
       if (!mr || mr.state === "inactive" || isStopping) return
 
@@ -194,8 +194,16 @@ export function useVoiceRecorder(autoStart = true): UseVoiceRecorderReturn {
 
       localRecorder.onstop = () => {
         const mime = localRecorder.mimeType || "audio/webm"
+
         const blob = new Blob(chunksRef.current, { type: mime })
-        const url = URL.createObjectURL(blob);
+
+        const ext =
+          mime.includes("webm") ? "webm" :
+            mime.includes("ogg") ? "ogg" :
+              mime.includes("wav") ? "wav" :
+                "webm"
+
+        const file = new File([blob], `recording-${Date.now()}.${ext}`, { type: mime })
 
         // ensure mic is off
         hardStopStream(localStream)
@@ -209,13 +217,13 @@ export function useVoiceRecorder(autoStart = true): UseVoiceRecorderReturn {
         setIsPaused(false)
         setIsStopping(false)
 
-        onSend(url, formatDuration(totalSec))
+        onSend(file)
       }
 
       // flush last chunk
       try {
         localRecorder.requestData()
-      } catch {}
+      } catch { }
 
       // stop mic ASAP for indicator
       hardStopStream(localStream)

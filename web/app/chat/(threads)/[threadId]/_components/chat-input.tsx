@@ -41,8 +41,8 @@ const ChatInput = ({ onSend, onTyping,inputRef }: ChatInputProps) => {
 
 
 
-  const handleRecordingSend = (audioUrl: string) => {
-    onSend("voice", audioUrl);
+  const handleRecordingSend = (audioFile: File) => {
+    onSend("voice", audioFile);
     setIsRecording(false);
   }
 

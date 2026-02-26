@@ -33,9 +33,8 @@ const TypingIndicator = ({ isSent = false }: TypingIndicatorProps) => {
         variants={containerVariants}
         initial="initial"
         animate="animate"
-        className={`flex items-center gap-1 px-4 py-3 rounded-2xl backdrop-blur-sm border border-glass-border ${
-          isSent ? "bg-message-sent rounded-br-md" : "bg-message-received rounded-bl-md"
-        }`}
+        className={`flex items-center gap-1 px-4 py-3 rounded-2xl backdrop-blur-sm border border-glass-border ${isSent ? "bg-message-sent rounded-br-md" : "bg-message-received rounded-bl-md"
+          }`}
       >
         {[0, 1, 2].map((index) => (
           <motion.div
