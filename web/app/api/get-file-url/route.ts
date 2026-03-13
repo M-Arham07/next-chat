@@ -20,6 +20,7 @@ const ALLOWED_FILE_TYPES = [
     "audio/mpeg",
     "audio/wav",
     "audio/ogg",
+    "audio/webm",
     "audio/webm;codecs=opus",
     "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",

@@ -38,8 +38,18 @@ export function getOriginalFilename(storedName: string): string {
  * It also extracts the original filename from the #filename= hash if present.
  */
 export async function reconstructFileFromBlobUrl(blobUrl: string): Promise<File> {
-    const res = await fetch(blobUrl);
+    console.log("[reconstructFileFromBlobUrl] blob is", blobUrl);
+    
+    // Remove hash/fragment before fetching, as fetch might fail on some browsers if it's present
+    const fetchUrl = blobUrl.split("#")[0];
+    
+    const res = await fetch(fetchUrl);
+    if (!res.ok) {
+        throw new Error(`Failed to fetch blob: ${res.statusText}`);
+    }
+    
     const blob = await res.blob();
+    console.log("blob ok")
 
     let filename = "file";
     const hashIndex = blobUrl.indexOf("#filename=");

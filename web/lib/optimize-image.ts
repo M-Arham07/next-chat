@@ -11,7 +11,7 @@ export async function optimizeImage(file: File): Promise<File> {
 
     try {
         const options = {
-            maxSizeMB: 3,
+            maxSizeMB: 0.5,
             useWebWorker: true,
         };
         return await imageCompression(file, options);

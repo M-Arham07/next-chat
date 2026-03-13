@@ -9,6 +9,7 @@ import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { GetFileUrlResponse } from "@/app/api/get-file-url/route"
 import Image from "next/image"
+import { optimizeImage } from "@/lib/optimize-image"
 
 interface AvatarUploadProps {
     displayPicture: string | null
@@ -54,7 +55,9 @@ export default function AvatarUpload({
         // Convert to formData so image file can be sent properly! 
         const formData = new FormData();
 
-        formData.append("file", file);
+        const optimizedImage = await optimizeImage(file)
+
+        formData.append("file", optimizedImage);
 
         const res = await fetch("/api/get-file-url", {
             method: "POST",

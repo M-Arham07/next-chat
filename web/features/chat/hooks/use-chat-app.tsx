@@ -11,7 +11,7 @@ import { getSocket, type SocketClientType } from "@/features/chat/lib/socket-cli
 import { GetAllChatsResponse } from "@/app/api/get-all-chats/route";
 import { GetFileUrlResponse } from "@/app/api/get-file-url/route";
 import { toast } from "sonner";
-import { optimizeImage } from "@/app/lib/optimize-image";
+import { optimizeImage } from "../../../lib/optimize-image";
 import { reconstructFileFromBlobUrl } from "@/features/chat/lib/file-utils";
 
 
@@ -374,6 +374,8 @@ const useChatAppHook = (): ChatAppHook => {
         if (type !== "text" && typeof content === "string" && content.startsWith("blob:")) {
             try {
                 finalContent = await reconstructFileFromBlobUrl(content);
+                // We have the file now, we can revoke the old blob URL
+                URL.revokeObjectURL(content.split("#")[0]);
             } catch (err) {
                 console.error("Failed to reconstruct file from blob:", err);
                 toast.error("Failed to process file for resending");
@@ -420,7 +422,6 @@ const useChatAppHook = (): ChatAppHook => {
             if (finalContent.size > MAX_FILE_SIZE) {
                 toast.error(`File size exceeds the maximum limit of ${MAX_FILE_SIZE / (1024 * 1024)}MB`);
                 updateMessageStatus(newMessage.threadId, newMessage.msgId, "failed");
-                if (rawBlobUrl) URL.revokeObjectURL(rawBlobUrl);
                 return;
             }
 
@@ -444,7 +445,6 @@ const useChatAppHook = (): ChatAppHook => {
 
                     toast.error("Failed to send message!");
                     updateMessageStatus(newMessage.threadId, newMessage.msgId, "failed");
-                    if (rawBlobUrl) URL.revokeObjectURL(rawBlobUrl);
                     return;
                 }
 
@@ -462,7 +462,6 @@ const useChatAppHook = (): ChatAppHook => {
                 console.error("Error during file upload", err);
                 toast.error("Failed to upload file");
                 updateMessageStatus(newMessage.threadId, newMessage.msgId, "failed");
-                if (rawBlobUrl) URL.revokeObjectURL(rawBlobUrl);
                 return;
             }
         }
