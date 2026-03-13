@@ -6,6 +6,7 @@ import { Avatar } from "@/components/ui/avatar"
 
 interface VoiceMessageProps {
   voiceUrl: string
+  status?: string
 }
 
 const BAR_COUNT = 28
@@ -21,7 +22,7 @@ function isGoodDuration(d: number) {
   return Number.isFinite(d) && d > 0 && d !== Infinity
 }
 
-export default function VoiceMessage({ voiceUrl }: VoiceMessageProps) {
+export default function VoiceMessage({ voiceUrl, status }: VoiceMessageProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -206,27 +207,33 @@ export default function VoiceMessage({ voiceUrl }: VoiceMessageProps) {
   const progress = duration > 0 ? Math.min(1, Math.max(0, currentTime / duration)) : 0
 
   return (
-    <div className="flex items-center gap-3 rounded-2xl border bg-background/60 px-3 py-2 shadow-xs backdrop-blur supports-[backdrop-filter]:bg-background/50">
+      <div className="flex items-center gap-3 rounded-2xl border bg-background/60 px-3 py-2 shadow-xs backdrop-blur supports-backdrop-filter:bg-background/50">
       <Avatar className="h-9 w-9 shrink-0 bg-linear-to-br from-muted to-accent ring-1 ring-border">
         <span className="text-xs font-semibold text-foreground">M</span>
       </Avatar>
 
-      <button
-        onClick={handleToggle}
-        className="grid h-10 w-10 shrink-0 place-items-center rounded-full border bg-secondary/40 text-foreground shadow-xs transition hover:bg-secondary/70 active:scale-[0.98]"
-        aria-label={isPlaying ? "Pause voice message" : "Play voice message"}
-      >
-        {isPlaying ? <Pause className="h-5 w-5 fill-foreground" /> : <Play className="h-5 w-5 translate-x-[1px] fill-foreground" />}
-      </button>
+      {status === "sending" ? (
+        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full border bg-secondary/40 text-foreground shadow-xs">
+          <div className="h-5 w-5 rounded-full border-2 border-muted-foreground border-t-primary animate-spin" />
+        </div>
+      ) : (
+        <button
+          onClick={handleToggle}
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-full border bg-secondary/40 text-foreground shadow-xs transition hover:bg-secondary/70 active:scale-[0.98]"
+          aria-label={isPlaying ? "Pause voice message" : "Play voice message"}
+        >
+          {isPlaying ? <Pause className="h-5 w-5 fill-foreground" /> : <Play className="h-5 w-5 translate-x-px fill-foreground" />}
+        </button>
+      )}
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="relative h-10 overflow-hidden rounded-xl border bg-muted/30 px-2">
           <div className="pointer-events-none absolute inset-y-0 left-0 bg-primary/10" style={{ width: `${progress * 100}%` }} />
-          <div className="relative flex h-full items-center justify-between gap-[3px]">
+          <div className="relative flex h-full items-center justify-between gap-0.75">
             {bars.map((h, i) => (
               <div
                 key={i}
-                className="w-[3px] rounded-full bg-linear-to-t from-muted-foreground/60 to-primary/80 transition-[height] duration-75"
+                className="w-0.75 rounded-full bg-linear-to-t from-muted-foreground/60 to-primary/80 transition-[height] duration-75"
                 style={{ height: `${h}px` }}
               />
             ))}

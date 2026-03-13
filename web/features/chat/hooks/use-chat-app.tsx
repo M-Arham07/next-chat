@@ -11,6 +11,8 @@ import { getSocket, type SocketClientType } from "@/features/chat/lib/socket-cli
 import { GetAllChatsResponse } from "@/app/api/get-all-chats/route";
 import { GetFileUrlResponse } from "@/app/api/get-file-url/route";
 import { toast } from "sonner";
+import { optimizeImage } from "@/app/lib/optimize-image";
+import { reconstructFileFromBlobUrl } from "@/features/chat/lib/file-utils";
 
 
 interface ChatAppHook extends ChatAppStore {
@@ -40,6 +42,8 @@ interface ChatAppHook extends ChatAppStore {
 
 const ChatAppContext = createContext<ChatAppHook | undefined>(undefined);
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
 const useChatAppHook = (): ChatAppHook => {
 
 
@@ -50,7 +54,7 @@ const useChatAppHook = (): ChatAppHook => {
         markMounted, searchQuery, activeFilter,
         setThreads, addMessages,
         replyingToMsg,
-        set, updateMessageStatus, removeMessage, addTypingUser, removeTypingUser } = store;
+        set, updateMessageStatus, updateMessageContent, removeMessage, addTypingUser, removeTypingUser } = store;
 
     const { data: session } = useSession();
 
@@ -65,7 +69,9 @@ const useChatAppHook = (): ChatAppHook => {
 
     useEffect(() => {
 
+
         const load = async () => {
+
 
 
 
@@ -195,7 +201,14 @@ const useChatAppHook = (): ChatAppHook => {
 
 
 
+
+
+
+
+
+
         load();
+
 
 
 
@@ -348,39 +361,35 @@ const useChatAppHook = (): ChatAppHook => {
 
         // if message is a file, we'll upload it to supabase, and gets it's url! 
 
+        // but to ensure that file previews are shown quickly on frontend (for loading states),
+        // i'll store it in a blob immediately when the send button is clicked , and update the state with the blob as content
+        // once the file is uploaded to supabase, i'll update the state with the real url as content
 
-        // NOTE: if a message fails to send, i will not remove it from DB! 
-        // Just let it stay there, user can later click resend! 
 
 
+
+
+        // If content is a blob URL from a retry, reconstruct the original File object
+        let finalContent = content;
+        if (type !== "text" && typeof content === "string" && content.startsWith("blob:")) {
+            try {
+                finalContent = await reconstructFileFromBlobUrl(content);
+            } catch (err) {
+                console.error("Failed to reconstruct file from blob:", err);
+                toast.error("Failed to process file for resending");
+                return;
+            }
+        }
 
         // if file type is Not text and a file, upload it!
 
-        let uploadedContentUrl: string | null = null;
+        let rawBlobUrl: string | null = null;
+        let localBlobUrl: string | null = null;
 
-        if (type !== "text" && content instanceof File) {
-
-            // UPLOAD THE FILE TO SUPABASE USING API ROUTE!
-
-            // Convert to formData: 
-
-            const formData = new FormData();
-            formData.append("file", content);
-
-            const res = await fetch("/api/get-file-url", {
-                method: "POST",
-                body: formData
-            });
-
-            if (!res.ok) throw new Error("Unexpected response while uploading file");
-
-            const data = (await res.json()) as GetFileUrlResponse;
-
-            uploadedContentUrl = data!.url;
-
-
+        if (type !== "text" && finalContent instanceof File) {
+            rawBlobUrl = URL.createObjectURL(finalContent);
+            localBlobUrl = `${rawBlobUrl}#filename=${encodeURIComponent(finalContent.name)}`;
         }
-
 
         let newMessage: Message = {
 
@@ -388,28 +397,77 @@ const useChatAppHook = (): ChatAppHook => {
             threadId: threadId,
             sender: session?.user?.username || "",
             type: type as MessageContentType,
-            content: uploadedContentUrl || (content as string),
+            content: localBlobUrl || (finalContent as string),
             timestamp: new Date(Date.now()).toISOString(),
             replyToMsgId: replyingToMsg?.msgId,
             status: "sending"
 
         }
 
-
-
+      
         // TODO: PARSE VIA ZOD SCHEMA HERE, throw error if not matches it! 
-
 
         // append the newMessage to the state, for this thread id!
         // NO NEED TO RESORT!
         addMessages([newMessage]);
 
+        set("replyingToMsg", null);
 
+        let uploadedContentUrl: string | null = null;
 
+        if (type !== "text" && finalContent instanceof File) {
 
+            if (finalContent.size > MAX_FILE_SIZE) {
+                toast.error(`File size exceeds the maximum limit of ${MAX_FILE_SIZE / (1024 * 1024)}MB`);
+                updateMessageStatus(newMessage.threadId, newMessage.msgId, "failed");
+                if (rawBlobUrl) URL.revokeObjectURL(rawBlobUrl);
+                return;
+            }
+
+            try {
+                // Compress the image before uploading if it's an image
+                const fileToUpload = await optimizeImage(finalContent);
+
+                // UPLOAD THE FILE TO SUPABASE USING API ROUTE!
+
+                // Convert to formData: 
+                const formData = new FormData();
+             
+                formData.append("file", fileToUpload);
+
+                const res = await fetch("/api/get-file-url", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!res.ok) {
+
+                    toast.error("Failed to send message!");
+                    updateMessageStatus(newMessage.threadId, newMessage.msgId, "failed");
+                    if (rawBlobUrl) URL.revokeObjectURL(rawBlobUrl);
+                    return;
+                }
+
+                const data = (await res.json()) as GetFileUrlResponse;
+
+                uploadedContentUrl = data!.url;
+
+                // update the message in the store with the real URL instead of local blob
+                updateMessageContent(newMessage.threadId, newMessage.msgId, uploadedContentUrl);
+                newMessage.content = uploadedContentUrl; // ensure socket emits the real URL
+
+                if (rawBlobUrl) URL.revokeObjectURL(rawBlobUrl);
+
+            } catch (err) {
+                console.error("Error during file upload", err);
+                toast.error("Failed to upload file");
+                updateMessageStatus(newMessage.threadId, newMessage.msgId, "failed");
+                if (rawBlobUrl) URL.revokeObjectURL(rawBlobUrl);
+                return;
+            }
+        }
 
         // socketRef.current.emit the message , then use ack! 
-
 
         socketRef?.current?.timeout(10000).emit("message:new", newMessage, (err, res) => {
 
@@ -456,6 +514,8 @@ const useChatAppHook = (): ChatAppHook => {
         const { threadId, msgId, sender, type, content } = message;
 
         // Completely nuke the message from state ! 
+
+        
 
         removeMessage(threadId, msgId, true);
 

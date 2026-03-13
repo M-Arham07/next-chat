@@ -82,16 +82,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<GetAllChat
                             { $sort: { threadId: 1, timestamp: 1 } },
                             {
                                 $project: {
-                                    _id: 0,
-                                    msgId: { $toString: "$_id" },
-                                    threadId: { $toString: "$threadId" },
-                                    sender: 1,
-                                    type: 1,
-                                    content: 1,
-                                    replyToMsgId: 1,
-                                    readBy: 1,
-                                    status: 1,
-                                    timestamp: 1
+                                    _id: 0
                                 }
                             }
                         ],

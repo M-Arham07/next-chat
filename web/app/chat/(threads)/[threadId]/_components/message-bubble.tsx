@@ -18,6 +18,7 @@ import { useSession } from "next-auth/react"
 import { useChatApp } from "@/features/chat/hooks/use-chat-app"
 import { formatTime } from "@/lib/format-time"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getOriginalFilename } from "@/features/chat/lib/file-utils"
 
 
 const MAX_SWIPE_THRESHOLD: number = 80;
@@ -250,10 +251,10 @@ return (
         )}
 
         {message.type === "text" && message.content && <TextMessage content={message.content} />}
-        {message.type === "image" && message.content && <ImageMessage imageUrl={message.content} />}
-        {message.type === "voice" && message.content && <VoiceMessage voiceUrl={message.content} />}
+        {message.type === "image" && message.content && <ImageMessage imageUrl={message.content} status={status} />}
+        {message.type === "voice" && message.content && <VoiceMessage voiceUrl={message.content} status={status} />}
         {message.type === "document" && message.content && (
-          <DocumentMessage documentName={"Placeholder name"} documentUrl={message.content} />
+          <DocumentMessage documentName={getOriginalFilename(message.content)} documentUrl={message.content} status={status} />
         )}
 
         <div

@@ -21,7 +21,9 @@ export const useInfiniteScroll: useInfiniteScrollProps = (threadId, sentinelRef,
     const skipMessagesRef = useRef<number>(10);
     const allFetchedRef = useRef<boolean>(false);
 
-    const { addMessages } = useChatApp();
+    const { addMessages, messages } = useChatApp();
+
+    
 
 
 
@@ -35,12 +37,18 @@ export const useInfiniteScroll: useInfiniteScrollProps = (threadId, sentinelRef,
                 entries.forEach(async (entry) => {
 
                     // early exit if the div isnt intersecting or all messages are fetched! 
+
+
                     if (!entry.isIntersecting || allFetchedRef.current) return;
+
 
                     // Clear any existing timeout
                     if (loadingTimeoutRef.current) {
                         clearTimeout(loadingTimeoutRef.current)
                     }
+
+
+
 
 
 
@@ -60,6 +68,7 @@ export const useInfiniteScroll: useInfiniteScrollProps = (threadId, sentinelRef,
                     const { messages: newMsgs }: LastTenMsgsResponse = await res.json();
 
 
+                    console.log("RESPONSE IS",newMsgs)
 
                     // TODO: ZOD VALIDATE :
 
@@ -68,7 +77,7 @@ export const useInfiniteScroll: useInfiniteScrollProps = (threadId, sentinelRef,
 
 
                     // append to start cuz received messages will be older than existing msgs! 
-                    addMessages(newMsgs, { appendToStart: true });
+                    addMessages(newMsgs, { appendToStart: true,resort:true});
 
                     setLoadingState("idle");
 

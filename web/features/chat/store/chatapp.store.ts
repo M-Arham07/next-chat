@@ -26,6 +26,7 @@ export interface ChatAppStore {
     addThread: (newThread: Thread, options: { appendToStart: boolean }) => void
     addMessages: (newMessages: Message[], options?: { resort?: boolean, appendToStart?: boolean }) => void
     updateMessageStatus: (threadId: string, msgId: string, newStatus: MessageStatusType) => void
+    updateMessageContent: (threadId: string, msgId: string, newContent: string) => void
     removeMessage: (threadId: string, msgId: string, nuke?: boolean) => void
 
     addTypingUser: (threadId: string, username: string) => void
@@ -69,7 +70,7 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
         // BLOCK IF ALREADY EXISTS! 
 
         const doesExist = state.threads?.some(t => t.threadId === newThread.threadId);
-    
+
 
 
         if (doesExist) return state;
@@ -100,26 +101,39 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
         const currentMessages: Message[] = state.messages?.[threadId] ?? [];
 
+        
+
 
 
         let updatedMsgs: Message[] = options?.appendToStart ? [...newMessages, ...currentMessages] : [...currentMessages, ...newMessages];
 
-
+       
         // Remove duplicates:
 
         // set will keep track of added message ids
         const addedMsgIds = new Set<string>();
 
+        
 
         updatedMsgs = updatedMsgs.filter(m => {
 
+            
+
 
             // if this msg id is already appended to the set, remove it from updated messages:
-            if (addedMsgIds.has(m.msgId)) return false;
+            if (addedMsgIds.has(m.msgId)) {
+
+                console.log("DUPLICATE_MESSAGE_DETECTED");
+                return false;
+            }
 
 
-            // if not already added, append it to m.msgId: 
+            // if not already added, append it to m.msgId:
+            
+        
+            
             addedMsgIds.add(m.msgId);
+  
 
             // hence include the current object in updatedMsgs! 
 
@@ -130,7 +144,9 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
 
 
+   
 
+        
 
         if (options?.resort) {
             console.log("resorting msgs")
@@ -152,7 +168,7 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
 
 
-                return msgBepoch - msgAepoch;
+                return msgAepoch - msgBepoch;
 
             })
 
@@ -194,6 +210,11 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
 
 
+
+
+
+
+
         // FINALLY, SET STATE TO THE UPDATED MESSSAGES!
 
 
@@ -204,10 +225,22 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
             }
         }
 
+    }),
 
+    updateMessageContent: (threadId: string, msgId: string, newContent: string) => set((state) => {
+        const idx: number = state.messages![threadId].findIndex(m => m.msgId === msgId);
 
+        if (idx < 0) return { messages: state.messages };
 
+        let updatedMsgs = [...state.messages![threadId]];
+        updatedMsgs[idx].content = newContent;
 
+        return {
+            messages: {
+                ...state.messages,
+                [threadId]: updatedMsgs
+            }
+        }
     }),
 
 

@@ -19,8 +19,6 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
 
 
 
-
-
     const { messages, replyingToMsg, handleSendMessage, handleTyping, set, stopTypingEmit, threads, typingUsers } = useChatApp()!;
 
     const { data: session } = useSession();
@@ -47,19 +45,43 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
     const mainRef = useRef<HTMLElement>(null);
 
 
+
     // TO AUTOMATICALLY FOCUS ON CHAT INPUT WHEN REPLYING TO A MESSAGE
     const inputRef = useRef<HTMLInputElement | null>(null);
 
 
+//     useEffect(() => {
+//     const container = mainRef.current;
+//     if (!container) return;
+
+//     const previousScroll = container.scrollTop;
+
+//     requestAnimationFrame(() => {
+//         container.scrollTop = previousScroll;
+//     });
+
+// }, [messages]);
 
 
 
     // Scroll to bottom on mount (instant, no animation)
     useEffect(() => {
         if (mounted && messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: "auto" })
+
+            console.log("Scrolling")
+
+
+
+            messagesEndRef.current.scrollIntoView({ behavior: "instant" })
         }
     }, [mounted]);
+
+
+    
+
+
+
+
 
 
 
@@ -162,12 +184,16 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
                 <div className="space-y-1 relative">
                     {/* {contextMenuOpenMessageId && <div className="absolute inset-0 pointer-events-none z-40" />} */}
 
-                    {messages?.[threadId]?.map((message, idx) => (
+                    {messages?.[threadId]?.map((message, idx, msgsArr) => (
 
                         <div
                             key={message.msgId}
                             ref={(el) => {
-                                if (el) messageRefsMap.current[message.msgId] = el
+                                if (el) {
+                                    messageRefsMap.current[message.msgId] = el;
+
+                                
+                                }
                             }}
                             style={{
                                 filter: "none",
@@ -175,6 +201,7 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
                                 pointerEvents: "auto",
                                 transition: "filter 0.2s ease, opacity 0.2s ease, pointer-events 0.2s ease",
                             }}
+
                         >
                             <MessageBubble
                                 message={message}
