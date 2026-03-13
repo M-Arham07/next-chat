@@ -29,53 +29,60 @@ const ALLOWED_FILE_TYPES = [
 ];
 
 export async function POST(request: NextRequest): Promise<NextResponse<GetFileUrlResponse>> {
-
-    // this API endpoint will upload a file to supabase via admin client, and return its url !
+    const correlationId = crypto.randomUUID();
 
     try {
         const formData = await request.formData();
         const file = formData.get("file") as File;
 
-        console.log("file is ",file)
-
         if (!file || !(file instanceof File)) {
+            console.warn(`[get-file-url (API)][${correlationId}] Validation Failed: No file provided.`);
             return NextResponse.json(null, { status: 400, statusText: "NO_FILE_PROVIDED" });
         }
 
         // Validate File Size
         if (file.size > MAX_FILE_SIZE) {
-      
+            console.warn(`[get-file-url (API)][${correlationId}] Validation Failed: File too large (${file.size} bytes). Max: ${MAX_FILE_SIZE}`);
             return NextResponse.json(null, { status: 413, statusText: "FILE_TOO_LARGE" });
         }
 
         // Validate File Type
         if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-            console.log("File type",file.type);
+            console.warn(`[get-file-url (API)][${correlationId}] Validation Failed: Unsupported Media Type (${file.type}).`);
             return NextResponse.json(null, { status: 415, statusText: "UNSUPPORTED_MEDIA_TYPE" });
         }
 
-        const filePath = `uploads/${buildStoredFilename(file.name)}`;
+        const storedName = buildStoredFilename(file.name);
+        const filePath = `uploads/${storedName}`;
 
-        const { error } = await supabaseAdmin.storage
+        const { error: uploadError } = await supabaseAdmin.storage
             .from("media")
             .upload(filePath, file, {
                 cacheControl: "3600",
                 upsert: false,
-                contentType: (file.type) as string, // if file type specified then use it!
+                contentType: (file.type) as string,
             });
 
-        if (error) throw error;
+        if (uploadError) {
+            console.error(`[get-file-url (API)][${correlationId}] Supabase Upload Error:`, {
+                message: uploadError.message,
+                name: uploadError.name,
+                path: filePath
+            });
+            throw uploadError;
+        }
 
-        // Make sure to fetch the public URL from the same "media" bucket it was uploaded to
         const { data } = supabaseAdmin.storage.from("media").getPublicUrl(filePath);
 
         return NextResponse.json({ url: data.publicUrl, path: filePath }, { status: 200 });
 
     } catch (err) {
-        if (err instanceof Error) {
-            console.error("[get-file-url (API)] Uploading file failed >> ", err?.message);
-        }
-        return NextResponse.json(null, { status: 500 });
+        console.error(`[get-file-url (API)][${correlationId}] Unexpected error during file processing:`, err);
+        
+        return NextResponse.json(null, { 
+            status: 500,
+            statusText: err instanceof Error ? err.message : "INTERNAL_SERVER_ERROR"
+        });
     }
 }
 

@@ -117,6 +117,8 @@ export default function AvatarUpload({
                         <div className="relative w-full h-full rounded-full overflow-hidden bg-muted border-2 border-border shadow-lg backdrop-blur-sm">
                             <Image
                                 src={displayPicture || "/placeholder.svg"}
+                                width={avatarSize}
+                                height={avatarSize}
                                 alt="Display picture preview"
                                 className="w-full h-full object-cover"
                             />
