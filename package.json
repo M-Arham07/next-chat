@@ -4,7 +4,8 @@
   "workspaces": [
     "web",
     "realtime",
-    "shared"
+    "shared",
+    "mobile"
   ],
   "scripts": {
     "build": "npm run -w shared build && npm run -w web build"
