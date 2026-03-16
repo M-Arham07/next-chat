@@ -1,27 +1,5 @@
 import { create } from "zustand";
-
-export interface Message {
-  id: string;
-  threadId: string;
-  userId: string;
-  content: string;
-  mediaType?: "image" | "document" | "voice";
-  mediaUrl?: string;
-  timestamp: string;
-  read: boolean;
-}
-
-export interface Thread {
-  id: string;
-  name: string;
-  type: "direct" | "group";
-  avatar?: string;
-  lastMessage?: Message;
-  unreadCount: number;
-  participants: string[];
-  createdAt: string;
-  updatedAt: string;
-}
+import type { Thread, Message } from "@shared/types";
 
 interface ChatState {
   threads: Thread[];

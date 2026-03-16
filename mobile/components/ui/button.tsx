@@ -5,14 +5,15 @@ import {
   ViewStyle,
   TextStyle,
   ActivityIndicator,
+  GestureResponderEvent,
 } from "react-native";
 import { useTheme } from "@/lib/use-theme";
 
-type ButtonVariant = "default" | "outline" | "ghost" | "destructive";
-type ButtonSize = "sm" | "md" | "lg";
+type ButtonVariant = "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+type ButtonSize = "default" | "sm" | "lg" | "icon" | "icon-sm" | "icon-lg";
 
 interface ButtonProps {
-  onPress?: () => void;
+  onPress?: (event: GestureResponderEvent) => void;
   disabled?: boolean;
   loading?: boolean;
   variant?: ButtonVariant;
@@ -27,50 +28,70 @@ export function Button({
   disabled = false,
   loading = false,
   variant = "default",
-  size = "md",
+  size = "default",
   children,
   style,
   textStyle,
 }: ButtonProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const variantStyles: Record<ButtonVariant, ViewStyle> = {
     default: {
       backgroundColor: colors.primary,
     },
+    destructive: {
+      backgroundColor: colors.destructive,
+    },
     outline: {
-      backgroundColor: "transparent",
+      backgroundColor: colors.background,
       borderWidth: 1,
       borderColor: colors.border,
+    },
+    secondary: {
+      backgroundColor: colors.secondary,
     },
     ghost: {
       backgroundColor: "transparent",
     },
-    destructive: {
-      backgroundColor: colors.destructive,
+    link: {
+      backgroundColor: "transparent",
     },
   };
 
   const sizeStyles: Record<ButtonSize, { container: ViewStyle; text: TextStyle }> = {
-    sm: {
-      container: { paddingHorizontal: 12, paddingVertical: 6 },
-      text: { fontSize: 14, fontWeight: "600" },
+    default: {
+      container: { paddingHorizontal: 16, paddingVertical: 8, minHeight: 36, borderRadius: 6 },
+      text: { fontSize: 14, fontWeight: "500" },
     },
-    md: {
-      container: { paddingHorizontal: 16, paddingVertical: 10 },
-      text: { fontSize: 16, fontWeight: "600" },
+    sm: {
+      container: { paddingHorizontal: 12, paddingVertical: 6, minHeight: 32, borderRadius: 6 },
+      text: { fontSize: 13, fontWeight: "500" },
     },
     lg: {
-      container: { paddingHorizontal: 20, paddingVertical: 12 },
-      text: { fontSize: 18, fontWeight: "600" },
+      container: { paddingHorizontal: 24, paddingVertical: 10, minHeight: 40, borderRadius: 6 },
+      text: { fontSize: 15, fontWeight: "500" },
+    },
+    icon: {
+      container: { width: 36, height: 36, borderRadius: 6 },
+      text: { fontSize: 16 },
+    },
+    "icon-sm": {
+      container: { width: 32, height: 32, borderRadius: 5 },
+      text: { fontSize: 14 },
+    },
+    "icon-lg": {
+      container: { width: 40, height: 40, borderRadius: 6 },
+      text: { fontSize: 18 },
     },
   };
 
   const textColors: Record<ButtonVariant, string> = {
     default: colors.primaryForeground,
+    destructive: "#FFFFFF",
     outline: colors.foreground,
+    secondary: colors.secondaryForeground,
     ghost: colors.foreground,
-    destructive: colors.destructiveForeground,
+    link: colors.primary,
   };
 
   return (
@@ -80,7 +101,6 @@ export function Button({
       activeOpacity={0.7}
       style={[
         {
-          borderRadius: 8,
           alignItems: "center",
           justifyContent: "center",
           opacity: disabled ? 0.5 : 1,
@@ -91,7 +111,7 @@ export function Button({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={textColors[variant]} />
+        <ActivityIndicator color={textColors[variant]} size="small" />
       ) : (
         <Text
           style={[

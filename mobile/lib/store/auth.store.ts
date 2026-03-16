@@ -1,16 +1,9 @@
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-export interface User {
-  id: string;
-  email: string;
-  username: string;
-  avatar?: string;
-  createdAt: string;
-}
+import type { UserInterface } from "@shared/types";
 
 interface AuthState {
-  user: User | null;
+  user: UserInterface | null;
   token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -20,7 +13,7 @@ interface AuthState {
   register: (email: string, password: string, username: string) => Promise<void>;
   logout: () => Promise<void>;
   restoreSession: () => Promise<void>;
-  setUser: (user: User | null) => void;
+  setUser: (user: UserInterface | null) => void;
   setToken: (token: string | null) => void;
 }
 
@@ -38,11 +31,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Mock response
-      const mockUser: User = {
-        id: "mock-id",
+      const mockUser: UserInterface = {
+        _id: "mock-id" as any,
         email,
         username: email.split("@")[0],
-        createdAt: new Date().toISOString(),
+        name: email.split("@")[0],
+        image: "",
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
       const mockToken = "mock-token-" + Math.random();
 
@@ -67,11 +63,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      const mockUser: User = {
-        id: "mock-id-" + Math.random(),
+      const mockUser: UserInterface = {
+        _id: ("mock-id-" + Math.random()) as any,
         email,
         username,
-        createdAt: new Date().toISOString(),
+        name: username,
+        image: "",
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
       const mockToken = "mock-token-" + Math.random();
 

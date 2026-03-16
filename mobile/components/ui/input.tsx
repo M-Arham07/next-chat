@@ -38,12 +38,13 @@ export const Input = React.forwardRef<RNTextInput, InputProps>(
           style={{
             borderWidth: 1,
             borderColor: error ? colors.destructive : colors.border,
-            borderRadius: 8,
+            borderRadius: 6,
             paddingHorizontal: 12,
-            paddingVertical: 10,
+            paddingVertical: 8,
             fontSize: 16,
             color: colors.foreground,
-            backgroundColor: colors.input,
+            backgroundColor: "transparent",
+            minHeight: 36,
           }}
           {...props}
         />
