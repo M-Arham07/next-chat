@@ -4,7 +4,8 @@
   "workspaces": [
     "web",
     "realtime",
-    "shared"
+    "shared",
+    "mobile"
   ],
   "scripts": {
     "build": "npm run -w shared build && npm run -w web build"
@@ -14,8 +15,26 @@
     "esbuild": "^0.27.2"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "@react-native-async-storage/async-storage": "^3.0.1",
+    "@react-navigation/native": "^7.1.33",
     "browser-image-compression": "^2.0.2",
+    "expo-document-picker": "^55.0.8",
+    "expo-image-picker": "^55.0.12",
+    "expo-media-library": "^55.0.9",
+    "expo-router": "^55.0.5",
+    "expo-splash-screen": "^55.0.10",
+    "lucide-react-native": "^0.577.0",
     "mongoose": "^9.1.6",
-    "next-themes": "^0.4.6"
+    "nativewind": "^4.2.2",
+    "next-themes": "^0.4.6",
+    "react": "^19.2.4",
+    "react-hook-form": "^7.71.2",
+    "react-native": "^0.84.1",
+    "react-native-gesture-handler": "^2.30.0",
+    "react-native-safe-area-context": "^5.7.0",
+    "socket.io-client": "^4.8.3",
+    "zod": "^4.3.6",
+    "zustand": "^5.0.11"
   }
 }

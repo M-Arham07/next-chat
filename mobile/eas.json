@@ -1,0 +1,28 @@
+{
+  "cli": {
+    "version": ">= 8.0.0",
+    "promptToConfigurePushNotifications": false
+  },
+  "build": {
+    "preview": {
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": true
+      }
+    },
+    "preview2": {
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": true
+      }
+    },
+    "production": {}
+  },
+  "submit": {
+    "production": {}
+  }
+}
