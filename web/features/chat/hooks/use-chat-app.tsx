@@ -12,7 +12,9 @@ import { GetAllChatsResponse } from "@/app/api/get-all-chats/route";
 import { GetFileUrlResponse } from "@/app/api/get-file-url/route";
 import { toast } from "sonner";
 import { optimizeImage } from "../../../lib/optimize-image";
+import { optimizeVideo } from "../../../lib/optimize-video";
 import { reconstructFileFromBlobUrl } from "@/features/chat/lib/file-utils";
+import { GetFileUrl } from "@/features/chat/lib/upload-utils";
 
 
 interface ChatAppHook extends ChatAppStore {
@@ -42,7 +44,8 @@ interface ChatAppHook extends ChatAppStore {
 
 const ChatAppContext = createContext<ChatAppHook | undefined>(undefined);
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB limit for non-optimizable files
+const MAX_OPTIMIZABLE_FILE_SIZE = 100 * 1024 * 1024; // 100MB limit for images/videos before compression
 
 const useChatAppHook = (): ChatAppHook => {
 
@@ -54,7 +57,7 @@ const useChatAppHook = (): ChatAppHook => {
         markMounted, searchQuery, activeFilter,
         setThreads, addMessages,
         replyingToMsg,
-        set, updateMessageStatus, updateMessageContent, removeMessage, addTypingUser, removeTypingUser } = store;
+        set, updateMessageStatus, updateMessageContent, removeMessage, addTypingUser, removeTypingUser, setUploadingProgress } = store;
 
     const { data: session } = useSession();
 
@@ -419,38 +422,21 @@ const useChatAppHook = (): ChatAppHook => {
 
         if (type !== "text" && finalContent instanceof File) {
 
-            if (finalContent.size > MAX_FILE_SIZE) {
-                toast.error(`File size exceeds the maximum limit of ${MAX_FILE_SIZE / (1024 * 1024)}MB`);
+            const isOptimizable = type === "image" || type === "video";
+            const currentLimit = isOptimizable ? MAX_OPTIMIZABLE_FILE_SIZE : MAX_FILE_SIZE;
+
+            if (finalContent.size > currentLimit) {
+                toast.error(`File size exceeds the maximum limit of ${currentLimit / (1024 * 1024)}MB`);
                 updateMessageStatus(newMessage.threadId, newMessage.msgId, "failed");
                 return;
             }
 
             try {
-                // Compress the image before uploading if it's an image
-                const fileToUpload = await optimizeImage(finalContent);
-
-                // UPLOAD THE FILE TO SUPABASE USING API ROUTE!
-
-                // Convert to formData: 
-                const formData = new FormData();
-             
-                formData.append("file", fileToUpload);
-
-                const res = await fetch("/api/get-file-url", {
-                    method: "POST",
-                    body: formData
+                const { url } = await GetFileUrl(finalContent, (percent) => {
+                    setUploadingProgress(newMessage.msgId, percent);
                 });
-
-                if (!res.ok) {
-
-                    toast.error("Failed to send message!");
-                    updateMessageStatus(newMessage.threadId, newMessage.msgId, "failed");
-                    return;
-                }
-
-                const data = (await res.json()) as GetFileUrlResponse;
-
-                uploadedContentUrl = data!.url;
+                
+                uploadedContentUrl = url;
 
                 // update the message in the store with the real URL instead of local blob
                 updateMessageContent(newMessage.threadId, newMessage.msgId, uploadedContentUrl);

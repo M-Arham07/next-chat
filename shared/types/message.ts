@@ -1,5 +1,5 @@
 
-export type MessageContentType = "text" | "image" | "voice" | "document" | "deleted";
+export type MessageContentType = "text" | "image" | "video" | "voice" | "document" | "deleted";
 export type MessageStatusType = "sending" | "sent" | "failed"
 
 export interface Message {

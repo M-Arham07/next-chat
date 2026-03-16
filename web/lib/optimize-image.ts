@@ -4,7 +4,7 @@ import imageCompression from "browser-image-compression";
  * Optimizes an image file if it is an image, restricting its size to 3MB.
  * If the file is not an image or compression fails, it returns the original file.
  */
-export async function optimizeImage(file: File): Promise<File> {
+export async function optimizeImage(file: File, onProgress?: (percent: number) => void): Promise<File> {
     if (!file.type.startsWith("image/")) {
         return file;
     }
@@ -13,6 +13,7 @@ export async function optimizeImage(file: File): Promise<File> {
         const options = {
             maxSizeMB: 0.5,
             useWebWorker: true,
+            onProgress: onProgress,
         };
         return await imageCompression(file, options);
     } catch (error) {

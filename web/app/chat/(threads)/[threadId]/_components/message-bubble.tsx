@@ -11,6 +11,7 @@ import TextMessage from "./text-message"
 import ImageMessage from "./image-message"
 import VoiceMessage from "./voice-message"
 import DocumentMessage from "./document-message"
+import VideoMessage from "./video-message"
 import MessageContextMenu from "./message-context-menu"
 import TypingIndicator from "./typing-indicator"
 import { Message } from "@chat/shared"
@@ -251,10 +252,11 @@ return (
         )}
 
         {message.type === "text" && message.content && <TextMessage content={message.content} />}
-        {message.type === "image" && message.content && <ImageMessage imageUrl={message.content} status={status} />}
-        {message.type === "voice" && message.content && <VoiceMessage voiceUrl={message.content} status={status} />}
+        {message.type === "image" && message.content && <ImageMessage msgId={message.msgId} imageUrl={message.content} status={status} />}
+        {message.type === "voice" && message.content && <VoiceMessage msgId={message.msgId} voiceUrl={message.content} status={status} />}
+        {message.type === "video" && message.content && <VideoMessage msgId={message.msgId} videoUrl={message.content} status={status} />}
         {message.type === "document" && message.content && (
-          <DocumentMessage documentName={getOriginalFilename(message.content)} documentUrl={message.content} status={status} />
+          <DocumentMessage msgId={message.msgId} documentName={getOriginalFilename(message.content)} documentUrl={message.content} status={status} />
         )}
 
         <div

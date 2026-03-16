@@ -18,6 +18,8 @@ export interface ChatAppStore {
     searchQuery: string,
     activeFilter: ActiveFilter,
     typingUsers: Record<string, Set<string>>, // eg: "thread1":["user1","user3"],
+    uploadingProgress: Record<string, number>, // msgId -> percent
+
 
 
 
@@ -31,6 +33,8 @@ export interface ChatAppStore {
 
     addTypingUser: (threadId: string, username: string) => void
     removeTypingUser: (threadId: string, username: string) => void
+    setUploadingProgress: (msgId: string, progress: number) => void
+
 
 }
 
@@ -48,6 +52,8 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
     searchQuery: "",
     activeFilter: "all",
     typingUsers: {},
+    uploadingProgress: {},
+
 
 
 
@@ -358,7 +364,15 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
 
 
-    })
+    }),
+
+    setUploadingProgress: (msgId: string, progress: number) => set((state) => ({
+        uploadingProgress: {
+            ...state.uploadingProgress,
+            [msgId]: progress
+        }
+    })),
+
 
 
 

@@ -4,6 +4,7 @@
   "workspaces": [
     "web",
     "realtime",
+    "mobile",
     "shared"
   ],
   "scripts": {

@@ -3,8 +3,10 @@
 import { useEffect, useRef, useState } from "react"
 import { Play, Pause } from "lucide-react"
 import { Avatar } from "@/components/ui/avatar"
+import { useChatAppStore } from "@/features/chat/store/chatapp.store"
 
 interface VoiceMessageProps {
+  msgId: string
   voiceUrl: string
   status?: string
 }
@@ -22,11 +24,12 @@ function isGoodDuration(d: number) {
   return Number.isFinite(d) && d > 0 && d !== Infinity
 }
 
-export default function VoiceMessage({ voiceUrl, status }: VoiceMessageProps) {
+export default function VoiceMessage({ msgId, voiceUrl, status }: VoiceMessageProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [bars, setBars] = useState<number[]>(Array.from({ length: BAR_COUNT }, () => 22))
+  const progressPercent = useChatAppStore(s => s.uploadingProgress?.[msgId] || 0);
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
@@ -213,8 +216,30 @@ export default function VoiceMessage({ voiceUrl, status }: VoiceMessageProps) {
       </Avatar>
 
       {status === "sending" ? (
-        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full border bg-secondary/40 text-foreground shadow-xs">
-          <div className="h-5 w-5 rounded-full border-2 border-muted-foreground border-t-primary animate-spin" />
+        <div className="relative h-10 w-10 shrink-0 flex items-center justify-center">
+            <svg className="absolute w-full h-full -rotate-90">
+              <circle
+                cx="20"
+                cy="20"
+                r="18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="text-muted/20"
+              />
+              <circle
+                cx="20"
+                cy="20"
+                r="18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeDasharray={113}
+                strokeDashoffset={113 - (113 * progressPercent) / 100}
+                className="text-primary transition-all duration-300"
+              />
+            </svg>
+            <span className="text-[10px] font-bold text-foreground">{progressPercent}%</span>
         </div>
       ) : (
         <button

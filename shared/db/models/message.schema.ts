@@ -22,7 +22,7 @@ const messageSchema = new mongoose.Schema<Message>(
 
     type: {
       type: String,
-      enum: ["text", "image", "voice", "document", "deleted"],
+      enum: ["text", "image", "video", "voice", "document", "deleted"],
       required: true,
     },
 
@@ -60,4 +60,4 @@ const messageSchema = new mongoose.Schema<Message>(
   }
 );
 
-export const Messages = mongoose.models.Messages || mongoose.model<Message>("Messages", messageSchema) as Model<Message> ;
+export const Messages = mongoose.models.Messages || mongoose.model<Message>("Messages", messageSchema) as Model<Message>;

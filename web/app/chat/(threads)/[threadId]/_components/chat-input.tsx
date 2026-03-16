@@ -3,7 +3,7 @@
 import type { Ref } from "react"
 import { useState, useRef, RefObject } from "react"
 import { Smile, Paperclip, Camera, Mic, Send } from "lucide-react"
-import {motion} from "framer-motion";
+import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input"
 import VoiceRecorder from "./voice-recorder"
 import { MessageContentType } from "@chat/shared"
@@ -17,7 +17,7 @@ interface ChatInputProps {
   inputRef: Ref<HTMLInputElement> | null
 }
 
-const ChatInput = ({ onSend, onTyping,inputRef }: ChatInputProps) => {
+const ChatInput = ({ onSend, onTyping, inputRef }: ChatInputProps) => {
 
   // if text content, send it only on button click/enter, 
   // if document or image, send when selected !
@@ -63,11 +63,18 @@ const ChatInput = ({ onSend, onTyping,inputRef }: ChatInputProps) => {
 
     if (!file) return;
 
-    const fileType: string = file.type.startsWith("audio/")
+    const fileName = file.name.toLowerCase();
+    const isVoice = file.type.startsWith("audio/") || fileName.endsWith(".mp3") || fileName.endsWith(".wav") || fileName.endsWith(".ogg") || fileName.endsWith(".m4a");
+    const isImage = file.type.startsWith("image/") || fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || fileName.endsWith(".png") || fileName.endsWith(".gif") || fileName.endsWith(".webp");
+    const isVideo = file.type.startsWith("video/") || fileName.endsWith(".mp4") || fileName.endsWith(".mov") || fileName.endsWith(".mkv") || fileName.endsWith(".webm") || fileName.endsWith(".avi");
+
+    const fileType: Omit<MessageContentType, "deleted"> = isVoice
       ? "voice"
-      : file.type.startsWith("image/")
+      : isImage
         ? "image"
-        : "document"
+        : isVideo
+          ? "video"
+          : "document"
 
 
     onSend(fileType, file);
@@ -115,7 +122,7 @@ const ChatInput = ({ onSend, onTyping,inputRef }: ChatInputProps) => {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*,audio/*,.pdf,.doc,.docx,.txt,.xls,.xlsx"
+              accept="image/*,audio/*,video/*,.pdf,.doc,.docx,.txt,.xls,.xlsx,.mkv,.mov"
               onChange={handleFileSelect}
               className="hidden"
             />
@@ -132,34 +139,34 @@ const ChatInput = ({ onSend, onTyping,inputRef }: ChatInputProps) => {
           </div>
         </div>
 
-      
-          {content.trim().length > 0 ? (
-            <motion.button
-              key="send"
-              type="submit"
-              initial={{ scale: 0, rotate: -90 }}
-              animate={{ scale: 1, rotate: 0 }}
-              exit={{ scale: 0, rotate: 90 }}
-              transition={{ type: "spring", stiffness: 500, damping: 30 }}
-              className="p-3 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
-            >
-              <Send className="w-5 h-5" />
-            </motion.button>
-          ) : (
-            <motion.button
-              key="mic"
-              type="button"
-              onClick={() => setIsRecording(true)}
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0 }}
-              transition={{ type: "spring", stiffness: 500, damping: 30 }}
-              className="p-3 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
-            >
-              <Mic className="w-5 h-5" />
-            </motion.button>
-          )}
-  
+
+        {content.trim().length > 0 ? (
+          <motion.button
+            key="send"
+            type="submit"
+            initial={{ scale: 0, rotate: -90 }}
+            animate={{ scale: 1, rotate: 0 }}
+            exit={{ scale: 0, rotate: 90 }}
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            className="p-3 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
+          >
+            <Send className="w-5 h-5" />
+          </motion.button>
+        ) : (
+          <motion.button
+            key="mic"
+            type="button"
+            onClick={() => setIsRecording(true)}
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0 }}
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            className="p-3 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
+          >
+            <Mic className="w-5 h-5" />
+          </motion.button>
+        )}
+
       </form>
     </motion.div>
   )
