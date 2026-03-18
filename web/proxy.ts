@@ -1,47 +1,43 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getServerSession } from 'next-auth';
-import { authOptions } from './app/api/auth/[...nextauth]/route';
 import path from 'path';
-
+import { updateSession } from './supabase/proxy';
+import { rewriteWithCookies } from './supabase/rewrite';
+import { getProfileServer } from './supabase/getProfileServer';
 // This function can be marked `async` if using `await` inside
 export default async function proxy(request: NextRequest) {
 
-    const session = await getServerSession(authOptions);
+
+    let response = await updateSession(request);
+    const profile = await getProfileServer();
     const pathname: string = request.nextUrl.pathname;
 
 
 
 
-    // run only if pathname doesent start with register !
-
-    if (!pathname.startsWith("/register")) {
 
 
-        if (!session?.user) {
-            // if session doesent exist then:
-            return NextResponse.redirect(new URL("/register", request.url));
-        }
-
-        if (!session?.user?.username) {
-
-            // if session exists but username doesent exist: 
-            return NextResponse.redirect(new URL("/register/onboarding", request.url));
-        }
-    }
-
-    if (pathname.startsWith("/register")) {
+    // run only if pathname is / or /chat and user is authenticated already
+    // (user is authenticated in updateSession function automatically)
 
 
-        if (session?.user.username) {
+    if (pathname === "/" || pathname === "/chat") {
 
-            // if an already onboarded (registered) user has tried to access
-            // /register or /register/onboarding,redirect the user to "/"
-            return NextResponse.redirect(new URL("/", request.url));
+        // now check for profile if it exists or not, if not redirect to onboarding
+
+        if (!profile) {
+            return NextResponse.redirect(new URL("/register/onboarding",request.url));
         }
 
     }
 
+
+
+
+
+
+
+    // dont uncomment
     //     // if session.user.username doesent exist, go back to register page !
 
     //     if(!session?.user?.username){
@@ -54,17 +50,14 @@ export default async function proxy(request: NextRequest) {
 
 
     if (pathname === "/") {
-        return NextResponse.rewrite(new URL("/chat", request.url));
+        return rewriteWithCookies(request, response, "/chat");
     }
 
 
 
 
 
-
-
-
-    return NextResponse.next();
+    return response;
 }
 
 // Alternatively, you can use a default export:

@@ -2,7 +2,8 @@ import imageCompression from "browser-image-compression";
 
 /**
  * Optimizes an image file if it is an image, restricting its size to 3MB.
- * If the file is not an image or compression fails, it returns the original file.
+ * If the file is not an image it returns the original file.
+ * Throws an error if compression fails.
  */
 export async function optimizeImage(file: File, onProgress?: (percent: number) => void): Promise<File> {
     if (!file.type.startsWith("image/")) {
@@ -18,6 +19,6 @@ export async function optimizeImage(file: File, onProgress?: (percent: number) =
         return await imageCompression(file, options);
     } catch (error) {
         console.error("[optimizeImage] Error compressing image:", error);
-        return file; // Fallback to the original file if compression fails
+        throw error;
     }
 }

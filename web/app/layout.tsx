@@ -3,11 +3,11 @@ import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "@/app/globals.css";
 import { ThemeProvider } from "@/providers/theme-provider"
-import NextAuthProvider from "@/providers/next-auth";
 import GlobalLoader from "@/store/loader/GlobalLoader";
 import { LoaderContextProvider } from "@/store/loader/use-loader";
 import { Viewport } from "next";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/features/auth/hooks/useAuth";
 
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -53,8 +53,8 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
       </head>
       <body className={`font-sans antialiased`}>
-        <NextAuthProvider>
-         {/* @ts-ignore */}
+        <AuthProvider>
+          {/* @ts-ignore */}
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
@@ -67,7 +67,7 @@ export default function RootLayout({
               <Toaster />
             </LoaderContextProvider>
           </ThemeProvider>
-        </NextAuthProvider>
+        </AuthProvider>
         <Analytics />
       </body>
     </html>

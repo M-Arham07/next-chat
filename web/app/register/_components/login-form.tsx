@@ -7,8 +7,7 @@ import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ProviderButton, GoogleIcon, AppleIcon, GitHubIcon } from "./provider-button";
-import { signIn } from "next-auth/react";
-
+import { signInWithOAuth } from "@/supabase/auth/signInOAuth";
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
@@ -51,9 +50,9 @@ export function LoginForm({ onBack, showBackButton }: LoginFormProps) {
     setLoginError(null);
 
 
-    
 
-    
+
+
 
     // Create a promise that rejects after 10 seconds
     const timeoutPromise = new Promise<never>((_, reject) => {
@@ -300,7 +299,7 @@ export function LoginForm({ onBack, showBackButton }: LoginFormProps) {
             icon={provider.icon}
             label={provider.label}
             index={index}
-            onClick={() => signIn(provider.label.toLowerCase(),{callbackUrl:"/"})}
+            onClick={() => signInWithOAuth("google")}
           />
         ))}
       </div>

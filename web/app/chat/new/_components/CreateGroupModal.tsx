@@ -2,7 +2,7 @@
 
 import { Dispatch, SetStateAction, useState } from 'react'
 import { UserInterface } from '@chat/shared'
-import AvatarUpload from '@/features/upload-avatar/components/avatar.upload'
+import AvatarUpload from '@/components/shared/upload-avatar/avatar.upload'
 import {
   Dialog,
   DialogContent,

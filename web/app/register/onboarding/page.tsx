@@ -4,11 +4,10 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { AlertCircle, CheckCircle } from "lucide-react";
 import OnboardingContent from "./_components/onboarding-content";
-import AvatarUpload from "@/features/upload-avatar/components/avatar.upload";
+import AvatarUpload from "@/components/shared/upload-avatar/avatar.upload";
 import UsernameForm from "./_components/username-form";
 import { useLoader } from "@/store/loader/use-loader";
-import { useSession } from "next-auth/react";
-import CreateUser from "@/features/auth/create-user";
+import { CreateProfileSchemaResponse } from "@chat/shared";
 import { useRouter } from "next/navigation";
 
 // const AVATAR_SIZE_PX = 70;
@@ -16,11 +15,10 @@ import { useRouter } from "next/navigation";
 export default function OnboardingPage() {
 
 
-    const { update : updateSession} = useSession();
     const router = useRouter();
 
     // use default session image !
-    const [displayPicture, setDisplayPicture] = useState<string | null>(null);
+    const [displayPicture, setDisplayPicture] = useState<File | null>(null);
 
 
 
@@ -31,6 +29,8 @@ export default function OnboardingPage() {
 
     const { loading, setLoading } = useLoader();
 
+    const MAX_DP_SIZE_MB = 0.5 * 1024 * 1024
+
 
     // this function will save the onboarded user, and update the session !
     const handleSave = async () => {
@@ -38,39 +38,46 @@ export default function OnboardingPage() {
         setError("")
         setSuccessMessage("")
 
+        if (displayPicture && displayPicture.size > MAX_DP_SIZE_MB) {
+            setError(`Display picture size should be less than ${MAX_DP_SIZE_MB}MB`)
+            return;
+        }
+
         if (!username.trim()) {
             setError("Username is required")
-            return
+            return;
         }
 
         if (!displayPicture) {
             setError("Please upload a display picture")
-            return
+            return;
         }
 
         setLoading(true)
 
-        // also add the new dp ! 
-        const { success, errMsg } = await CreateUser(username,displayPicture);
 
+        const res = await fetch("/api/profiles", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                username: username,
+                image: displayPicture,
+            }),
+        });
 
+        const { data, success } = CreateProfileSchemaResponse.parse(await res.json());
 
-        if (!success) {
+        if (!res.ok || !success) {
+            setError(data);
             setLoading(false);
-            setError(errMsg!); // if success is false , there must be an error message from backend!
             return;
         }
 
-        // if user created successfully, update the session: 
-
-        // new username and dp will be attached in JWT callback! (NEXT_AUTH route.ts)
-
-        await updateSession();
-
-        // redirect to "/"
-        router.push("/");
-
+        setSuccessMessage(data);
         setLoading(false);
+
 
         return;
 

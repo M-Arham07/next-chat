@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/supabase/supabase-admin";
+import { supabaseAdmin } from "@/supabase/client";
 import { buildStoredFilename, sanitizeFilename } from "@/features/chat/lib/file-utils";
 
 export type UploadUrlResponse = {
