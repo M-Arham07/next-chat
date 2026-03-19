@@ -2,11 +2,11 @@
 import { CheckCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { motion } from "framer-motion";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useChatApp } from "@/features/chat/hooks/use-chat-app";
-import { Message, Thread, particpant } from "@chat/shared";
+import { Message, Thread, participant } from "@chat/shared";
 import { formatTime } from "@/lib/format-time";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 
 
@@ -20,15 +20,15 @@ const avatarColors = [
 
 
 // this component will receive the individual thread object ! 
-const ThreadItem = ({ thread }: { thread: Thread}) => {
+const ThreadItem = ({ thread }: { thread: Thread }) => {
   // Deterministic color based on id
   const colorClass = avatarColors[Math.floor(Math.random() * avatarColors.length)];
 
-  const { data: session } = useSession();
+  const { profile } = useAuth();
   const { messages, typingUsers } = useChatApp()!;
 
-  
-  const lastUsernameTypingIdx = (typingUsers?.[thread.threadId]?.size ?? 0) - 1;  
+
+  const lastUsernameTypingIdx = (typingUsers?.[thread.threadId]?.size ?? 0) - 1;
   const currentlyTypingUsername = [...(typingUsers?.[thread.threadId] ?? [])][lastUsernameTypingIdx]
 
   // get last message of this thread : 
@@ -41,10 +41,10 @@ const ThreadItem = ({ thread }: { thread: Thread}) => {
 
 
   // IF THREAD TYPE IS DIRECT:
-  let otherParticipant: particpant | undefined = undefined;
+  let otherParticipant: participant | undefined = undefined;
 
   if (thread.type === "direct") {
-    otherParticipant = thread.particpants?.find(p => p.username.toLowerCase() !== session?.user.username!.toLowerCase());
+    otherParticipant = thread.participants?.find(p => p.username.toLowerCase() !== profile.username.toLowerCase());
   }
 
 
@@ -100,9 +100,9 @@ const ThreadItem = ({ thread }: { thread: Thread}) => {
 
 
               {currentlyTypingUsername ? `${currentlyTypingUsername} is typing...`
-               : lastMessage?.type === "text"
-                ? lastMessage.content.slice(0, 30) + "..."
-                : `${lastMessage?.type} message`}
+                : lastMessage?.type === "text"
+                  ? lastMessage.content.slice(0, 30) + "..."
+                  : `${lastMessage?.type} message`}
             </p>
           </div>
 

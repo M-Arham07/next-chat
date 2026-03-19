@@ -1,6 +1,7 @@
+import { Profile } from "@chat/shared/schema/profiles/profile";
 import { createClient } from "./server";
 
-export async function getProfileServer() {
+export async function getProfileServer() : Promise<Profile | null> {
     const supabase = await createClient();
 
     // 1. Get authenticated user

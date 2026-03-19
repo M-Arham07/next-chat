@@ -1,15 +1,20 @@
-import { getServerSession } from "next-auth";
+
 import { NextRequest, NextResponse } from "next/server";
-import { authOptions } from "../../auth/[...nextauth]/route";
 import { User } from "@chat/shared";
+import { getProfileServer } from "@/supabase/getProfileServer";
+import { createClient } from "@/supabase/server";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
 
     try {
 
-        const session = await getServerSession(authOptions);
+        const profile = await getProfileServer();
+    
 
-        if (!session) throw new Error(" No session found");
+        if (!profile) throw new Error("NO_PROFILE");
+
+
+        const supabase = await createClient();
 
 
         const params = request.nextUrl.searchParams;
@@ -18,18 +23,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
         if (!username) throw new Error("No username search query");
 
-
-        // WILL LIMIT (WHEN IT SCALES) IF NEEDED? 
-
-
-        // idk how this regex work lol
-        const escaped = username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-        const foundUsers = await User.find({ username: { $regex: escaped, $options: "i", $ne: session.user.username } }).lean();
-
-        console.log("FOUND USER RES", foundUsers)
-
-
+        const { data : foundUsers, error } = await supabase.rpc("search_users", {
+            p_query: username,
+            p_limit: 20,
+        });
+        
+        if(error) throw error;
 
         return NextResponse.json(foundUsers, { status: 200 });
 

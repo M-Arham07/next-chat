@@ -7,6 +7,7 @@ import { ThreadHeader, ThreadFilterTabs, ThreadItem, ThreadList } from "../_comp
 import { FloatingActionButton } from "../_components";
 import { useChatApp } from "@/features/chat/hooks/use-chat-app";
 import { ActiveFilter } from "@/features/chat/types";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 
 
@@ -15,6 +16,7 @@ import { ActiveFilter } from "@/features/chat/types";
 export default function ThreadsLayout({ children }: { children: React.ReactNode }) {
 
 
+    const { loading } = useAuth();
 
     const { activeTab,
         searchQuery,
@@ -23,6 +25,17 @@ export default function ThreadsLayout({ children }: { children: React.ReactNode 
         activeFilter, set
 
     } = useChatApp()!;
+
+
+    if (loading) {
+        return <h1> Wait while you're being authorized...</h1>
+    }
+
+
+
+
+
+
 
 
     if (!mounted) return null;

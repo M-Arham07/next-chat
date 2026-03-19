@@ -4,17 +4,16 @@ import { useChatAppStore } from "../store/chatapp.store";
 import { useLoader } from "@/store/loader/use-loader";
 import { Message, MessageContentType, Thread } from "@chat/shared";
 import { MessageState } from "../types";
-import { useSession } from "next-auth/react";
 import { ChatAppStore } from "../store/chatapp.store";
 import filterThreads from "../lib/filter-threads";
 import { getSocket, type SocketClientType } from "@/features/chat/lib/socket-client"
-import { GetAllChatsResponse } from "@/app/api/get-all-chats/route";
-import { GetFileUrlResponse } from "@/app/api/get-file-url/route";
 import { toast } from "sonner";
 import { optimizeImage } from "../../../lib/optimize-image";
 import { optimizeVideo } from "../../../lib/optimize-video";
 import { reconstructFileFromBlobUrl } from "@/features/chat/lib/file-utils";
 import { GetFileUrl } from "@/features/chat/lib/upload-utils";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { messageSchema } from "@chat/shared/schema";
 
 
 interface ChatAppHook extends ChatAppStore {
@@ -59,7 +58,8 @@ const useChatAppHook = (): ChatAppHook => {
         replyingToMsg,
         set, updateMessageStatus, updateMessageContent, removeMessage, addTypingUser, removeTypingUser, setUploadingProgress } = store;
 
-    const { data: session } = useSession();
+    const { profile } = useAuth();
+  
 
     const { setLoading } = useLoader();
 
@@ -88,9 +88,10 @@ const useChatAppHook = (): ChatAppHook => {
                 console.log("NO CURRENT SOKCET")
 
 
-                const res = await fetch("/api/auth/get-session-token", { method: "GET" });
+                // const res = await fetch("/api/auth/get-session-token", { method: "GET" });
 
-                const sessionToken = await res.json() as string;
+                // const sessionToken = await res.json() as string;
+                const sessionToken = "qq"
 
                 socketRef.current = getSocket(sessionToken);
 
@@ -114,7 +115,7 @@ const useChatAppHook = (): ChatAppHook => {
             socketRef.current.on("message:deleted", removeMessage);
             socketRef.current.on("typing:start", (threadId, username) => {
 
-                if (session?.user.username !== username) {
+                if (profile.username !== username) {
                     addTypingUser(threadId, username);
 
                 }
@@ -139,7 +140,7 @@ const useChatAppHook = (): ChatAppHook => {
 
             try {
 
-                const res = await fetch("/api/get-all-chats", {
+                const res = await fetch("/api/threads/inbox", {
                     method: "GET"
                 });
 
@@ -150,7 +151,7 @@ const useChatAppHook = (): ChatAppHook => {
                 if (!res.ok) throw new Error("Bad response from SERVER");
 
 
-                const data: GetAllChatsResponse = await res.json();
+                const data = await res.json();
 
                 // RETURN TYPE WILL NOT BE NULL IN CASE OF OK RESPONSE
 
@@ -231,7 +232,7 @@ const useChatAppHook = (): ChatAppHook => {
 
         }
 
-    }, [session]);
+    }, [profile]);
 
 
 
@@ -258,7 +259,7 @@ const useChatAppHook = (): ChatAppHook => {
 
 
         // edge case:
-        if (!threadId || !session?.user?.username) return;
+        if (!threadId || !profile?.username) return;
 
         if (!isTypingRef.current) {
             isTypingRef.current = true;
@@ -266,7 +267,7 @@ const useChatAppHook = (): ChatAppHook => {
 
 
             // emit! 
-            socketRef.current?.emit("typing:start", threadId, session.user.username!);
+            socketRef.current?.emit("typing:start", threadId, profile.username);
 
         }
 
@@ -291,7 +292,7 @@ const useChatAppHook = (): ChatAppHook => {
 
     const stopTypingEmit = (threadId: string) => {
 
-        socketRef.current?.emit("typing:stop", threadId, session?.user?.username! || "");
+        socketRef.current?.emit("typing:stop", threadId, profile.username! || "");
 
     }
 
@@ -311,7 +312,7 @@ const useChatAppHook = (): ChatAppHook => {
 
         const { threadId, msgId, sender } = messageToDelete;
 
-        if (sender !== session?.user?.username) return;
+        if (sender !== profile.username) return;
 
 
         // FIRST SET STATUS TO SENDING  (to show loading)
@@ -400,7 +401,7 @@ const useChatAppHook = (): ChatAppHook => {
 
             msgId: process.env.NODE_ENV === "production" ? crypto.randomUUID() : (Date.now() - Math.random()).toString(),
             threadId: threadId,
-            sender: session?.user?.username || "",
+            sender: profile.username,
             type: type as MessageContentType,
             content: localBlobUrl || (finalContent as string),
             timestamp: new Date(Date.now()).toISOString(),
@@ -409,7 +410,12 @@ const useChatAppHook = (): ChatAppHook => {
 
         }
 
-      
+        if(!messageSchema.safeParse(newMessage).success){
+            toast.error("Failed to send message!");
+            return;
+        }
+
+
         // TODO: PARSE VIA ZOD SCHEMA HERE, throw error if not matches it! 
 
         // append the newMessage to the state, for this thread id!
@@ -435,7 +441,7 @@ const useChatAppHook = (): ChatAppHook => {
                 const { url } = await GetFileUrl(finalContent, (percent) => {
                     setUploadingProgress(newMessage.msgId, percent);
                 });
-                
+
                 uploadedContentUrl = url;
 
                 // update the message in the store with the real URL instead of local blob
@@ -500,7 +506,7 @@ const useChatAppHook = (): ChatAppHook => {
 
         // Completely nuke the message from state ! 
 
-        
+
 
         removeMessage(threadId, msgId, true);
 
@@ -523,7 +529,7 @@ const useChatAppHook = (): ChatAppHook => {
         // ZOD PARSE ?
 
 
-        const isEcho = receivedMsg.sender === session?.user.username;
+        const isEcho = receivedMsg.sender === profile.username;
 
 
         console.log(`Received a message from ${receivedMsg.sender}! isEcho ${isEcho} `);
@@ -544,7 +550,7 @@ const useChatAppHook = (): ChatAppHook => {
 
 
     // Filter threads based on search query and active filter
-    const filteredThreads = useMemo(() => filterThreads(threads, messages, session, searchQuery, activeFilter),
+    const filteredThreads = useMemo(() => filterThreads(threads, messages, profile, searchQuery, activeFilter),
         [searchQuery, messages, activeFilter, threads]);
 
 

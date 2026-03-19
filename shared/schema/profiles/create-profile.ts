@@ -5,7 +5,7 @@ import { z } from "zod";
 
 export const CreateProfileSchemaBody = z.object({
     username: z.string().min(3, "Username must be at least 3 characters long"),
-    image: z.string().url("Invalid image URL"),
+    image: z.file().max(0.5 * 1024 * 1024, "Image size must be less than 0.5MB"),
 })
 
 

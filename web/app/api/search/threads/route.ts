@@ -1,15 +1,18 @@
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { authOptions } from "../../auth/[...nextauth]/route";
 import { Threads } from "@chat/shared";
+import { getProfileServer } from "@/supabase/getProfileServer";
+import { createClient } from "@/supabase/server";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
 
     try {
 
-        const session = await getServerSession(authOptions);
 
-        if (!session) throw new Error("No session found");
+        const profile = await getProfileServer();
+
+        if(!profile) throw new Error("NO_PROFILE");
+
+        const supabase = await createClient();
 
 
         const params = request.nextUrl.searchParams;
@@ -19,15 +22,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         if (!groupName) throw new Error("No group name search query");
 
 
-        // WILL LIMIT (WHEN IT SCALES) IF NEEDED? 
+        const { data : foundThreads, error } = await supabase.rpc("search_threads", {
+            p_query: groupName,
+            p_limit: 20,
+        });
 
 
-        // idk how this regex work lol
-        const escaped = groupName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-        const foundThreads = await Threads.find({ groupName: { $regex: escaped, $options: "i" } }).lean();
-
-
+        if(error) throw error;
 
         return NextResponse.json(foundThreads, { status: 200 });
 

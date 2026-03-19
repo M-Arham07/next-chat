@@ -2,42 +2,69 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { createClient } from "@/supabase/client";
-import type { User } from '@supabase/supabase-js'
+import { type Profile } from "@chat/shared/schema/profiles/profile"
 
 type AuthContextType = {
-  user: User | null
+  profile: Profile
   loading: boolean
 }
 
 const AuthContext = createContext<AuthContextType>({
-  user: null,
+  profile: {} as Profile,
   loading: true,
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const supabase = createClient()
+    let isMounted = true;
+
+    const fetchProfile = async (userId: string | undefined) => {
+      if (!userId) {
+        if (isMounted) {
+          setProfile(null);
+          setLoading(false);
+        }
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+
+      if (isMounted) {
+        if (!error && data) {
+          setProfile(data as Profile);
+        } else {
+          setProfile(null);
+        }
+        setLoading(false);
+      }
+    };
 
     supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user)
-      setLoading(false)
+      fetchProfile(data.user?.id);
     })
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
+      fetchProfile(session?.user?.id);
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    }
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ profile: profile as Profile, loading }}>
       {children}
     </AuthContext.Provider>
   )

@@ -1,25 +1,26 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { UserInterface,Thread } from '@chat/shared'
+import { Thread } from '@chat/shared'
+import { Profile } from '@chat/shared/schema/profiles/profile'
 import { UserRow } from './UserRow'
 import { GroupRow } from './GroupRow'
 import { Skeleton } from '@/components/ui/skeleton'
 
 interface ResultsListProps {
   isGroupMode: boolean
-  results: UserInterface[] | Thread[]
+  results: Profile[] | Thread[]
   isLoading: boolean
   isError: boolean
   onUserChat: (username: string) => void
   onGroupJoin?: (threadId: string) => void
-  onUserAdd?: (user: UserInterface) => void
+  onUserAdd?: (user: Profile) => void
   isGroupCreationMode?: boolean
   selectedUsers?: Set<string>
 }
 
-function isUserInterface(item: unknown): item is UserInterface {
-  return (item as UserInterface).username !== undefined
+function isProfile(item: unknown): item is Profile {
+  return (item as Profile).username !== undefined
 }
 
 export function ResultsList({
@@ -51,6 +52,7 @@ export function ResultsList({
     )
   }
 
+  console.log(results)
   if (results.length === 0) {
     return (
       <div className="py-8 text-center text-sm text-muted-foreground">
@@ -63,8 +65,8 @@ export function ResultsList({
     <div className="space-y-2">
       <AnimatePresence mode="popLayout">
         {results.map((item) => {
-          const key = isUserInterface(item)
-            ? item._id.toString()
+          const key = isProfile(item)
+            ? item.id.toString()
             : (item as Thread).threadId
           return (
             <motion.div
@@ -81,12 +83,12 @@ export function ResultsList({
                 />
               ) : (
                 <UserRow
-                  user={item as UserInterface}
+                  user={item as Profile}
                   onChat={onUserChat}
                   onAdd={onUserAdd}
                   isGroupCreationMode={isGroupCreationMode}
                   isSelected={selectedUsers?.has(
-                    (item as UserInterface)._id.toString(),
+                    (item as Profile).id.toString(),
                   )}
                 />
               )}

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect, Dispatch, SetStateAction } from 'react'
-import { UserInterface, type Thread } from '@chat/shared'
+import { type Thread } from '@chat/shared'
+import { Profile } from '@chat/shared/schema/profiles/profile'
 import { debounce } from '@/lib/debounce'
 import { SearchBar } from './SearchBar'
 import { ResultsList } from './ResultsList'
@@ -17,8 +18,8 @@ export function StartMessagingClient() {
   const [isLoading, setIsLoading] = useState(false)
   const [isError, setIsError] = useState(false)
   const [isGroupMode, setIsGroupMode] = useState(false)
-  const [results, setResults] = useState<UserInterface[] | Thread[]>([])
-  const [selectedUsers, setSelectedUsers] = useState<UserInterface[]>([]);
+  const [results, setResults] = useState<Profile[] | Thread[]>([])
+  const [selectedUsers, setSelectedUsers] = useState<Profile[]>([]);
   const [isGroupCreationMode, setIsGroupCreationMode] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const debouncedSearchRef = useRef<((query: string) => void) | null>(null);
@@ -56,7 +57,7 @@ export function StartMessagingClient() {
 
         // TODO: ZOD VALIDATE PARSE! 
 
-        setResults(data as (UserInterface[] | Thread[]));
+        setResults(data as (Profile[] | Thread[]));
 
 
 
@@ -87,7 +88,7 @@ export function StartMessagingClient() {
     setIsGroupCreationMode(false)
   }
 
-  const handleUserAdd = (newUser: UserInterface) => {
+  const handleUserAdd = (newUser: Profile) => {
     setSelectedUsers((prev) => {
 
       const alreadyExists = prev.some(user => user.username === newUser.username);

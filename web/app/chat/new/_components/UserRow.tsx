@@ -1,6 +1,7 @@
 'use client'
 
-import { UserInterface, Thread } from "@chat/shared";
+import { Thread } from "@chat/shared";
+import { Profile } from "@chat/shared/schema/profiles/profile";
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { MessageCircle, Plus, Check } from 'lucide-react'
@@ -8,9 +9,9 @@ import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 
 interface UserRowProps {
-  user: UserInterface
+  user: Profile
   onChat: (username: string) => void
-  onAdd?: (user: UserInterface) => void
+  onAdd?: (user: Profile) => void
   isGroupCreationMode?: boolean
   isSelected?: boolean
 }
@@ -29,7 +30,7 @@ export function UserRow({
   const handleAdd = () => {
     if (onAdd) {
       onAdd(user)
-      toast.success(`Added ${user.name} to group`)
+      toast.success(`Added ${user.username} to group`)
     }
   }
 
@@ -41,11 +42,11 @@ export function UserRow({
     >
       <div className="flex items-center gap-3">
         <Avatar className="h-10 w-10">
-          <AvatarImage src={user.image} alt={user.name} />
-          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+          <AvatarImage src={user.image} alt={user.username} />
+          <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">{user.name}</p>
+          <p className="truncate text-sm font-medium">{user.username}</p>
           <p className="truncate text-xs text-muted-foreground">
             @{user.username}
           </p>

@@ -6,4 +6,3 @@ export * from "./db/models/thread.schema.ts"
 export * from "./db/models/user.schema.ts"
 export * from "./db/models/message.schema.ts"
 export * from "./types/index.ts";
-export * from "./schema/index.ts";

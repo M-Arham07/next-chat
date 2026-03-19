@@ -7,7 +7,7 @@ import OnboardingContent from "./_components/onboarding-content";
 import AvatarUpload from "@/components/shared/upload-avatar/avatar.upload";
 import UsernameForm from "./_components/username-form";
 import { useLoader } from "@/store/loader/use-loader";
-import { CreateProfileSchemaResponse } from "@chat/shared";
+import { CreateProfileSchemaResponse } from "@chat/shared/schema/profiles/create-profile";
 import { useRouter } from "next/navigation";
 
 // const AVATAR_SIZE_PX = 70;
@@ -53,18 +53,19 @@ export default function OnboardingPage() {
             return;
         }
 
-        setLoading(true)
+        setLoading(true);
+
+        // Send the data as
+
+        const formData = new FormData();
+
+        formData.append("username", username);
+        formData.append("image", displayPicture);
 
 
         const res = await fetch("/api/profiles", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                username: username,
-                image: displayPicture,
-            }),
+            body: formData
         });
 
         const { data, success } = CreateProfileSchemaResponse.parse(await res.json());
@@ -77,6 +78,8 @@ export default function OnboardingPage() {
 
         setSuccessMessage(data);
         setLoading(false);
+
+        router.push("/");
 
 
         return;
@@ -124,7 +127,7 @@ export default function OnboardingPage() {
     }
 
     return (
-        <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 text-foreground flex items-center justify-center p-4 md:p-8 relative overflow-hidden">
+        <main className="min-h-screen bg-linear-to-br from-background via-background to-muted/20 text-foreground flex items-center justify-center p-4 md:p-8 relative overflow-hidden">
             <div className="absolute inset-0 -z-10">
                 <div className="absolute top-0 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
                 <div className="absolute bottom-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />

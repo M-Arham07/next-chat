@@ -2,7 +2,8 @@ import { MessageSquare, Radio, Users, Phone, Settings } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useEffect } from "react";
 
 export type NavTab = "threads" | "updates" | "communities" | "calls";
 
@@ -20,10 +21,11 @@ const navItems: { id: NavTab; icon: React.ElementType; label: string }[] = [
 
 
 const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
-  
-  const { data: session } = useSession();
 
- 
+  const { profile } = useAuth();
+  useEffect(()=>console.log(profile),[profile])
+
+
 
   return (
     <motion.div
@@ -41,9 +43,9 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
 
         {/* PUT BRAND LOGO HERE! */}
         <Avatar className="w-10 h-10 mb-6 ring-2 ring-border">
-          
+
           <AvatarFallback className="bg-foreground text-background text-sm font-bold">
-            {session?.user?.username?.charAt(0)?.toUpperCase() || "?"}
+            {profile.username.charAt(0)?.toUpperCase() || "?"}
           </AvatarFallback>
         </Avatar>
       </motion.div>
@@ -65,8 +67,8 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
                 size="icon"
                 onClick={() => onTabChange(item.id)}
                 className={`w-11 h-11 rounded-xl transition-all duration-200 relative ${isActive
-                    ? 'bg-foreground text-background hover:bg-foreground/90'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                  ? 'bg-foreground text-background hover:bg-foreground/90'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                   }`}
               >
                 <Icon className="w-5 h-5" />
@@ -98,9 +100,9 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
           <Settings className="w-5 h-5" />
         </Button>
         <Avatar className="w-9 h-9 ring-1 ring-border">
-          <AvatarImage src={session?.user?.image || ""}/>
+          <AvatarImage src={profile.image || ""} />
           <AvatarFallback className="bg-avatar-3 text-foreground text-xs font-medium">
-            {session?.user?.username?.charAt(0)?.toUpperCase() || "?"}
+            {profile.username.charAt(0)?.toUpperCase() || "?"}
           </AvatarFallback>
         </Avatar>
       </motion.div>
