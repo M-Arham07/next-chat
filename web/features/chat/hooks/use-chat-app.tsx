@@ -113,10 +113,10 @@ const useChatAppHook = (): ChatAppHook => {
             // REGISTER LISTENERS::: 
             socketRef.current.on("message:received", handleReceiveMessage);
             socketRef.current.on("message:deleted", removeMessage);
-            socketRef.current.on("typing:start", (threadId, username) => {
+            socketRef.current.on("typing:start", (threadId, id) => {
 
-                if (profile.username !== username) {
-                    addTypingUser(threadId, username);
+                if (profile.id !== id) {
+                    addTypingUser(threadId, id);
 
                 }
 
@@ -259,7 +259,7 @@ const useChatAppHook = (): ChatAppHook => {
 
 
         // edge case:
-        if (!threadId || !profile?.username) return;
+        if (!threadId || !profile?.id) return;
 
         if (!isTypingRef.current) {
             isTypingRef.current = true;
@@ -267,7 +267,7 @@ const useChatAppHook = (): ChatAppHook => {
 
 
             // emit! 
-            socketRef.current?.emit("typing:start", threadId, profile.username);
+            socketRef.current?.emit("typing:start", threadId, profile.id);
 
         }
 
@@ -292,7 +292,7 @@ const useChatAppHook = (): ChatAppHook => {
 
     const stopTypingEmit = (threadId: string) => {
 
-        socketRef.current?.emit("typing:stop", threadId, profile.username! || "");
+        socketRef.current?.emit("typing:stop", threadId, profile.id! || "");
 
     }
 
@@ -307,12 +307,12 @@ const useChatAppHook = (): ChatAppHook => {
     const handleDeleteMessage = async (messageToDelete: Message): Promise<void> => {
 
 
-        // TODO : BLOCK DELETION IF MESSAGE.SENDER !== SESSION.USER.USERNAME
+        // TODO : BLOCK DELETION IF message.sender !== profile.id
         // A user can only delete his OWN messages! 
 
         const { threadId, msgId, sender } = messageToDelete;
 
-        if (sender !== profile.username) return;
+        if (sender !== profile.id) return;
 
 
         // FIRST SET STATUS TO SENDING  (to show loading)
@@ -361,6 +361,8 @@ const useChatAppHook = (): ChatAppHook => {
         content: string | File)
         : Promise<void> => {
 
+            console.log("handle send trigger")
+
 
 
         // if message is a file, we'll upload it to supabase, and gets it's url! 
@@ -401,7 +403,7 @@ const useChatAppHook = (): ChatAppHook => {
 
             msgId: process.env.NODE_ENV === "production" ? crypto.randomUUID() : (Date.now() - Math.random()).toString(),
             threadId: threadId,
-            sender: profile.username,
+            sender: profile.id,
             type: type as MessageContentType,
             content: localBlobUrl || (finalContent as string),
             timestamp: new Date(Date.now()).toISOString(),
@@ -529,7 +531,7 @@ const useChatAppHook = (): ChatAppHook => {
         // ZOD PARSE ?
 
 
-        const isEcho = receivedMsg.sender === profile.username;
+        const isEcho = receivedMsg.sender === profile.id;
 
 
         console.log(`Received a message from ${receivedMsg.sender}! isEcho ${isEcho} `);

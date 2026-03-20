@@ -31,8 +31,8 @@ export interface ChatAppStore {
     updateMessageContent: (threadId: string, msgId: string, newContent: string) => void
     removeMessage: (threadId: string, msgId: string, nuke?: boolean) => void
 
-    addTypingUser: (threadId: string, username: string) => void
-    removeTypingUser: (threadId: string, username: string) => void
+    addTypingUser: (threadId: string, userId: string) => void
+    removeTypingUser: (threadId: string, userId: string) => void
     setUploadingProgress: (msgId: string, progress: number) => void
 
 
@@ -315,12 +315,12 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
 
     }),
 
-    addTypingUser: (threadId: string, username: string): void => set((state) => {
+    addTypingUser: (threadId: string, userId: string): void => set((state) => {
 
         const currentlyTyping = state.typingUsers ?? {};
         const currentlyTypingInThread = new Set(currentlyTyping[threadId] ?? []);
 
-        currentlyTypingInThread.add(username);
+        currentlyTypingInThread.add(userId);
 
 
         return {
@@ -340,13 +340,13 @@ export const useChatAppStore = create<ChatAppStore>((set) => ({
     }),
 
 
-    removeTypingUser: (threadId: string, username: string): void => set((state) => {
+    removeTypingUser: (threadId: string, userId: string): void => set((state) => {
 
         const currentlyTyping = state.typingUsers ?? {};
         const currentlyTypingInThread = new Set(currentlyTyping[threadId] ?? []);
 
 
-        currentlyTypingInThread.delete(username);
+        currentlyTypingInThread.delete(userId);
 
 
 

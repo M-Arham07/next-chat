@@ -1,7 +1,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/supabase/server";
-import type { Thread, Message } from "@chat/shared";
 import { getProfileServer } from "@/supabase/getProfileServer";
 import { GetInboxResponse } from "@chat/shared/schema";
 
@@ -19,14 +18,17 @@ export async function GET(
         if (!profile) {
             throw new Error("INVALID_AUTH");
         }
+   
 
         const supabase = await createClient();
 
         const { data, error } = await supabase.rpc("get_inbox", {
-            p_username: profile.username,
-            p_messages_limit: 10,
+            p_profile_id: profile.id,
+            p_messages_limit: 10
         });
-
+        console.log("profile.id:", profile.id);
+console.log("data:", data);
+console.log("error:", error);
       
         if (error) throw new Error(error.message)
 

@@ -1,7 +1,6 @@
 import { Thread } from "@chat/shared";
 import { ActiveFilter } from "../types";
 import { MessageState } from "../types/message-state";
-import { Session } from "next-auth";
 
 
 const filterThreads = (threads: Thread[] | null, messages: MessageState | null, session: Session | null,
@@ -26,7 +25,7 @@ const filterThreads = (threads: Thread[] | null, messages: MessageState | null, 
     let matchesName = false;
 
 
-    if (thread.particpants.some(p => p.username.toLowerCase().includes(query) && p.username !== session!.user.username!.toLowerCase())) {
+    if (thread.participants.some(p => p.username.toLowerCase().includes(query) && p.username !== session!.user.username!.toLowerCase())) {
       matchesName = true;
 
     }

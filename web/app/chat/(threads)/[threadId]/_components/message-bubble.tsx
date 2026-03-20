@@ -15,7 +15,6 @@ import VideoMessage from "./video-message"
 import MessageContextMenu from "./message-context-menu"
 import TypingIndicator from "./typing-indicator"
 import { Message } from "@chat/shared"
-import { useSession } from "next-auth/react"
 import { useChatApp } from "@/features/chat/hooks/use-chat-app"
 import { formatTime } from "@/lib/format-time"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -27,6 +26,7 @@ const MAX_SWIPE_THRESHOLD: number = 80;
 
 interface MessageBubbleProps {
   message: Message
+  isSent:boolean,
   isHighlighted: boolean
   onReplyClick: (messageId: string) => void
   onReply: (message: Message) => void
@@ -38,6 +38,7 @@ const MessageBubble = ({
 
 
   message,
+  isSent,
   isHighlighted,
   onReplyClick,
   status = "sent",
@@ -54,7 +55,7 @@ const MessageBubble = ({
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const hasTriggeredReply = useRef(false);
 
-  const { data: session } = useSession();
+
   const { messages, handleRetryMessage } = useChatApp()!;
 
 
@@ -70,8 +71,6 @@ const MessageBubble = ({
 
 
 
-  // have i sent this messagee ? 
-  const isSent: boolean = session?.user?.username === message.sender;
 
   // is the message read ? 
   const isRead = true; // FOR NOW, I'LL USE PLACEHOLDER TRUE!;
@@ -157,7 +156,7 @@ const MessageBubble = ({
 
     !isSent && displayPic.show && (
       <Avatar className={className}>
-        <AvatarImage src={displayPic.url ?? null} />
+        <AvatarImage src={(displayPic.url as string | undefined)} />
         <AvatarFallback>
           {message.sender?.[3]?.toUpperCase()}
         </AvatarFallback>
@@ -246,7 +245,7 @@ return (
             onClick={() => onReplyClick(repliedToMsg.msgId || "")}
             className="px-3 pt-2 pb-1 border-l-2 border-primary/50 mx-2 mt-2 bg-secondary/30 rounded cursor-pointer hover:bg-secondary/50 transition-colors"
           >
-            <p className="text-xs font-medium text-primary">{repliedToMsg.sender === session?.user?.username ? "You" : repliedToMsg.sender}</p>
+            <p className="text-xs font-medium text-primary">{repliedToMsg.sender === "" ? "You" : "need to fix it"}</p>
             <p className="text-xs text-muted-foreground truncate">{repliedToMsg.content}</p>
           </div>
         )}

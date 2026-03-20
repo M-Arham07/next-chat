@@ -6,11 +6,10 @@ import MessageBubble from "./message-bubble";
 import DateSeparator from "./date-separator";
 import { useChatApp } from "@/features/chat/hooks/use-chat-app"
 import TypingIndicator from "./typing-indicator";
-import { particpant } from "@chat/shared";
-import { useSession } from "next-auth/react";
 import { useInfiniteScroll } from "@/features/chat/hooks/use-infinite-scroll";
 import Loading from "../loading";
-import { notFound } from "next/navigation";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { participant } from "@chat/shared";
 
 
 
@@ -21,14 +20,15 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
 
     const { messages, replyingToMsg, handleSendMessage, handleTyping, set, stopTypingEmit, threads, typingUsers } = useChatApp()!;
 
-    const { data: session } = useSession();
+    // must not be null , null auth will be blocked by loading screen
+    const { profile } = useAuth()!;
 
     const thisThread = threads?.find(t => t.threadId === threadId);
 
-    let otherParticipant: particpant | undefined = undefined;
+    let otherParticipant: participant | undefined = undefined;
 
     if (thisThread?.type === "direct") {
-        otherParticipant = thisThread.particpants?.find(p => p.username.toLowerCase() !== session?.user?.username?.toLowerCase());
+        otherParticipant = thisThread.participants?.find(p => p.username.toLowerCase() !== profile.username.toLowerCase());
     }
 
 
@@ -50,17 +50,17 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
     const inputRef = useRef<HTMLInputElement | null>(null);
 
 
-//     useEffect(() => {
-//     const container = mainRef.current;
-//     if (!container) return;
+    //     useEffect(() => {
+    //     const container = mainRef.current;
+    //     if (!container) return;
 
-//     const previousScroll = container.scrollTop;
+    //     const previousScroll = container.scrollTop;
 
-//     requestAnimationFrame(() => {
-//         container.scrollTop = previousScroll;
-//     });
+    //     requestAnimationFrame(() => {
+    //         container.scrollTop = previousScroll;
+    //     });
 
-// }, [messages]);
+    // }, [messages]);
 
 
 
@@ -77,7 +77,7 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
     }, [mounted]);
 
 
-    
+
 
 
 
@@ -192,7 +192,7 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
                                 if (el) {
                                     messageRefsMap.current[message.msgId] = el;
 
-                                
+
                                 }
                             }}
                             style={{
@@ -205,6 +205,8 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
                         >
                             <MessageBubble
                                 message={message}
+                                // have i sent this message?
+                                isSent={message.sender === profile.id}
                                 isHighlighted={highlightedMessageId === message.msgId}
                                 onReplyClick={handleReplyPreviewClick}
                                 onReply={() => {
@@ -217,7 +219,7 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
 
                                 displayPic={
                                     {
-                                        url: thisThread?.particpants.find(p => p.username === message.sender)?.image,
+                                        url: thisThread?.participants.find(p => p.username === message.sender)?.image,
 
                                         // if previous message was of the same user ,dont show his dp again 
 
@@ -233,7 +235,7 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
 
                     {/* Render typing bubbles: */}
                     {[...(typingUsers?.[threadId] ?? [])].map(typingUsername => (
-                        <TypingIndicator isSent={typingUsername === session?.user.username} />
+                        <TypingIndicator isSent={typingUsername === profile.username} />
                     ))}
 
 

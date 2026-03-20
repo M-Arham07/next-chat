@@ -1,12 +1,10 @@
 import { z } from "zod";
-import { Thread } from "../../types/threads";
-import { threadSchema } from "./threads";
 
 export const CreateThreadSchemaBody = z.object({
     type: z.enum(["direct", "group"]),
     otherParticipantUserIds: z.array(z.string()),
     groupName: z.string().optional(),
-    groupImage: z.instanceof(File).optional()
+    groupImage: z.instanceof(File).optional().nullable()
 });
 
 

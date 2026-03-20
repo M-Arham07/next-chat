@@ -62,8 +62,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CreateThr
             p_type: type,
             p_other_particpant_user_ids: otherParticipantUserIds,
             p_group_name: groupName ?? null,
-            p_group_image: uploadedGroupImageUrl,
-            p_limit: 20, // <-- THIS
+            p_group_image: uploadedGroupImageUrl
         });
 
 
