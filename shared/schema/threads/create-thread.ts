@@ -1,17 +1,21 @@
 import { z } from "zod";
 import { Thread } from "../../types/threads";
+import { threadSchema } from "./threads";
 
 export const CreateThreadSchemaBody = z.object({
     type: z.enum(["direct", "group"]),
-    otherParticipantUsernames: z.array(z.string()),
+    otherParticipantUserIds: z.array(z.string()),
     groupName: z.string().optional(),
-    groupImage: z.string().optional()
+    groupImage: z.instanceof(File).optional()
 });
 
-export type CreateThreadBodyType = z.infer<typeof CreateThreadSchemaBody>;
 
-export type CreateThreadResponseType = {
-    success: boolean;
-    data?: Thread;
-    error?: string;
-};
+export const CreateThreadSchemaResponse = z.object({
+    createdThreadId: z.string().optional(),
+    success: z.boolean(),
+    error: z.string().optional()
+})
+
+
+export type CreateThreadBodyType = z.infer<typeof CreateThreadSchemaBody>;
+export type CreateThreadResponseType = z.infer<typeof CreateThreadSchemaResponse>;

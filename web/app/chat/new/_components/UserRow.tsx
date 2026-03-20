@@ -7,14 +7,18 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { MessageCircle, Plus, Check } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 interface UserRowProps {
   user: Profile
-  onChat: (username: string) => void
+  onChat: (userId: string, username: string) => void
   onAdd?: (user: Profile) => void
   isGroupCreationMode?: boolean
   isSelected?: boolean
 }
+
+
+
 
 export function UserRow({
   user,
@@ -27,12 +31,19 @@ export function UserRow({
 
 
 
-  const handleAdd = () => {
-    if (onAdd) {
-      onAdd(user)
-      toast.success(`Added ${user.username} to group`)
+  const { profile } = useAuth();
+
+  if (profile?.id === user.id) return null;
+
+
+    const handleAdd = () => {
+      if (onAdd) {
+        onAdd(user)
+        toast.success(`Added ${user.username} to group`)
+      }
     }
-  }
+
+
 
   return (
     <motion.div
@@ -76,7 +87,7 @@ export function UserRow({
         <Button
           variant="outline"
           size="sm"
-          onClick={()=>onChat(user.username)}
+          onClick={() => onChat(user.id, user.username)}
           className="gap-2"
         >
           <MessageCircle className="h-4 w-4" />

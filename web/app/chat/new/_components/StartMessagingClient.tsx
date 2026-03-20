@@ -9,9 +9,10 @@ import { ResultsList } from './ResultsList'
 import { SelectedUsersScroller } from './SelectedUsersScroller'
 import { CreateGroupModal } from './CreateGroupModal'
 import { toast } from 'sonner'
-import { createNewThread } from '@/features/chat/lib/create-thread'
 import { useRouter } from 'next/navigation'
 import { useChatApp } from '@/features/chat/hooks/use-chat-app'
+import { CreateThreadSchemaResponse } from '@chat/shared/schema'
+import { optimizeImage } from '@/lib/optimize-image'
 
 export function StartMessagingClient() {
   const [query, setQuery] = useState('')
@@ -54,6 +55,7 @@ export function StartMessagingClient() {
 
 
         const data = await res.json();
+
 
         // TODO: ZOD VALIDATE PARSE! 
 
@@ -100,10 +102,10 @@ export function StartMessagingClient() {
     })
   }
 
-  const handleUserRemove = (removedUsername: string) => {
+  const handleUserRemove = (removedUserId: string) => {
     setSelectedUsers((prev) => {
 
-      const updatedSelectedUsers = prev.filter(user => user.username !== removedUsername);
+      const updatedSelectedUsers = prev.filter(user => user.id !== removedUserId);
 
       return updatedSelectedUsers;
 
@@ -124,20 +126,56 @@ export function StartMessagingClient() {
 
 
 
-  const handleCreateGroup = async (groupName: string, groupImage: string, setIsCreating: Dispatch<SetStateAction<boolean>>): Promise<void> => {
+  const handleCreateGroup = async (groupName: string, groupImage: File, setIsCreating: Dispatch<SetStateAction<boolean>>): Promise<void> => {
+
+
 
     setIsCreating(true);
 
-    const otherParticpantUsernames = [...new Set<string>(selectedUsers.map(u => u.username))];
 
-    const createdThread = await createNewThread({ type: "group", otherParticpantUsernames, groupName, groupImage });
+    const otherParticipantUserIds = selectedUsers.map(u => u.id);
 
-    if (!createdThread) {
+
+
+
+
+    const formData = new FormData();
+    formData.append("type", "group");
+    formData.append("otherParticipantUserIds", JSON.stringify(otherParticipantUserIds));
+    formData.append("groupName", groupName);
+
+
+    let createdThreadId: string;
+
+    try {
+
+      const optimizedImage = await optimizeImage(groupImage);
+      formData.append("groupImage", optimizedImage);
+
+
+      const res = await fetch("/api/threads", {
+        method: "POST",
+        body: formData,
+      });
+
+      const json = await res.json();
+      const { success, createdThreadId: newThreadId } = CreateThreadSchemaResponse.parse(json);
+
+      if (!success) throw new Error("BAD Response from server");
+
+      createdThreadId = newThreadId! as string;
+
+
+
+    }
+
+    catch (err) {
+
       toast.error("Failed to create group! Please try again");
       setIsCreating(false);
       return;
-    }
 
+    }
 
 
 
@@ -149,9 +187,11 @@ export function StartMessagingClient() {
 
     // add new thread to state !
 
-    addThread(createdThread, { appendToStart: true });
 
-    router.push(`/chat/${createdThread.threadId}`);
+
+    // addThread(newThread, { appendToStart: true });
+
+    router.push(`/chat/${createdThreadId}`);
 
     return;
 
@@ -159,14 +199,33 @@ export function StartMessagingClient() {
 
   }
 
-  const handleUserChat = async (username: string): Promise<void> => {
+  const handleUserChat = async (userId: string, username: string): Promise<void> => {
 
-    const createdThread = await createNewThread({ type: "direct", otherParticpantUsernames: [username] });
 
-    if (!createdThread?.threadId) {
+    let createdThreadId: string;
+    const formData = new FormData();
+    formData.append("type", "direct");
+    formData.append("otherParticipantUserIds", JSON.stringify([userId]));
+
+    try {
+      const res = await fetch("/api/threads", {
+        method: "POST",
+        body: formData,
+      });
+
+      const json = await res.json();
+      const { success, createdThreadId: newThreadId } = CreateThreadSchemaResponse.parse(json);
+
+      if (!success) throw new Error("BAD Response from server");
+
+      createdThreadId = newThreadId! as string;
+    }
+    catch (err) {
       toast.error(`Failed to start chat with ${username}`);
       return;
+
     }
+
 
 
 
@@ -174,11 +233,12 @@ export function StartMessagingClient() {
 
     // add new thread to state !
 
-    addThread(createdThread, { appendToStart: true });
+    // addThread(createdThread, { appendToStart: true });
+    // todo : realtime update via socket! 
 
 
 
-    return router.push(`/chat/${createdThread.threadId}`)
+    return router.push(`/chat/${createdThreadId}`)
 
 
 

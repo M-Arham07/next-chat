@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { UserInterface } from '@chat/shared'
+import { Profile } from '@chat/shared/schema/profiles/profile'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { X } from 'lucide-react'
@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 interface SelectedUsersScrollerProps {
 
   //Data:
-  selectedUsers: UserInterface[]
+  selectedUsers: Profile[]
 
   // Functions: 
   onRemoveUser: (userId: string) => void
@@ -72,7 +72,7 @@ export function SelectedUsersScroller({
         <AnimatePresence mode="popLayout">
           {selectedUsers.map((user) => (
             <motion.div
-              key={user._id.toString()}
+              key={user.id}
               initial={{ opacity: 0, scale: 0.8, x: 20 }}
               animate={{ opacity: 1, scale: 1, x: 0 }}
               exit={{ opacity: 0, scale: 0.8, x: 20 }}
@@ -80,14 +80,14 @@ export function SelectedUsersScroller({
               className="flex shrink-0 items-center gap-2 rounded-full border bg-background px-2 py-1"
             >
               <Avatar className="h-6 w-6">
-                <AvatarImage src={user.image} alt={user.name} />
-                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                <AvatarImage src={user.image} alt={user.username} />
+                <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
               </Avatar>
-              <span className="text-xs font-medium">{user.name}</span>
+              <span className="text-xs font-medium">{user.username}</span>
               <button
-                onClick={() => onRemoveUser(user.username)}
+                onClick={() => onRemoveUser(user.id)}
                 className="rounded-full p-1 hover:bg-muted"
-                aria-label={`Remove ${user.name}`}
+                aria-label={`Remove ${user.username}`}
               >
                 <X className="h-3 w-3" />
               </button>

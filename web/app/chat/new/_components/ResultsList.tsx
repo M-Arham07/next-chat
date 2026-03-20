@@ -12,7 +12,7 @@ interface ResultsListProps {
   results: Profile[] | Thread[]
   isLoading: boolean
   isError: boolean
-  onUserChat: (username: string) => void
+  onUserChat: (userId: string,username: string) => void
   onGroupJoin?: (threadId: string) => void
   onUserAdd?: (user: Profile) => void
   isGroupCreationMode?: boolean

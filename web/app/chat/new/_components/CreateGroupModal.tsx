@@ -1,7 +1,7 @@
 'use client'
 
 import { Dispatch, SetStateAction, useState } from 'react'
-import { UserInterface } from '@chat/shared'
+import { Profile } from '@chat/shared/schema/profiles/profile'
 import AvatarUpload from '@/components/shared/upload-avatar/avatar.upload'
 import {
   Dialog,
@@ -15,16 +15,16 @@ import { Input } from '@/components/ui/input'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { motion } from 'framer-motion'
 import { Loader2, ChevronLeft, X } from 'lucide-react'
-import { fakeDelay } from '@/features/chat/lib/fake-delay'
+import Image from "next/image";
 
 interface CreateGroupModalProps {
 
   //Data
-  selectedUsers: UserInterface[],
+  selectedUsers: Profile[],
 
   // Functions : 
   onClose: () => void
-  onCreateGroup: (groupName: string, groupImage: string, setIsCreating: Dispatch<SetStateAction<boolean>>,) => Promise<void>
+  onCreateGroup: (groupName: string, groupImage: File, setIsCreating: Dispatch<SetStateAction<boolean>>,) => Promise<void>
   onRemoveUser: (username: string) => void
 }
 
@@ -40,7 +40,7 @@ export function CreateGroupModal({
 
   const [step, setStep] = useState<ModalStep>('review')
   const [groupName, setGroupName] = useState('')
-  const [groupImage, setGroupImage] = useState<string | null>(null)
+  const [groupImage, setGroupImage] = useState<File | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [nameError, setNameError] = useState('')
 
@@ -89,7 +89,7 @@ export function CreateGroupModal({
               <div className="max-h-64 space-y-2 overflow-y-auto">
                 {selectedUsers.map((user) => (
                   <motion.div
-                    key={user._id.toString()}
+                    key={user.id.toString()}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.1 }}
@@ -97,11 +97,11 @@ export function CreateGroupModal({
                   >
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <Avatar className="h-8 w-8 shrink-0">
-                        <AvatarImage src={user.image} alt={user.name} />
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={user.image} alt={user.username} />
+                        <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{user.name}</p>
+                        <p className="truncate text-sm font-medium">{user.username}</p>
                         <p className="truncate text-xs text-muted-foreground">
                           @{user.username}
                         </p>
@@ -202,10 +202,12 @@ export function CreateGroupModal({
                   <div className="relative">
                     <div className="absolute inset-0 rounded-lg bg-linear-to-br from-primary/20 to-primary/5 blur-xl" />
                     <div className="relative w-24 h-24 rounded-lg overflow-hidden border-2 border-border shadow-lg">
-                      <img
-                        src={groupImage}
+                      <Image
+                        src={URL.createObjectURL(groupImage)}
                         alt={groupName}
                         className="w-full h-full object-cover"
+                        width={50}
+                        height={50}
                       />
                     </div>
                   </div>
@@ -226,14 +228,14 @@ export function CreateGroupModal({
                 <div className="flex gap-2 flex-wrap">
                   {selectedUsers.map((user) => (
                     <div
-                      key={user._id.toString()}
+                      key={user.id.toString()}
                       className="inline-flex items-center gap-2 rounded-full bg-muted px-2 py-1"
                     >
                       <Avatar className="h-5 w-5">
-                        <AvatarImage src={user.image} alt={user.name} />
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={user.image} alt={user.username} />
+                        <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
                       </Avatar>
-                      <span className="text-xs font-medium">{user.name}</span>
+                      <span className="text-xs font-medium">{user.username}</span>
                     </div>
                   ))}
                 </div>
@@ -250,7 +252,7 @@ export function CreateGroupModal({
                   Back
                 </Button>
                 <Button
-                  onClick={() => onCreateGroup(groupName, (groupImage as string), setIsCreating)}
+                  onClick={() => onCreateGroup(groupName, (groupImage as File), setIsCreating)}
                   disabled={isCreating}
                   className="gap-2 flex-1"
                 >

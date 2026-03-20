@@ -35,7 +35,7 @@ export function GroupRow({ thread, onJoin }: GroupRowProps) {
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{thread.groupName}</p>
           <p className="truncate text-xs text-muted-foreground">
-            {thread.particpants.length} members
+            {thread.participants.length} members
           </p>
         </div>
       </div>

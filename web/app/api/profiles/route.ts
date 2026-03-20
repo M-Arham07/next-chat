@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { CreateProfileSchemaBody, CreateProfileSchemaResponseType } from "@chat/shared/schema";
 import { createClient } from "@/supabase/server";
 import { getAuthServer } from "@/supabase/getAuthServer";
+import { uploadAvatarAndGetLink } from "@/features/upload-avatar/get-avatar-link";
 
 export async function POST(request: NextRequest): Promise<NextResponse<CreateProfileSchemaResponseType>> {
     try {
@@ -25,29 +26,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<CreatePro
             );
         }
 
-        // 1. Upload the image to public bucket named "media"
-        const fileExt = image.name.split('.').pop() || 'jpg';
-        const fileName = `avatars/${user.id}-${Date.now()}.${fileExt}`;
 
-        const { data: uploadData, error: uploadError } = await supabase.storage
-            .from("media")
-            .upload(fileName, image, {
-                cacheControl: "3600",
-                upsert: true,
-                contentType: image.type,
-            });
-
-        if (uploadError) {
-            throw new Error(`Storage upload failed: ${uploadError.message}`);
-        }
-
-        // 2. Retrieve the public URL for the uploaded image
-        const { data: { publicUrl } } = supabase.storage
-            .from("media")
-            .getPublicUrl(fileName);
-
-
-
+        const publicUrl = await uploadAvatarAndGetLink(image);
+ 
 
 
         // 3. Insert the user record with the public URL
