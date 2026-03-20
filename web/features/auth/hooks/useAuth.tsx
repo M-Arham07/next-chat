@@ -51,15 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       fetchProfile(data.user?.id);
     })
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      fetchProfile(session?.user?.id);
-    })
-
     return () => {
       isMounted = false;
-      subscription.unsubscribe();
     }
   }, [])
 

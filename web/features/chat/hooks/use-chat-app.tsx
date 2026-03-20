@@ -60,7 +60,13 @@ const useChatAppHook = (): ChatAppHook => {
         set, updateMessageStatus, updateMessageContent, removeMessage, addTypingUser, removeTypingUser, setUploadingProgress } = store;
 
     const { profile } = useAuth();
-  
+
+
+    // to prevent stale closures! : 
+    const profileRef = useRef(profile);
+    useEffect(() => { profileRef.current = profile }, [profile]);
+
+
 
     const { setLoading } = useLoader();
 
@@ -94,7 +100,7 @@ const useChatAppHook = (): ChatAppHook => {
                 const { data } = await supabase.auth.getSession()
 
                 const sessionToken = data.session?.access_token ?? "";
-                console.log("sending token",sessionToken);
+                console.log("sending token", sessionToken);
 
                 socketRef.current = getSocket(sessionToken);
 
@@ -118,7 +124,10 @@ const useChatAppHook = (): ChatAppHook => {
             socketRef.current.on("message:deleted", removeMessage);
             socketRef.current.on("typing:start", (threadId, id) => {
 
-                if (profile.id !== id) {
+
+                console.log("received typing start")
+                console.log(profileRef.current?.id)
+                if (profileRef.current?.id !== id) {
                     addTypingUser(threadId, id);
 
                 }
@@ -364,7 +373,7 @@ const useChatAppHook = (): ChatAppHook => {
         content: string | File)
         : Promise<void> => {
 
-            console.log("handle send trigger")
+        console.log("handle send trigger")
 
 
 
@@ -415,7 +424,7 @@ const useChatAppHook = (): ChatAppHook => {
 
         }
 
-        if(!messageSchema.safeParse(newMessage).success){
+        if (!messageSchema.safeParse(newMessage).success) {
             toast.error("Failed to send message!");
             return;
         }
@@ -533,8 +542,17 @@ const useChatAppHook = (): ChatAppHook => {
 
         // ZOD PARSE ?
 
+        const parsed = messageSchema.safeParse(receivedMsg);
 
-        const isEcho = receivedMsg.sender === profile.id;
+        if (!parsed.success) {
+            console.log("Invalid message received");
+            return;
+        }
+
+        console.log("profile id is", profileRef.current)
+
+
+        const isEcho = receivedMsg.sender === profileRef.current?.id;
 
 
         console.log(`Received a message from ${receivedMsg.sender}! isEcho ${isEcho} `);

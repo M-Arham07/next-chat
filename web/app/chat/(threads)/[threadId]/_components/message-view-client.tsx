@@ -64,17 +64,17 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
 
 
 
-    // Scroll to bottom on mount (instant, no animation)
+    // One-shot scroll to bottom: fires the first time messages for this thread appear in the DOM
+    const hasScrolledRef = useRef(false);
     useEffect(() => {
-        if (mounted && messagesEndRef.current) {
+        if (hasScrolledRef.current) return;
+        if (!messages?.[threadId]?.length) return;
 
-            console.log("Scrolling")
-
-
-
-            messagesEndRef.current.scrollIntoView({ behavior: "instant" })
-        }
-    }, [mounted]);
+        requestAnimationFrame(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+            hasScrolledRef.current = true;
+        });
+    }, [messages?.[threadId]]);
 
 
 
