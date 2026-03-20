@@ -2,26 +2,34 @@
 import type { Server as NodeHttpServer } from "node:http";
 import { Server } from "socket.io";
 import { socketMiddleware } from "./socket-auth-middleware.ts";
-import { registerChatFeatures } from "../chat-features/register-chat-features.ts";
-import { joinAllRooms } from "../chat-features/join-all-rooms.ts";
 import type { TypedIO } from "../types.ts";
+import { joinAllRooms } from "../chat-features/join-all-rooms.ts";
+import { registerChatFeatures } from "../chat-features/register-chat-features.ts";
+import { logger } from "../lib/logger.ts";
 
 export default function InitSocket(server: NodeHttpServer) {
 
 
-    const ALLOWED_ORIGINS: string[] = process?.env?.ALLOWED_ORIGINS?.split(",") ?? [];
+    if (
+        !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+        !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+        !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    ) {
+        throw new Error("Missing environment variables");
+    }
 
 
-   
+        const ALLOWED_ORIGINS: string[] = process?.env?.ALLOWED_ORIGINS?.split(",") ?? [];
 
 
 
 
 
-    console.log(ALLOWED_ORIGINS)
+    logger.info("Allowed origins: " + ALLOWED_ORIGINS.join(", "));
     const io = new Server<TypedIO>(server, {
         cors: {
-            origin: process.env.NODE_ENV === "production" ? ALLOWED_ORIGINS : "*", 
+            origin: process.env.NODE_ENV === "production" ? ALLOWED_ORIGINS : "*",
             methods: ["GET", "POST"],
             credentials: true
         }
@@ -35,7 +43,7 @@ export default function InitSocket(server: NodeHttpServer) {
 
 
     io.on("connection", async (socket) => {
-        console.log("connected:", socket.id);
+        logger.ws(`connected: ${socket.id}`);
 
         // JOIN ALL ROOMS UPON CONNECTION:
 
@@ -52,7 +60,7 @@ export default function InitSocket(server: NodeHttpServer) {
 
 
         socket.on("disconnect", () => {
-            console.log("disconnected:", socket.id);
+            logger.ws(`disconnected: ${socket.id}`);
         });
 
 

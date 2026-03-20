@@ -1,6 +1,10 @@
 
 import { Socket, type ExtendedError } from "socket.io";
-import { getToken } from "next-auth/jwt"
+import { supabase } from "../supabase/supabase.ts";
+import { getProfileFromToken } from "./getProfileFromToken.ts";
+import { logger } from "../lib/logger.ts";
+
+
 
 
 
@@ -10,45 +14,37 @@ export async function socketMiddleware(socket: Socket, next: NextFn): Promise<vo
     try {
 
 
-        if(!process.env.NEXTAUTH_SECRET) throw new Error("NO_AUTH_SECRET");
-
 
         const { sessionToken } = socket?.handshake?.auth;
-        
-       
-       
+
+
+
 
         if (!sessionToken) throw new Error("NO_SESSION_TOKEN");
 
 
-        
-        console.log("RECEIVED_TOKEN",sessionToken);
+
+        logger.info("RECEIVED_TOKEN: " + sessionToken.slice(0, 10) + "...");
 
 
-        const token = await getToken({
-            req: {
-                headers: {
-                    authorization: `Bearer ${sessionToken}`
-                }
-            } as any,
-            secret: process.env.NEXTAUTH_SECRET!
-        });
-
-        if (!token) throw new Error("INVALID_AUTH");
-        if (!token?.username) throw new Error("ONBOARDING_INCOMPLETE");
 
 
-        console.log("AUTH_SUCCESS: ", token.username);
 
-        socket.username = token.username as string;
-        next()
+        const profile = await getProfileFromToken(sessionToken);
+
+
+
+        logger.success(`AUTH_SUCCESS: ${profile.username}`);
+
+        socket.profile = profile;
+        next();
 
     }
     catch (err) {
 
 
         if (err instanceof Error) {
-            console.log("AUTH_FAIL", err?.message);
+            logger.error(`AUTH_FAIL: ${err?.message}`);
         }
 
 

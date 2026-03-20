@@ -14,6 +14,7 @@ import { reconstructFileFromBlobUrl } from "@/features/chat/lib/file-utils";
 import { GetFileUrl } from "@/features/chat/lib/upload-utils";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { messageSchema } from "@chat/shared/schema";
+import { createClient } from "@/supabase/client";
 
 
 interface ChatAppHook extends ChatAppStore {
@@ -66,6 +67,8 @@ const useChatAppHook = (): ChatAppHook => {
 
     const socketRef = useRef<SocketClientType | null>(null);
 
+    const supabase = createClient();
+
 
 
 
@@ -88,10 +91,10 @@ const useChatAppHook = (): ChatAppHook => {
                 console.log("NO CURRENT SOKCET")
 
 
-                // const res = await fetch("/api/auth/get-session-token", { method: "GET" });
+                const { data } = await supabase.auth.getSession()
 
-                // const sessionToken = await res.json() as string;
-                const sessionToken = "qq"
+                const sessionToken = data.session?.access_token ?? "";
+                console.log("sending token",sessionToken);
 
                 socketRef.current = getSocket(sessionToken);
 

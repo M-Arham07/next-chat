@@ -1,7 +1,8 @@
+import type { Profile } from "#/shared/schema/profiles/profile.ts";
 import "socket.io";
 
 declare module "socket.io" {
   interface Socket {
-    username: string;
+    profile: Profile
   }
 }

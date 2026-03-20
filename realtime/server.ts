@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 import InitSocket from "./initialize/init-socket.ts";
 import dotenv from "dotenv";
+import { logger } from "./lib/logger.ts";
 dotenv.config({
   path:".env.local"
 });
@@ -94,6 +95,7 @@ InitSocket(server);
 
 
 
+
 server.listen(8080, () => {
-    console.log("[WS] Started")
+    logger.ws("Started on port 8080");
 });

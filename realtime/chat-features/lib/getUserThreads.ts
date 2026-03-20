@@ -1,28 +1,34 @@
+import { logger } from "../../lib/logger.ts";
+import { supabase } from "../../supabase/supabase.ts";
 
-import { User } from "@chat/shared";
-import { ConnectDB } from "@chat/shared";
-import { Threads } from "@chat/shared";
+export async function getUserThreads(userId: string): Promise<string[]> {
 
-export async function getUserThreads(username: string): Promise<string[]> {
+    if(!userId) throw new Error("No user id provided");
 
 
 
     try {
 
-        await ConnectDB();
+       
 
         // ONLY GET THREAD IDS!x
-        const threadIds = await Threads.distinct("threadId",{
-            "particpants.username": username
-        });
+        const {data,error} = await supabase
+        .from("thread_participants")
+        .select("thread_id")
+        .eq("user_id",userId)
 
-        
+
+        if(error) throw new Error(error.message);
+
+
+        const threadIds = data.map((item) => item.thread_id);
+
+
 
         if (!threadIds || threadIds.length === 0) {
             throw new Error("No thread found, aborting... ");
         }
 
-        console.log(`${username} joined ${threadIds}`)
 
 
         return threadIds;
@@ -33,7 +39,7 @@ export async function getUserThreads(username: string): Promise<string[]> {
     catch (err) {
 
         if(err instanceof Error){
-        console.error("[getUserThreads] Failed to get user threads! Logs: ", err?.message);
+        logger.error("[getUserThreads] Failed to get user threads! Logs: ", err?.message);
         }
         
         return [];

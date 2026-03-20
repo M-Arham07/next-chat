@@ -5,6 +5,7 @@ import type { Ack, Message } from "#/shared/index.ts";
 import type { TypedIO, TypedSocket } from "../types.ts";
 import { deleteMessage } from "./lib/delete-message.ts";
 import { handleTypingStart, handleTypingStop } from "./handle-typing.ts";
+import { logger } from "../lib/logger.ts";
 
 
 export function registerChatFeatures(io: TypedIO, socket: TypedSocket) {
@@ -16,7 +17,7 @@ export function registerChatFeatures(io: TypedIO, socket: TypedSocket) {
 
     socket.on("message:delete", (msgToDelete, ack) => {
 
-        console.log("received message to delete:", msgToDelete);
+        logger.info(`received message to delete: ${JSON.stringify(msgToDelete)}`);
 
         deleteMessage(socket, msgToDelete, ack);
 

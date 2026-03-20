@@ -1,6 +1,6 @@
-import { ConnectDB, Messages, type AckFN, type Message } from "@chat/shared";
+import { type AckFN, type Message } from "@chat/shared";
 import type { TypedSocket } from "../../types.ts";
-import type { Model } from "mongoose";
+import { supabase } from "../../supabase/supabase.ts";
 
 
 
@@ -18,26 +18,20 @@ export async function deleteMessage(socket: TypedSocket, msgToDelete: Message, a
         const { threadId, msgId, sender } = msgToDelete;
 
 
-        // @ts-ignore
-        if (!threadId || !msgId || !sender || (sender !== socket.username)) {
+
+
+        // add ts-ignore if fails to compile
+
+        if (!threadId || !msgId || !sender || (sender !== socket.profile.username)) {
             throw new Error("Delete not allowed!");
         }
 
-        await ConnectDB();
 
 
-        await (Messages as Model<Message>).findOneAndUpdate(
-            { msgId: msgId },
-            {
-                $set: {
-                    content: "",
-                    type: "deleted",
-                    replyToMsgId: null,
-                    readBy: []
-                }
-            }
 
-        );
+        const { error: dbDeleteError } = await supabase.from("messages").delete().eq("msgId", msgId);
+
+        if (dbDeleteError) throw new Error(dbDeleteError.message);
 
 
 
@@ -47,7 +41,7 @@ export async function deleteMessage(socket: TypedSocket, msgToDelete: Message, a
 
         socket.to(threadId).emit("message:deleted", threadId, msgId);
 
-    
+
         return ack({ ok: true, data: "DELETE_SUCCESS" });
 
 

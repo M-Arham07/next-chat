@@ -1,4 +1,3 @@
-import { Threads, type Thread } from "@chat/shared";
 import MessagesViewClient from "./_components/message-view-client";
 import { notFound } from "next/navigation";
 import { createClient } from "@/supabase/server";

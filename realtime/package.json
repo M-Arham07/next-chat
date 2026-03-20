@@ -8,19 +8,23 @@
   "main": "server.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test-build":"npx esbuild ./server.ts --bundle --platform=node --minify --target=node18 --outfile=./dist/realtime.js",
+    "test-build": "npx esbuild ./server.ts --bundle --platform=node --minify --target=node18 --outfile=./dist/realtime.js",
     "start": "node dist/server.js",
     "dev": "tsx watch server.ts"
   },
   "dependencies": {
     "@chat/shared": "^0.0.1",
+    "@supabase/supabase-js": "^2.99.3",
+    "chalk": "^4.1.2",
+    "cli-progress": "^3.12.0",
     "dotenv": "^17.2.3",
-    "next-auth": "^4.24.13",
     "socket-io": "^1.0.0",
     "socket.io": "^4.8.3",
+    "supabase": "^2.82.0",
     "tsx": "^4.21.0"
   },
   "devDependencies": {
+    "@types/cli-progress": "^3.11.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.0.10",
     "esbuild": "^0.27.2",
