@@ -1,173 +1,189 @@
-import React, { useState } from "react"
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from "react-native"
-import { useNavigation } from "@react-navigation/native"
-import { supabase } from "../../lib/supabase"
+import React, { useState } from "react";
+import {
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    Alert,
+    TouchableOpacity,
+    ActivityIndicator,
+} from "react-native";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { supabase } from "../../lib/supabase";
+import { TextInput } from "../../components/ui/TextInput";
+import { Button } from "../../components/ui/Button";
+import { colors } from "../../theme/colors";
 
-export function RegisterScreen() {
-  const navigation = useNavigation<any>()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+type Props = NativeStackScreenProps<any, "Register">;
 
-  const handleRegister = async () => {
-    if (!email || !password || !confirmPassword) {
-      setError("Please fill in all fields")
-      return
+export function RegisterScreen({ navigation }: Props) {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState<{
+        email?: string;
+        password?: string;
+        confirmPassword?: string;
+    }>({});
+
+    const validateForm = () => {
+        const newErrors: {
+            email?: string;
+            password?: string;
+            confirmPassword?: string;
+        } = {};
+
+        if (!email) newErrors.email = "Email is required";
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = "Invalid email format";
+
+        if (!password) newErrors.password = "Password is required";
+        else if (password.length < 6) newErrors.password = "Password must be at least 6 characters";
+
+        if (!confirmPassword) newErrors.confirmPassword = "Confirm password is required";
+        else if (password !== confirmPassword) newErrors.confirmPassword = "Passwords do not match";
+
+        return newErrors;
+    };
+
+    const handleRegister = async () => {
+        const newErrors = validateForm();
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+
+        setLoading(true);
+        setErrors({});
+
+        try {
+            const { error } = await supabase.auth.signUp({
+                email,
+                password,
+            });
+
+            if (error) {
+                Alert.alert("Registration Failed", error.message);
+            } else {
+                Alert.alert("Success", "Check your email for verification link", [
+                    {
+                        text: "OK",
+                        onPress: () => navigation.goBack(),
+                    },
+                ]);
+            }
+        } catch (err) {
+            Alert.alert("Error", "An error occurred during registration");
+            console.error("[v0] Register error:", err);
+        } finally {
+            setLoading(false);
+        }
     }
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match")
-      return
-    }
+    return (
+        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+            <View style={styles.header}>
+                <Text style={styles.title}>Create Account</Text>
+                <Text style={styles.subtitle}>Sign up to get started</Text>
+            </View>
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters")
-      return
-    }
+            <View style={styles.form}>
+                <TextInput
+                    label="Email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChangeText={(text) => {
+                        setEmail(text);
+                        setErrors({ ...errors, email: undefined });
+                    }}
+                    keyboardType="email-address"
+                    error={errors.email}
+                    editable={!loading}
+                />
 
-    setLoading(true)
-    setError("")
+                <TextInput
+                    label="Password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChangeText={(text) => {
+                        setPassword(text);
+                        setErrors({ ...errors, password: undefined });
+                    }}
+                    secureTextEntry
+                    error={errors.password}
+                    editable={!loading}
+                />
 
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      })
+                <TextInput
+                    label="Confirm Password"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChangeText={(text) => {
+                        setConfirmPassword(text);
+                        setErrors({ ...errors, confirmPassword: undefined });
+                    }}
+                    secureTextEntry
+                    error={errors.confirmPassword}
+                    editable={!loading}
+                />
 
-      if (error) {
-        setError(error.message)
-      } else {
-        setError("Check your email for verification link")
-      }
-    } catch (err) {
-      setError("An error occurred during registration")
-      console.error("[v0] Register error:", err)
-    } finally {
-      setLoading(false)
-    }
-  }
+                <Button
+                    title="Sign Up"
+                    onPress={handleRegister}
+                    loading={loading}
+                    disabled={loading}
+                />
+            </View>
 
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Create Account</Text>
-        <Text style={styles.subtitle}>Sign up to get started</Text>
-
-        {error ? <Text style={[styles.error, error.includes("Check") && styles.success]}>{error}</Text> : null}
-
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#999"
-          value={email}
-          onChangeText={setEmail}
-          editable={!loading}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#999"
-          value={password}
-          onChangeText={setPassword}
-          editable={!loading}
-          secureTextEntry
-        />
-
-        <TextInput
-          style={styles.input}
-          placeholder="Confirm Password"
-          placeholderTextColor="#999"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          editable={!loading}
-          secureTextEntry
-        />
-
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleRegister}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Create Account</Text>
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => navigation.navigate("Login")} disabled={loading}>
-          <Text style={styles.link}>Already have an account? Sign in</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
-  )
+            <View style={styles.footer}>
+                <Text style={styles.footerText}>Already have an account? </Text>
+                <TouchableOpacity onPress={() => navigation.goBack()} disabled={loading}>
+                    <Text style={styles.footerLink}>Sign in</Text>
+                </TouchableOpacity>
+            </View>
+        </ScrollView>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 16,
-    backgroundColor: "#fff",
-  },
-  content: {
-    gap: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#000",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 16,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 14,
-    color: "#000",
-  },
-  button: {
-    backgroundColor: "#3b82f6",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  link: {
-    color: "#3b82f6",
-    fontSize: 14,
-    textAlign: "center",
-    marginTop: 8,
-  },
-  error: {
-    color: "#ef4444",
-    fontSize: 14,
-    padding: 12,
-    backgroundColor: "#fee2e2",
-    borderRadius: 6,
-  },
-  success: {
-    color: "#16a34a",
-    backgroundColor: "#dcfce7",
-  },
-})
+    container: {
+        flex: 1,
+        backgroundColor: colors.background,
+    },
+    content: {
+        flexGrow: 1,
+        paddingHorizontal: 16,
+        paddingVertical: 32,
+    },
+    header: {
+        marginBottom: 32,
+    },
+    title: {
+        fontSize: 28,
+        fontWeight: "700",
+        color: colors.foreground,
+        marginBottom: 8,
+    },
+    subtitle: {
+        fontSize: 16,
+        color: colors.muted,
+    },
+    form: {
+        gap: 16,
+        marginBottom: 24,
+    },
+    footer: {
+        flexDirection: "row",
+        justifyContent: "center",
+        marginTop: "auto",
+    },
+    footerText: {
+        fontSize: 14,
+        color: colors.muted,
+    },
+    footerLink: {
+        fontSize: 14,
+        fontWeight: "600",
+        color: colors.primary,
+    },
+});

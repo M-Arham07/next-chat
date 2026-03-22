@@ -1,174 +1,270 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react";
 import {
-  View,
-  Text,
-  FlatList,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-} from "react-native"
-import { useRoute } from "@react-navigation/native"
-import { Send } from "lucide-react-native"
-// Note: Import the chat app hook once fully implemented
-// import { useChatApp } from "../../features/chat/hooks/use-chat-app"
+    View,
+    Text,
+    StyleSheet,
+    FlatList,
+    TextInput,
+    TouchableOpacity,
+    KeyboardAvoidingView,
+    Platform,
+    ActivityIndicator,
+} from "react-native";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { Send, Plus } from "lucide-react-native";
+import { useChatApp } from "../../features/chat/hooks/use-chat-app";
+import { useAuth } from "../../features/auth/hooks/useAuth";
+import { colors } from "../../theme/colors";
 
-export function ChatDetailScreen() {
-  const route = useRoute<any>()
-  const { threadId } = route.params || {}
-  // const { messages, handleSendMessage } = useChatApp()
-  const [messageText, setMessageText] = useState("")
-  const [messages, setMessages] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
+type Props = NativeStackScreenProps<any, "ChatDetail">;
 
-  const handleSend = async () => {
-    if (!messageText.trim()) return
+export function ChatDetailScreen({ route }: Props) {
+    const { threadId } = route.params || {};
+    const [messageText, setMessageText] = useState("");
+    const [sending, setSending] = useState(false);
 
-    const newMessage = {
-      msgId: Date.now().toString(),
-      content: messageText,
-      timestamp: new Date().toISOString(),
-      sender: "current-user",
-    }
+    const { messages, threads, handleSendMessage, handleTyping } = useChatApp();
+    const { profile } = useAuth();
 
-    setMessages((prev) => [newMessage, ...prev])
-    setMessageText("")
+    const threadMessages = messages?.[threadId] || [];
+    const thread = threads?.find((t) => t.threadId === threadId);
 
-    try {
-      // TODO: Call handleSendMessage from useChatApp hook
-      // await handleSendMessage(threadId, 'text', messageText)
-    } catch (error) {
-      console.error("[v0] Error sending message:", error)
-    }
-  }
+    const renderMessage = ({ item }: { item: any }) => {
+        const isOwn = item.sender === profile?.id;
 
-  const renderMessage = ({ item }: { item: any }) => (
-    <View style={[styles.messageRow, item.sender === "current-user" && styles.sentMessage]}>
-      <View
-        style={[styles.messageBubble, item.sender === "current-user" && styles.sentBubble]}
-      >
-        <Text style={[styles.messageText, item.sender === "current-user" && styles.sentText]}>
-          {item.content}
-        </Text>
-      </View>
-    </View>
-  )
+        return (
+            <View style={[styles.messageRow, isOwn && styles.ownMessage]}>
+                <View
+                    style={[
+                        styles.messageBubble,
+                        isOwn ? styles.ownBubble : styles.otherBubble,
+                    ]}
+                >
+                    {item.type === "text" ? (
+                        <Text
+                            style={[
+                                styles.messageText,
+                                isOwn && styles.ownText,
+                            ]}
+                        >
+                            {item.content}
+                        </Text>
+                    ) : (
+                        <View>
+                            <Text
+                                style={[
+                                    styles.messageText,
+                                    isOwn && styles.ownText,
+                                ]}
+                            >
+                                [{item.type.toUpperCase()}]
+                            </Text>
+                            <Text
+                                style={[
+                                    styles.messageSubtext,
+                                    isOwn && styles.ownSubtext,
+                                ]}
+                            >
+                                {item.content}
+                            </Text>
+                        </View>
+                    )}
+                </View>
+                <Text
+                    style={[
+                        styles.timestamp,
+                        isOwn && styles.ownTimestamp,
+                    ]}
+                >
+                    {new Date(item.timestamp).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                    })}
+                </Text>
+            </View>
+        );
+    };
 
-  return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-    >
-      <FlatList
-        data={messages}
-        renderItem={renderMessage}
-        keyExtractor={(item) => item.msgId}
-        inverted
-        contentContainerStyle={messages.length === 0 ? styles.emptyContainer : undefined}
-        ListEmptyComponent={
-          <View style={styles.emptyContent}>
-            <Text style={styles.emptyText}>No messages yet</Text>
-            <Text style={styles.emptySubtext}>Start the conversation!</Text>
-          </View>
+    const handleSend = async () => {
+        if (!messageText.trim()) return;
+
+        setSending(true);
+        try {
+            await handleSendMessage(threadId, "text", messageText);
+            setMessageText("");
+        } catch (error) {
+            console.error("[v0] Error sending message:", error);
+        } finally {
+            setSending(false);
         }
-      />
+    };
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Type a message..."
-          placeholderTextColor="#999"
-          value={messageText}
-          onChangeText={setMessageText}
-          multiline
-          maxLength={1000}
-        />
-        <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={!messageText.trim()}>
-          <Send color="#fff" size={20} />
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
-  )
+    return (
+        <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.container}
+        >
+            <FlatList
+                data={threadMessages}
+                renderItem={renderMessage}
+                keyExtractor={(item) => item.msgId}
+                inverted
+                contentContainerStyle={styles.messagesContainer}
+                ListEmptyComponent={
+                    <View style={styles.emptyContainer}>
+                        <Text style={styles.emptyText}>No messages yet</Text>
+                        <Text style={styles.emptySubtext}>
+                            Start the conversation
+                        </Text>
+                    </View>
+                }
+            />
+
+            <View style={styles.inputContainer}>
+                <TouchableOpacity style={styles.attachButton}>
+                    <Plus size={20} color={colors.primary} />
+                </TouchableOpacity>
+
+                <TextInput
+                    style={styles.input}
+                    placeholder="Type a message..."
+                    placeholderTextColor={colors.mutedForeground}
+                    value={messageText}
+                    onChangeText={(text) => {
+                        setMessageText(text);
+                        handleTyping(threadId);
+                    }}
+                    multiline
+                    maxLength={1000}
+                    editable={!sending}
+                />
+
+                <TouchableOpacity
+                    style={[
+                        styles.sendButton,
+                        (!messageText.trim() || sending) && styles.sendButtonDisabled,
+                    ]}
+                    onPress={handleSend}
+                    disabled={!messageText.trim() || sending}
+                >
+                    {sending ? (
+                        <ActivityIndicator size="small" color={colors.primary} />
+                    ) : (
+                        <Send size={20} color={colors.primary} />
+                    )}
+                </TouchableOpacity>
+            </View>
+        </KeyboardAvoidingView>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-  },
-  emptyContent: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  emptyText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#000",
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 4,
-  },
-  messageRow: {
-    flexDirection: "row",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    justifyContent: "flex-start",
-  },
-  sentMessage: {
-    justifyContent: "flex-end",
-  },
-  messageBubble: {
-    maxWidth: "80%",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: "#f0f0f0",
-  },
-  sentBubble: {
-    backgroundColor: "#3b82f6",
-  },
-  messageText: {
-    fontSize: 14,
-    color: "#000",
-  },
-  sentText: {
-    color: "#fff",
-  },
-  inputContainer: {
-    flexDirection: "row",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    alignItems: "flex-end",
-    gap: 8,
-    borderTopWidth: 1,
-    borderTopColor: "#f0f0f0",
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    fontSize: 14,
-    color: "#000",
-    maxHeight: 100,
-  },
-  sendButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#3b82f6",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-})
+    container: {
+        flex: 1,
+        backgroundColor: colors.background,
+    },
+    messagesContainer: {
+        paddingHorizontal: 12,
+        paddingVertical: 12,
+    },
+    messageRow: {
+        marginVertical: 4,
+        flexDirection: "row",
+        alignItems: "flex-end",
+    },
+    ownMessage: {
+        justifyContent: "flex-end",
+    },
+    messageBubble: {
+        maxWidth: "80%",
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 12,
+    },
+    ownBubble: {
+        backgroundColor: colors.primary,
+        borderBottomRightRadius: 4,
+    },
+    otherBubble: {
+        backgroundColor: colors.surface,
+        borderBottomLeftRadius: 4,
+    },
+    messageText: {
+        fontSize: 14,
+        color: colors.foreground,
+    },
+    ownText: {
+        color: "#FFFFFF",
+    },
+    messageSubtext: {
+        fontSize: 12,
+        color: colors.muted,
+        marginTop: 4,
+    },
+    ownSubtext: {
+        color: "rgba(255, 255, 255, 0.7)",
+    },
+    timestamp: {
+        fontSize: 11,
+        color: colors.mutedForeground,
+        marginHorizontal: 8,
+    },
+    ownTimestamp: {
+        color: colors.mutedForeground,
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingVertical: 40,
+    },
+    emptyText: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: colors.foreground,
+    },
+    emptySubtext: {
+        fontSize: 14,
+        color: colors.muted,
+        marginTop: 8,
+    },
+    inputContainer: {
+        flexDirection: "row",
+        alignItems: "flex-end",
+        paddingHorizontal: 12,
+        paddingVertical: 12,
+        borderTopWidth: 1,
+        borderTopColor: colors.border,
+        gap: 8,
+    },
+    attachButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: colors.surface,
+    },
+    input: {
+        flex: 1,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: 20,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        fontSize: 14,
+        maxHeight: 100,
+        color: colors.foreground,
+    },
+    sendButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: colors.primaryLight,
+    },
+    sendButtonDisabled: {
+        opacity: 0.5,
+    },
+});
