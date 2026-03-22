@@ -26,7 +26,7 @@ export default async function proxy(request: NextRequest) {
 
     // if user isnt authenticated but tries to access onboarding page: 
     if (pathname === "/register/onboarding") {
-        console.log(auth)
+       
 
         if (!auth) return NextResponse.redirect(new URL("/register", request.url));
     }

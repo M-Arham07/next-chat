@@ -13,7 +13,6 @@ import VoiceMessage from "./voice-message"
 import DocumentMessage from "./document-message"
 import VideoMessage from "./video-message"
 import MessageContextMenu from "./message-context-menu"
-import TypingIndicator from "./typing-indicator"
 import { Message } from "@chat/shared"
 import { useChatApp } from "@/features/chat/hooks/use-chat-app"
 import { formatTime } from "@/lib/format-time"
@@ -57,6 +56,7 @@ const MessageBubble = ({
 
 
   const { messages, handleRetryMessage } = useChatApp()!;
+
 
 
 

@@ -28,8 +28,10 @@ const ThreadItem = ({ thread }: { thread: Thread }) => {
   const { messages, typingUsers } = useChatApp()!;
 
 
-  const lastUsernameTypingIdx = (typingUsers?.[thread.threadId]?.size ?? 0) - 1;
-  const currentlyTypingUsername = [...(typingUsers?.[thread.threadId] ?? [])][lastUsernameTypingIdx]
+  const lastUserIdTypingIdx = (typingUsers?.[thread.threadId]?.size ?? 0) - 1;
+  const currentlyTypingUserId= [...(typingUsers?.[thread.threadId] ?? [])][lastUserIdTypingIdx]
+
+  const currentlyTypingUsername = thread.participants?.find(p => p.userId === currentlyTypingUserId)?.username;
 
   // get last message of this thread : 
 

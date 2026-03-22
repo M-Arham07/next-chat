@@ -9,6 +9,7 @@ export function sanitizeFilename(name: string): string {
  * Generates a storage-safe filename by prefixing a UUID to the sanitized original filename.
  */
 export function buildStoredFilename(originalName: string): string {
+
     const uuid = crypto.randomUUID();
     return `${uuid}__${sanitizeFilename(originalName)}`;
 }

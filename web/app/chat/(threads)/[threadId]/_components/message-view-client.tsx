@@ -14,6 +14,33 @@ import { participant } from "@chat/shared";
 
 
 
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+/** Returns "Today", "Yesterday", or a formatted date string */
+function getDateLabel(isoTimestamp: string): string {
+    const msgDate = new Date(isoTimestamp);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    const isSameDay = (a: Date, b: Date) =>
+        a.getFullYear() === b.getFullYear() &&
+        a.getMonth() === b.getMonth() &&
+        a.getDate() === b.getDate();
+
+    if (isSameDay(msgDate, today)) return "Today";
+    if (isSameDay(msgDate, yesterday)) return "Yesterday";
+
+    return msgDate.toLocaleDateString(undefined, {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        ...(msgDate.getFullYear() !== today.getFullYear() ? { year: "numeric" } : {}),
+    });
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+
 export default function MessagesViewClient({ threadId }: { threadId: string }) {
 
 
@@ -86,7 +113,7 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
 
 
     // Intersection Observer for infinite scroll at top
-    useInfiniteScroll(threadId, sentinelRef, mainRef, mounted, setLoadingState);
+    const { retry } = useInfiniteScroll(threadId, sentinelRef, mainRef, mounted, setLoadingState);
 
 
 
@@ -165,6 +192,12 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
                                     <div className="w-1 h-3 bg-red-500 transform rotate-45" />
                                 </div>
                                 <span className="text-sm font-medium">Loading Failed</span>
+                                <button
+                                    onClick={retry}
+                                    className="ml-1 text-sm font-semibold underline underline-offset-2 hover:text-red-400 transition-colors"
+                                >
+                                    Try Again
+                                </button>
                             </>
                         )}
                     </div>
@@ -179,66 +212,80 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
                 <div ref={sentinelRef}> </div>
 
 
-                <DateSeparator date="Today" />
-
                 <div className="space-y-1 relative">
                     {/* {contextMenuOpenMessageId && <div className="absolute inset-0 pointer-events-none z-40" />} */}
 
-                    {messages?.[threadId]?.map((message, idx, msgsArr) => (
+                    {messages?.[threadId]?.map((message, idx) => {
+                        const prevMsg = messages[threadId][idx - 1];
+                        const showSeparator = !prevMsg ||
+                            getDateLabel(prevMsg.timestamp) !== getDateLabel(message.timestamp);
 
-                        <div
-                            key={message.msgId}
-                            ref={(el) => {
-                                if (el) {
-                                    messageRefsMap.current[message.msgId] = el;
+                        return (
+                            <div key={message.msgId}>
 
+                                {showSeparator && (
+                                    <DateSeparator date={getDateLabel(message.timestamp)} />
+                                )}
 
-                                }
-                            }}
-                            style={{
-                                filter: "none",
-                                opacity: 1,
-                                pointerEvents: "auto",
-                                transition: "filter 0.2s ease, opacity 0.2s ease, pointer-events 0.2s ease",
-                            }}
-
-                        >
-                            <MessageBubble
-                                message={message}
-                                // have i sent this message?
-                                isSent={message.sender === profile.id}
-                                isHighlighted={highlightedMessageId === message.msgId}
-                                onReplyClick={handleReplyPreviewClick}
-                                onReply={() => {
-                                    set("replyingToMsg", message)
-                                    // focus the message input so on-screen keyboard shows up
-                                    inputRef?.current?.focus();
-
-                                }}
+                                <div
+                                    ref={(el) => {
+                                        if (el) {
+                                            messageRefsMap.current[message.msgId] = el;
 
 
-                                displayPic={
-                                    {
-                                        url: thisThread?.participants.find(p => p.username === message.sender)?.image,
+                                        }
+                                    }}
+                                    style={{
+                                        filter: "none",
+                                        opacity: 1,
+                                        pointerEvents: "auto",
+                                        transition: "filter 0.2s ease, opacity 0.2s ease, pointer-events 0.2s ease",
+                                    }}
 
-                                        // if previous message was of the same user ,dont show his dp again 
+                                >
+                                    <MessageBubble
+                                        message={message}
+                                        // have i sent this message?
+                                        isSent={message.sender === profile.id}
+                                        isHighlighted={highlightedMessageId === message.msgId}
+                                        onReplyClick={handleReplyPreviewClick}
+                                        onReply={() => {
+                                            set("replyingToMsg", message)
+                                            // focus the message input so on-screen keyboard shows up
+                                            inputRef?.current?.focus();
 
-                                        show: messages?.[threadId][idx - 1]?.sender !== message.sender
-                                    }
-                                }
-                                status={message.status}
-                            />
-                        </div>
+                                        }}
 
-                    )) || <h1>Start a conversation </h1>}
 
+                                        displayPic={
+                                            {
+                                                url: thisThread?.participants.find(p => p.userId === message.sender)?.image,
+
+                                                // if previous message was of the same user ,dont show his dp again 
+
+                                                show: messages?.[threadId][idx - 1]?.sender !== message.sender
+                                            }
+                                        }
+                                        status={message.status}
+                                    />
+                                </div>
+
+                            </div>
+                        );
+                    }) || <h1>Start a conversation </h1>}
 
                     {/* Render typing bubbles: */}
-                    {[...(typingUsers?.[threadId] ?? [])].map(typingUsername => (
-                        <TypingIndicator isSent={typingUsername === profile.username} />
-                    ))}
-
-
+                    {[...(typingUsers?.[threadId] ?? [])].map((typingUserId) => {
+                        const user = thisThread?.participants.find((p) => p.userId === typingUserId);
+                        return (
+                            <TypingIndicator
+                                key={typingUserId}
+                                isSent={typingUserId === profile.id}
+                                displayPicUrl={user?.image}
+                                username={user?.username}
+                            />
+                        );
+                    })}
 
                     <div ref={messagesEndRef} />
                 </div>

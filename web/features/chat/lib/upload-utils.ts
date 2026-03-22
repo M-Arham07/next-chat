@@ -1,27 +1,32 @@
+
 import { optimizeImage } from "@/lib/optimize-image";
 import { optimizeVideo } from "@/lib/optimize-video";
+import { createClient } from "@/supabase/client";
+import { buildStoredFilename } from "./file-utils";
 
 export interface UploadResult {
     url: string;
     path: string;
 }
 
-
 // FOR NOW COMRPESSION DISABLED FOR VIDEOS! 
 
 /**
- * Uploads a file using a signed URL flow and reports combined progress.
+ * Uploads a file directly to the Supabase 'media' bucket.
  * Optimization: 0% - 50%
- * Upload: 50% - 100%
+ * Upload: jumps to 100% when complete.
  */
 export async function GetFileUrl(
     file: File,
     onProgress?: (progress: number) => void
 ): Promise<UploadResult> {
+    console.log("GetFileUrl called with file",file)
+    const supabase = createClient();
 
     // 1. Optimization Phase (0% - 50%)
     let fileToUpload = file;
 
+    console.log("Received file is",file)
     const reportOptimizationProgress = (percent: number) => {
         if (onProgress) {
             // Optimization accounts for the first 50%
@@ -33,31 +38,23 @@ export async function GetFileUrl(
         fileToUpload = await optimizeImage(file, reportOptimizationProgress);
     } else if (file.type.startsWith("video/")) {
         fileToUpload = await optimizeVideo(file, reportOptimizationProgress);
-        // for now compression is disabled for videos
-        fileToUpload = file;
+
     } else {
         // No optimization for other types
         if (onProgress) onProgress(50);
     }
 
-    // 2. Get Signed Upload URL
-    const urlRes = await fetch("/api/upload-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            filename: fileToUpload.name,
-            fileType: fileToUpload.type
-        })
-    });
+    // 2. Direct Upload Phase (50% - 100%)
+    const storedFilename = buildStoredFilename(fileToUpload.name);
 
-    if (!urlRes.ok) {
-        const err = await urlRes.json();
-        throw new Error(err.error || "Failed to get upload URL");
-    }
+    // Get current session token to authenticate the direct XHR upload
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) throw new Error("Not authenticated");
 
-    const { signedUrl, path } = await urlRes.json();
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const uploadUrl = `${supabaseUrl}/storage/v1/object/media/${encodeURIComponent(storedFilename)}`;
 
-    // 3. Upload Phase (50% - 100%)
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
 
@@ -72,12 +69,9 @@ export async function GetFileUrl(
 
         xhr.addEventListener("load", () => {
             if (xhr.status >= 200 && xhr.status < 300) {
-                // Return the public URL. Supabase public URL format:
-                // https://[project-id].supabase.co/storage/v1/object/public/[bucket]/[path]
-                const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-                const publicUrl = `${supabaseUrl}/storage/v1/object/public/media/${path}`;
-
-                resolve({ url: publicUrl, path });
+                const publicUrl = `${supabaseUrl}/storage/v1/object/public/media/${encodeURIComponent(storedFilename)}`;
+                if (onProgress) onProgress(100);
+                resolve({ url: publicUrl, path: storedFilename });
             } else {
                 reject(new Error(`Upload failed with status ${xhr.status}`));
             }
@@ -86,11 +80,13 @@ export async function GetFileUrl(
         xhr.addEventListener("error", () => reject(new Error("Network error during upload")));
         xhr.addEventListener("abort", () => reject(new Error("Upload aborted")));
 
-        xhr.open("PUT", signedUrl);
-        // Supabase expects the file type to be set in the headers if we want to preserve it
+        xhr.open("POST", uploadUrl);
+        // Authenticate the direct upload
+        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
         xhr.setRequestHeader("Content-Type", fileToUpload.type);
-        // If the signed URL doesn't already contain the token in a way that handles auth, 
-        // we might need x-upsert if allowed, but here we just PUT.
+        // Include x-upsert header to match standard SDK behavior
+        xhr.setRequestHeader("x-upsert", "false");
+
         xhr.send(fileToUpload);
     });
 }

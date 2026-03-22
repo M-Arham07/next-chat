@@ -22,14 +22,14 @@ export async function deleteMessage(socket: TypedSocket, msgToDelete: Message, a
 
         // add ts-ignore if fails to compile
 
-        if (!threadId || !msgId || !sender || (sender !== socket.profile.username)) {
+        if (!threadId || !msgId || !sender || (sender !== socket.profile.id)) {
             throw new Error("Delete not allowed!");
         }
 
 
 
 
-        const { error: dbDeleteError } = await supabase.from("messages").delete().eq("msgId", msgId);
+        const { error: dbDeleteError } = await supabase.from("messages").delete().eq("msg_id", msgId);
 
         if (dbDeleteError) throw new Error(dbDeleteError.message);
 

@@ -9,6 +9,7 @@ export type ThreadType = "direct" | "group"; // DM to someone, or a group chat
 export interface participant {
 
     username: string,
+    userId: string,
     image: string,
     role: "admin" | "member" // if private chat, then role can only be member (or just keep it null?)
 

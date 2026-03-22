@@ -8,6 +8,7 @@ import { LoaderContextProvider } from "@/store/loader/use-loader";
 import { Viewport } from "next";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/features/auth/hooks/useAuth";
+import { QueryProvider } from "@/providers/query-provider";
 
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -53,6 +54,7 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
       </head>
       <body className={`font-sans antialiased`}>
+        <QueryProvider>
         <AuthProvider>
           {/* @ts-ignore */}
           <ThemeProvider
@@ -64,10 +66,11 @@ export default function RootLayout({
             <LoaderContextProvider>
               <GlobalLoader loader="LoaderOne" />
               {children}
-              <Toaster />
+              <Toaster closeButton richColors />
             </LoaderContextProvider>
           </ThemeProvider>
         </AuthProvider>
+        </QueryProvider>
         <Analytics />
       </body>
     </html>

@@ -1,4 +1,4 @@
-const formatTime = (date: Date | string | undefined): string => {
+export const formatTime = (date: Date | string | undefined): string => {
 
 
 
@@ -24,4 +24,3 @@ const formatTime = (date: Date | string | undefined): string => {
     });
 }
 
-export { formatTime };

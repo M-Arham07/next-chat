@@ -9,6 +9,7 @@ import UsernameForm from "./_components/username-form";
 import { useLoader } from "@/store/loader/use-loader";
 import { CreateProfileSchemaResponse } from "@chat/shared/schema/profiles/create-profile";
 import { useRouter } from "next/navigation";
+import { useMutation } from "@tanstack/react-query";
 
 // const AVATAR_SIZE_PX = 70;
 
@@ -31,6 +32,28 @@ export default function OnboardingPage() {
 
     const MAX_DP_SIZE_MB = 0.5 * 1024 * 1024
 
+    const createProfileMutation = useMutation({
+        mutationFn: async (formData: FormData) => {
+            const res = await fetch("/api/profiles", {
+                method: "POST",
+                body: formData
+            });
+            const json = await res.json();
+            const { data, success } = CreateProfileSchemaResponse.parse(json);
+
+            if (!res.ok || !success) throw new Error(data || "Failed to create profile");
+            return data;
+        },
+        onMutate: () => setLoading(true),
+        onSettled: () => setLoading(false),
+        onSuccess: (data) => {
+            setSuccessMessage(data);
+            router.push("/");
+        },
+        onError: (err) => {
+            setError(err.message);
+        }
+    });
 
     // this function will save the onboarded user, and update the session !
     const handleSave = async () => {
@@ -53,55 +76,12 @@ export default function OnboardingPage() {
             return;
         }
 
-        setLoading(true);
-
-        // Send the data as
-
         const formData = new FormData();
-
         formData.append("username", username);
         formData.append("image", displayPicture);
 
-
-        const res = await fetch("/api/profiles", {
-            method: "POST",
-            body: formData
-        });
-
-        const { data, success } = CreateProfileSchemaResponse.parse(await res.json());
-
-        if (!res.ok || !success) {
-            setError(data);
-            setLoading(false);
-            return;
-        }
-
-        setSuccessMessage(data);
-        setLoading(false);
-
-        router.push("/");
-
-
-        return;
-
-
-
-
-
-
+        createProfileMutation.mutate(formData);
     }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -149,7 +129,7 @@ export default function OnboardingPage() {
                                 exit={{ opacity: 0, x: -20 }}
                                 className="flex items-start gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-xl backdrop-blur-sm"
                             >
-                                <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                                <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
                                 <p className="text-sm text-destructive/90 font-medium">{error}</p>
                             </motion.div>
                         )}
@@ -161,7 +141,7 @@ export default function OnboardingPage() {
                                 exit={{ opacity: 0, x: -20 }}
                                 className="flex items-start gap-3 p-4 bg-green-500/10 border border-green-500/20 rounded-xl backdrop-blur-sm"
                             >
-                                <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                                <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
                                 <p className="text-sm text-green-700 dark:text-green-300 font-medium">{successMessage}</p>
                             </motion.div>
                         )}

@@ -13,66 +13,24 @@ import { useRouter } from 'next/navigation'
 import { useChatApp } from '@/features/chat/hooks/use-chat-app'
 import { CreateThreadSchemaResponse } from '@chat/shared/schema'
 import { optimizeImage } from '@/lib/optimize-image'
+import { useQuery, useMutation } from '@tanstack/react-query'
 
 export function StartMessagingClient() {
   const [query, setQuery] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [isError, setIsError] = useState(false)
+  const [debouncedQuery, setDebouncedQuery] = useState('')
   const [isGroupMode, setIsGroupMode] = useState(false)
-  const [results, setResults] = useState<Profile[] | Thread[]>([])
-  const [selectedUsers, setSelectedUsers] = useState<Profile[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<Profile[]>([])
   const [isGroupCreationMode, setIsGroupCreationMode] = useState(false)
   const [showModal, setShowModal] = useState(false)
-  const debouncedSearchRef = useRef<((query: string) => void) | null>(null);
+  const debouncedSearchRef = useRef<((query: string) => void) | null>(null)
 
-  const router = useRouter();
+  const router = useRouter()
+  const { addThread } = useChatApp()
 
-  const { addThread } = useChatApp();
-
-  // Initialize debounced search
+  // Initialize debounced search setter
   useEffect(() => {
-    const handleSearch = async (searchQuery: string) => {
-
-      if (!searchQuery.trim()) {
-        setResults([]);
-        return;
-      }
-
-      searchQuery = searchQuery.toLowerCase();
-
-      try {
-        setIsLoading(true)
-        setIsError(false)
-
-
-
-        const searchRoute = isGroupMode ? `threads?group_name=${searchQuery}` : `users?username=${searchQuery}`;
-
-        const res = await fetch(`/api/search/${searchRoute}`, { method: "GET" });
-        console.log(`Sent to /api/search/${searchRoute}`)
-
-        if (!res.ok) throw new Error(`Failed to search for ${isGroupMode ? "threads" : "users"}`);
-
-
-        const data = await res.json();
-
-
-        // TODO: ZOD VALIDATE PARSE! 
-
-        setResults(data as (Profile[] | Thread[]));
-
-
-
-      } catch (error) {
-        console.error('[StartMessagingClient] Search error:', error)
-        setIsError(true)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    debouncedSearchRef.current = debounce(handleSearch, 400)
-  }, [isGroupMode])
+    debouncedSearchRef.current = debounce((q: string) => setDebouncedQuery(q), 400)
+  }, [])
 
   const handleSearchChange = (newQuery: string) => {
     setQuery(newQuery)
@@ -81,167 +39,102 @@ export function StartMessagingClient() {
     }
   }
 
+  // TanStack Query for search
+  const searchRoute = isGroupMode 
+    ? `threads?group_name=${debouncedQuery.toLowerCase()}` 
+    : `users?username=${debouncedQuery.toLowerCase()}`
+
+  const { data: results = [], isLoading, isError } = useQuery<Profile[] | Thread[]>({
+    queryKey: ['search', searchRoute],
+    queryFn: async () => {
+      const res = await fetch(`/api/search/${searchRoute}`)
+      if (!res.ok) throw new Error(`Failed to search for ${isGroupMode ? "threads" : "users"}`)
+      return await res.json()
+    },
+    enabled: debouncedQuery.trim().length > 0,
+  })
+
+  // TanStack Mutation for thread creation
+  const createThreadMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const res = await fetch("/api/threads", {
+        method: "POST",
+        body: formData,
+      })
+      const json = await res.json()
+      const { success, createdThreadId } = CreateThreadSchemaResponse.parse(json)
+      if (!success) throw new Error("BAD Response from server")
+      return createdThreadId as string
+    }
+  })
 
   const handleModeChange = (newIsGroupMode: boolean) => {
     setIsGroupMode(newIsGroupMode)
     setQuery('')
-    setResults([])
+    setDebouncedQuery('')
     setSelectedUsers([])
     setIsGroupCreationMode(false)
   }
 
   const handleUserAdd = (newUser: Profile) => {
     setSelectedUsers((prev) => {
-
-      const alreadyExists = prev.some(user => user.username === newUser.username);
-
-      if (alreadyExists) return prev;
-
-      return [...prev, newUser];
-
+      const alreadyExists = prev.some(user => user.username === newUser.username)
+      if (alreadyExists) return prev
+      return [...prev, newUser]
     })
   }
 
   const handleUserRemove = (removedUserId: string) => {
-    setSelectedUsers((prev) => {
-
-      const updatedSelectedUsers = prev.filter(user => user.id !== removedUserId);
-
-      return updatedSelectedUsers;
-
-    })
+    setSelectedUsers((prev) => prev.filter(user => user.id !== removedUserId))
   }
 
-
   const handeStartCreatingGroup = () => {
-
-
     if (selectedUsers.length < 2) {
-      toast.error('Select at least two users to create a group', { position: "top-center" });
-      return;
+      toast.error('Select at least two users to create a group', { position: "top-center" })
+      return
     }
     setShowModal(true)
   }
 
-
-
-
   const handleCreateGroup = async (groupName: string, groupImage: File, setIsCreating: Dispatch<SetStateAction<boolean>>): Promise<void> => {
+    setIsCreating(true)
+    const otherParticipantUserIds = selectedUsers.map(u => u.id)
 
-
-
-    setIsCreating(true);
-
-
-    const otherParticipantUserIds = selectedUsers.map(u => u.id);
-
-
-
-
-
-    const formData = new FormData();
-    formData.append("type", "group");
-    formData.append("otherParticipantUserIds", JSON.stringify(otherParticipantUserIds));
-    formData.append("groupName", groupName);
-
-
-    let createdThreadId: string;
+    const formData = new FormData()
+    formData.append("type", "group")
+    formData.append("otherParticipantUserIds", JSON.stringify(otherParticipantUserIds))
+    formData.append("groupName", groupName)
 
     try {
+      const optimizedImage = await optimizeImage(groupImage)
+      formData.append("groupImage", optimizedImage)
 
-      const optimizedImage = await optimizeImage(groupImage);
-      formData.append("groupImage", optimizedImage);
+      const createdThreadId = await createThreadMutation.mutateAsync(formData)
 
-
-      const res = await fetch("/api/threads", {
-        method: "POST",
-        body: formData,
-      });
-
-      const json = await res.json();
-      const { success, createdThreadId: newThreadId } = CreateThreadSchemaResponse.parse(json);
-
-      if (!success) throw new Error("BAD Response from server");
-
-      createdThreadId = newThreadId! as string;
-
-
-
+      setShowModal(false)
+      setSelectedUsers([])
+      setIsGroupCreationMode(false)
+      toast.success('Group created successfully')
+      router.push(`/chat/${createdThreadId}`)
+    } catch (err) {
+      toast.error("Failed to create group! Please try again")
+    } finally {
+      setIsCreating(false)
     }
-
-    catch (err) {
-
-      toast.error("Failed to create group! Please try again");
-      setIsCreating(false);
-      return;
-
-    }
-
-
-
-    setShowModal(false)
-    setSelectedUsers([])
-    setIsGroupCreationMode(false)
-    toast.success('Group created successfully');
-
-
-    // add new thread to state !
-
-
-
-    // addThread(newThread, { appendToStart: true });
-
-    router.push(`/chat/${createdThreadId}`);
-
-    return;
-
-
-
   }
 
   const handleUserChat = async (userId: string, username: string): Promise<void> => {
-
-
-    let createdThreadId: string;
-    const formData = new FormData();
-    formData.append("type", "direct");
-    formData.append("otherParticipantUserIds", JSON.stringify([userId]));
+    const formData = new FormData()
+    formData.append("type", "direct")
+    formData.append("otherParticipantUserIds", JSON.stringify([userId]))
 
     try {
-      const res = await fetch("/api/threads", {
-        method: "POST",
-        body: formData,
-      });
-
-      const json = await res.json();
-      const { success, createdThreadId: newThreadId } = CreateThreadSchemaResponse.parse(json);
-
-      if (!success) throw new Error("BAD Response from server");
-
-      createdThreadId = newThreadId! as string;
+      const createdThreadId = await createThreadMutation.mutateAsync(formData)
+      toast.success(`Starting chat with ${username}`)
+      router.push(`/chat/${createdThreadId}`)
+    } catch (err) {
+      toast.error(`Failed to start chat with ${username}`)
     }
-    catch (err) {
-      toast.error(`Failed to start chat with ${username}`);
-      return;
-
-    }
-
-
-
-
-    toast.success(`Starting chat with ${username}`);
-
-    // add new thread to state !
-
-    // addThread(createdThread, { appendToStart: true });
-    // todo : realtime update via socket! 
-
-
-
-    return router.push(`/chat/${createdThreadId}`)
-
-
-
   }
 
 

@@ -26,9 +26,7 @@ export async function GET(
             p_profile_id: profile.id,
             p_messages_limit: 10
         });
-        console.log("profile.id:", profile.id);
-console.log("data:", data);
-console.log("error:", error);
+  
       
         if (error) throw new Error(error.message)
 
