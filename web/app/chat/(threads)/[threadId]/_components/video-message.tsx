@@ -16,8 +16,16 @@ const VideoMessage = ({ msgId, videoUrl, status }: VideoMessageProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [duration, setDuration] = useState(0);
   const progress = useChatAppStore(s => s.uploadingProgress?.[msgId] || 0);
   const displayUrl = videoUrl.startsWith("blob:") ? videoUrl.split("#")[0] : videoUrl;
+
+  const formatDuration = (seconds: number) => {
+    if (!seconds || !isFinite(seconds)) return "0:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
 
   const togglePlay = () => {
     if (status === "sending") return;
@@ -31,6 +39,20 @@ const VideoMessage = ({ msgId, videoUrl, status }: VideoMessageProps) => {
     }
   };
 
+  const handleLoadedMetadata = () => {
+    if (videoRef.current) {
+      setDuration(videoRef.current.duration);
+    }
+    setIsLoaded(true);
+  };
+
+  const handlePause = () => {
+    setIsPlaying(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+    }
+  };
+
   return (
     <Dialog>
       <div className="p-1 relative group overflow-hidden rounded-xl bg-muted/20 border border-border/50 min-h-50 min-w-62.5 sm:min-w-75">
@@ -41,16 +63,16 @@ const VideoMessage = ({ msgId, videoUrl, status }: VideoMessageProps) => {
           ref={videoRef}
           crossOrigin={videoUrl.startsWith("blob:") ? undefined : "anonymous"}
           className={`relative z-10 rounded-xl max-w-62.5 sm:max-w-75 aspect-video object-contain bg-black transition-opacity ${status === "sending" ? "opacity-30 grayscale" : ""} ${!isLoaded ? "opacity-0" : "opacity-100"}`}
-          onLoadedData={() => setIsLoaded(true)}
+          onLoadedMetadata={handleLoadedMetadata}
           onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
+          onPause={handlePause}
           onEnded={() => setIsPlaying(false)}
           onClick={(e) => { e.stopPropagation(); togglePlay(); }}
           playsInline
           preload="metadata"
         >
           {/* Append #t=0.001 to force browser to stop downloading after getting the first frame */}
-          <source src={`${displayUrl}#t=0.001`} type="video/mp4" />
+          <source src={displayUrl} type="video/mp4" />
         </video>
 
         {status === "sending" ? (
@@ -101,12 +123,18 @@ const VideoMessage = ({ msgId, videoUrl, status }: VideoMessageProps) => {
               <DialogTrigger asChild>
                 <button
                   title="Open fullscreen player"
-                  onClick={(e) => { e.stopPropagation(); setIsPlaying(false); videoRef.current?.pause(); }}
-                  className="absolute bottom-3 right-3 p-2 z-30 rounded-md bg-black/60 hover:bg-black/80 text-white opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-md border border-white/20 cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); handlePause(); }}
+                  className="absolute bottom-3 right-3 p-2 z-30 rounded-md bg-black/60 hover:bg-black/80 text-white opacity-100 transition-opacity backdrop-blur-md border border-white/20 cursor-pointer"
                 >
                   <Maximize2 className="w-4 h-4" />
                 </button>
               </DialogTrigger>
+            )}
+
+            {isLoaded && (
+              <div className="absolute bottom-3 left-3 px-1.5 py-0.5 rounded bg-black/40 text-white pointer-events-none z-30 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border border-white/10">
+                {formatDuration(duration)}
+              </div>
             )}
 
             <div className="absolute top-3 right-3 px-1.5 py-0.5 rounded bg-black/40 text-white pointer-events-none z-30 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border border-white/10">

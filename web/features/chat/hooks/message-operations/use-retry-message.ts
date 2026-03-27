@@ -1,4 +1,3 @@
-import { useCallback } from "react";
 import { Message, MessageContentType } from "@chat/shared";
 
 interface UseRetryMessageParams {

@@ -3,10 +3,11 @@ TODO: REMOVE ALL CONTENT IF MESSAGE.type === "deleted"
 TODO : BLOCK COPY IN CASE OF OTHER THAN TEXT MSG
 
 TODO: ADD LOADING STATE FOR IMAGE MESSAGE!
-
-
+TODO : add cancel upload via abort controller
+TODO : FIX DP BEING LOADED ON EVERY SCROLL!
 TODO :ADD A STATUS LIKE DELETE FAILED AND HANDLE BEHAVIOUR OF RETRY BUTTON DPEENDING ON status? 
 
 WS:
 
-TODO: For multi client support,  socket.emit to all sockets, except the emitter !
+
+todo : blue tick

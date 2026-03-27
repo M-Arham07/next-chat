@@ -1,4 +1,4 @@
-import { RefObject, useCallback, useRef } from "react";
+import { RefObject, useRef } from "react";
 import { getEnvironmentName, Message, MessageContentType, MessageStatusType } from "@chat/shared";
 import { toast } from "sonner";
 import { type SocketClientType } from "@/features/chat/lib/socket-client";
@@ -30,8 +30,6 @@ export const useSendMessage = ({
     updateMessageStatus,
     setUploadingProgress,
 }: UseSendMessageParams) => {
-    
-
     const handleSendMessage = async (
         threadId: string,
         type: Omit<MessageContentType, "deleted">,
