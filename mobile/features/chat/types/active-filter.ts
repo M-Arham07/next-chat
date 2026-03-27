@@ -1,2 +1,1 @@
-
-export type ActiveFilter = "all" | "unread" | "groups"
+export type ActiveFilter = 'all' | 'unread' | 'groups';

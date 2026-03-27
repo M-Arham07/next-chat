@@ -1,21 +1,31 @@
-import { RefObject, useEffect } from "react";
-import { Thread } from "@chat/shared";
-import { MessageState } from "../../types/message-state";
-import { type SocketClientType } from "../../lib/socket-client";
-import { Profile } from "@chat/shared/schema/profiles/profile";
-import type { ChatAppStore } from "../../store/chatapp.store";
-import { apiUrl } from "@/lib/api";
-import { getSupabaseClient } from "@/supabase/client";
+import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Thread } from '@chat/shared';
+import { MessageState } from '../../types/message-state';
+import { type SocketClientType } from '@/features/chat/lib/socket-client';
+import { Profile } from '@chat/shared/schema/profiles/profile';
+import type { ChatAppStore } from '../../store/chatapp.store';
+import { apiClient } from '@/lib/api-client';
 
 interface UseInitialLoadParams {
   mounted: boolean;
-  socketRef: RefObject<SocketClientType | null>;
+  socketRef: React.RefObject<SocketClientType | null>;
   markMounted: () => void;
   setThreads: (threads: Thread[]) => void;
   set: <K extends keyof ChatAppStore>(key: K, value: ChatAppStore[K]) => void;
   setLoading: (loading: boolean) => void;
-  profile: Profile;
+  profile: Profile | null;
 }
+
+interface InboxData {
+  threads: Thread[];
+  messages: Array<{ threadId: string; [key: string]: any }>;
+}
+
+const fetchInbox = async (): Promise<InboxData> => {
+  const data = await apiClient.get('/threads/inbox');
+  return data;
+};
 
 export const useInitialLoad = ({
   mounted,
@@ -25,49 +35,41 @@ export const useInitialLoad = ({
   setLoading,
   profile,
 }: UseInitialLoadParams) => {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['inbox', profile?.id],
+    queryFn: fetchInbox,
+    enabled: !mounted && !!profile?.id,
+    staleTime: Infinity,
+  });
+
   useEffect(() => {
-    const load = async () => {
-      if (mounted) return;
-
+    if (!mounted && data) {
       markMounted();
-      setLoading(true);
 
-      try {
-        // Get auth token to authenticate against the Next.js API
-        const supabase = getSupabaseClient();
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        const token = session?.access_token ?? "";
+      console.log('FETCHING ALL CHATS');
 
-        const res = await fetch(apiUrl("/api/threads/inbox"), {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+      // Set threads from data
+      setThreads(data.threads);
 
-        if (!res.ok) throw new Error("Bad response from SERVER");
+      // Transform messages to message state (threadId -> messages array)
+      let result: MessageState = {};
 
-        const data = await res.json();
-
-        setThreads(data!.threads);
-
-        let result: MessageState = {};
-        for (const msg of data!.messages) {
-          (result[msg.threadId] ??= []).push(msg);
-        }
-
-        set("messages", result);
-        setLoading(false);
-      } catch (err) {
-        if (err instanceof Error) {
-          console.error("[useInitialLoad] Error fetching chats:", err.message);
-        }
-        setLoading(false);
+      for (const msg of data.messages) {
+        (result[msg.threadId] ??= []).push(msg as any);
       }
-    };
 
-    load();
-  }, [profile]);
+      set('messages', result);
+    }
+  }, [data, mounted, markMounted, setThreads, set]);
+
+  useEffect(() => {
+    setLoading(isLoading);
+  }, [isLoading, setLoading]);
+
+  useEffect(() => {
+    if (error) {
+      console.error('[useInitialLoad] Error while fetching chats on initial load >>', error.message);
+      setLoading(false);
+    }
+  }, [error, setLoading]);
 };

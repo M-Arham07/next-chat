@@ -1,38 +1,43 @@
-import { RefObject } from "react";
-import { Alert } from "react-native";
-import { Message, MessageStatusType } from "@chat/shared";
-import { type SocketClientType } from "../../lib/socket-client";
-import { Profile } from "@chat/shared/schema/profiles/profile";
+import { RefObject } from 'react';
+import { Message, MessageStatusType } from '@chat/shared';
+import { type SocketClientType } from '@/features/chat/lib/socket-client';
+import { Profile } from '@chat/shared/schema/profiles/profile';
 
 interface UseDeleteMessageParams {
-    profileRef: RefObject<Profile>;
-    socketRef: RefObject<SocketClientType | null>;
-    updateMessageStatus: (threadId: string, msgId: string, newStatus: MessageStatusType) => void;
-    removeMessage: (threadId: string, msgId: string) => void;
+  profileRef: RefObject<Profile | null>;
+  socketRef: RefObject<SocketClientType | null>;
+  updateMessageStatus: (threadId: string, msgId: string, newStatus: MessageStatusType) => void;
+  removeMessage: (threadId: string, msgId: string) => void;
 }
 
 export const useDeleteMessage = ({
-    profileRef,
-    socketRef,
-    updateMessageStatus,
-    removeMessage,
+  profileRef,
+  socketRef,
+  updateMessageStatus,
+  removeMessage,
 }: UseDeleteMessageParams) => {
-    const handleDeleteMessage = async (messageToDelete: Message): Promise<void> => {
-        const { threadId, msgId, sender } = messageToDelete;
+  const handleDeleteMessage = async (messageToDelete: Message): Promise<void> => {
+    const { threadId, msgId, sender } = messageToDelete;
 
-        if (sender !== profileRef.current.id) return;
+    // Only allow deletion of own messages
+    if (sender !== profileRef.current?.id) return;
 
-        updateMessageStatus(threadId, msgId, "sending");
+    // Set status to sending to show loading
+    updateMessageStatus(threadId, msgId, 'sending');
 
-        socketRef.current?.emit("message:delete", messageToDelete, (res) => {
-            if (!res.ok) {
-                Alert.alert("Error", "Failed to delete message!");
-                updateMessageStatus(threadId, msgId, "sent");
-                return;
-            }
-            removeMessage(threadId, msgId);
-        });
-    };
+    socketRef.current?.emit('message:delete', messageToDelete, (res: { ok: boolean }) => {
+      if (!res.ok) {
+        console.error('Failed to delete message');
 
-    return { handleDeleteMessage };
+        // Restore original state if failed
+        updateMessageStatus(threadId, msgId, 'sent');
+        return;
+      }
+
+      // Remove message from state if successful
+      removeMessage(threadId, msgId);
+    });
+  };
+
+  return { handleDeleteMessage };
 };

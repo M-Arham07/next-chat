@@ -4,7 +4,7 @@ import React, {
   useState,
   createContext,
   Dispatch,
-} from "react";
+} from 'react';
 
 type useLoaderHookType = {
   loading: boolean;
@@ -15,8 +15,13 @@ const LoaderContext = createContext<useLoaderHookType | null>(null);
 
 export function useLoader(): useLoaderHookType {
   const ctx = useContext(LoaderContext);
-  if (!ctx)
-    throw new Error("Please wrap your layout with LoaderContextProvider!");
+
+  if (!ctx) {
+    throw new Error(
+      'Please wrap your app layout with LoaderContextProvider!'
+    );
+  }
+
   return ctx;
 }
 
@@ -25,10 +30,14 @@ export function LoaderContextProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [loading, setLoading] = useState<boolean>(false);
+  const value = useLoaderHook();
   return (
-    <LoaderContext.Provider value={{ loading, setLoading }}>
-      {children}
-    </LoaderContext.Provider>
+    <LoaderContext.Provider value={value}>{children}</LoaderContext.Provider>
   );
+}
+
+function useLoaderHook(): useLoaderHookType {
+  const [loading, setLoading] = useState<boolean>(false);
+
+  return { loading, setLoading };
 }

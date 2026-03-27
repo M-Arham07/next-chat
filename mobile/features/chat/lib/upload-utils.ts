@@ -1,6 +1,6 @@
-import * as FileSystem from "expo-file-system";
-import { getSupabaseClient } from "@/supabase/client";
-import { buildStoredFilename } from "./file-utils";
+import { optimizeImage } from '@/lib/optimize-image';
+import { supabase } from '@/supabase/supabase-client';
+import { buildStoredFilename } from '@/lib/file-utils';
 
 export interface UploadResult {
   url: string;
@@ -8,46 +8,92 @@ export interface UploadResult {
 }
 
 /**
- * Uploads a file to the Supabase 'media' bucket using expo-file-system.
- * Reports progress from 0-100%.
+ * Uploads a file directly to the Supabase 'media' bucket.
+ * Optimization: 0% - 50%
+ * Upload: jumps to 100% when complete.
  */
-export async function GetFileUrl(
-  fileUri: string,
-  mimeType: string,
-  fileName: string,
+export async function getFileUrl(
+  file: File,
   onProgress?: (progress: number) => void
 ): Promise<UploadResult> {
-  const supabase = getSupabaseClient();
+  console.log('[getFileUrl] called with file', file);
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  // 1. Optimization Phase (0% - 50%)
+  let fileToUpload = file;
 
-  const token = session?.access_token;
-  if (!token) throw new Error("Not authenticated");
+  const reportOptimizationProgress = (percent: number) => {
+    if (onProgress) {
+      // Optimization accounts for the first 50%
+      onProgress(Math.round(percent / 2));
+    }
+  };
 
-  if (onProgress) onProgress(10);
-
-  const storedFilename = buildStoredFilename(fileName);
-  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
-  const uploadUrl = `${supabaseUrl}/storage/v1/object/media/${encodeURIComponent(storedFilename)}`;
-
-  const uploadResult = await FileSystem.uploadAsync(uploadUrl, fileUri, {
-    httpMethod: "POST",
-    uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": mimeType,
-      "x-upsert": "false",
-    },
-  });
-
-  if (uploadResult.status < 200 || uploadResult.status >= 300) {
-    throw new Error(`Upload failed with status ${uploadResult.status}`);
+  if (file.type.startsWith('image/')) {
+    fileToUpload = await optimizeImage(file, reportOptimizationProgress);
+  } else {
+    // No optimization for videos/audio/documents in React Native
+    if (onProgress) onProgress(50);
   }
 
-  if (onProgress) onProgress(100);
+  // 2. Upload Phase (50% - 100%)
+  const storedFilename = buildStoredFilename(fileToUpload.name);
 
-  const publicUrl = `${supabaseUrl}/storage/v1/object/public/media/${encodeURIComponent(storedFilename)}`;
-  return { url: publicUrl, path: storedFilename };
+  try {
+    const { data, error } = await supabase.storage
+      .from('media')
+      .upload(storedFilename, fileToUpload, {
+        cacheControl: '3600',
+        upsert: true,
+        contentType: fileToUpload.type,
+      });
+
+    if (error) throw new Error(error.message);
+
+    if (onProgress) onProgress(100);
+
+    // Get public URL
+    const { data: publicUrlData } = supabase.storage
+      .from('media')
+      .getPublicUrl(storedFilename);
+
+    return {
+      url: publicUrlData.publicUrl,
+      path: storedFilename,
+    };
+  } catch (error) {
+    console.error('[getFileUrl] Upload failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Upload avatar and get the public URL
+ */
+export async function uploadAvatarAndGetLink(avatar: File): Promise<string> {
+  const MAX_AVATAR_MB = 0.5;
+
+  if (avatar.size > MAX_AVATAR_MB * 1024 * 1024) {
+    throw new Error('Avatar size must be less than 500KB');
+  }
+
+  const fileExt = avatar.name.split('.').pop() || 'jpg';
+  const fileName = `avatars/${Date.now()}.${fileExt}`;
+
+  const { data: uploadData, error: uploadError } = await supabase.storage
+    .from('media')
+    .upload(fileName, avatar, {
+      cacheControl: '3600',
+      upsert: true,
+      contentType: avatar.type,
+    });
+
+  if (uploadError) {
+    throw new Error(`Storage upload failed: ${uploadError.message}`);
+  }
+
+  const { data: publicUrlData } = supabase.storage
+    .from('media')
+    .getPublicUrl(fileName);
+
+  return publicUrlData.publicUrl;
 }

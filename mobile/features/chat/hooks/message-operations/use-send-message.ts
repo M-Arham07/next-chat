@@ -1,21 +1,14 @@
-import { RefObject } from "react";
-import { Message, MessageContentType, MessageStatusType } from "@chat/shared";
-import { type SocketClientType } from "../../lib/socket-client";
-import { GetFileUrl } from "../../lib/upload-utils";
-import { messageSchema } from "@chat/shared/schema";
-import { MAX_FILE_SIZE, MAX_VIDEO_SIZE_FOR_BROWSER } from "@chat/shared/constants";
-import { Profile } from "@chat/shared/schema/profiles/profile";
-import type { ChatAppStore } from "../../store/chatapp.store";
-
-export interface MobileFilePayload {
-  uri: string;
-  name: string;
-  mimeType?: string;
-  size?: number;
-}
+import { RefObject, useRef } from 'react';
+import { Message, MessageContentType, MessageStatusType, getEnvironmentName } from '@chat/shared';
+import { type SocketClientType } from '@/features/chat/lib/socket-client';
+import { getFileUrl } from '@/features/chat/lib/upload-utils';
+import { messageSchema } from '@chat/shared/schema';
+import { MAX_FILE_SIZE, MAX_OPTIMIZABLE_IMAGE_SIZE, MAX_VIDEO_SIZE_FOR_BROWSER } from '@chat/shared/constants';
+import { Profile } from '@chat/shared/schema/profiles/profile';
+import type { ChatAppStore } from '../../store/chatapp.store';
 
 interface UseSendMessageParams {
-  profileRef: RefObject<Profile>;
+  profileRef: RefObject<Profile | null>;
   socketRef: RefObject<SocketClientType | null>;
   replyingToMsg: Message | null;
   set: (key: keyof ChatAppStore, value: any) => void;
@@ -35,80 +28,118 @@ export const useSendMessage = ({
   updateMessageStatus,
   setUploadingProgress,
 }: UseSendMessageParams) => {
+  const reconstructedFilesRef = useRef<Map<string, File>>(new Map());
+
   const handleSendMessage = async (
     threadId: string,
-    type: Omit<MessageContentType, "deleted">,
-    content: string | MobileFilePayload
+    type: Omit<MessageContentType, 'deleted'>,
+    content: string | File
   ): Promise<void> => {
-    const isFile = type !== "text" && typeof content === "object";
+    console.log('handleSendMessage called for type:', type);
 
-    // Use local URI as optimistic preview for media, or the text string
-    const previewContent = isFile
-      ? (content as MobileFilePayload).uri
-      : (content as string);
+    // Reconstruct file from blob URL if needed
+    let finalContent = content;
 
+    if (type !== 'text' && typeof content === 'string' && content.startsWith('blob:')) {
+      const cached = reconstructedFilesRef.current.get(content);
+      if (cached) {
+        finalContent = cached;
+        reconstructedFilesRef.current.delete(content);
+      } else {
+        console.error('Could not reconstruct file from blob URL');
+        return;
+      }
+    }
+
+    // Determine file size limit based on type
+    let currentLimit = MAX_FILE_SIZE;
+
+    if (type === 'video') {
+      currentLimit = MAX_VIDEO_SIZE_FOR_BROWSER;
+    }
+
+    // Create blob URL for preview (if file)
+    let blobUrl: string | null = null;
+
+    if (type !== 'text' && finalContent instanceof File) {
+      blobUrl = URL.createObjectURL(finalContent);
+
+      // Check file size
+      if (finalContent.size > currentLimit) {
+        if (type === 'video') {
+          console.error(
+            `Video size exceeds limit of ${currentLimit / (1024 * 1024)}MB. Please use the mobile app for larger files.`
+          );
+        } else {
+          console.error(`File size exceeds limit of ${currentLimit / (1024 * 1024)}MB`);
+        }
+        URL.revokeObjectURL(blobUrl);
+        return;
+      }
+    }
+
+    // Create new message for state
     const newMessage: Message = {
       msgId:
-        process.env.NODE_ENV === "production"
-          ? crypto.randomUUID()
+        typeof process !== 'undefined' && process.env.NODE_ENV === 'production'
+          ? crypto.randomUUID?.() || `${Date.now()}`
           : (Date.now() - Math.random()).toString(),
       threadId,
-      sender: profileRef.current.id,
+      sender: profileRef.current?.id || '',
       type: type as MessageContentType,
-      content: previewContent,
+      content: blobUrl || (finalContent as string),
       timestamp: new Date().toISOString(),
       replyToMsgId: replyingToMsg?.msgId,
-      status: "sending",
+      status: 'sending',
     };
 
+    // Validate message with Zod schema
     if (!messageSchema.safeParse(newMessage).success) {
-      console.error("[useSendMessage] Message failed schema validation");
+      console.error('Failed to validate message');
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
       return;
     }
 
-    // File size guard
-    if (isFile) {
-      const file = content as MobileFilePayload;
-      const limit = type === "video" ? MAX_VIDEO_SIZE_FOR_BROWSER : MAX_FILE_SIZE;
-      if (file.size && file.size > limit) {
-        console.error(`[useSendMessage] File exceeds ${limit / 1024 / 1024}MB limit`);
-        updateMessageStatus(threadId, newMessage.msgId, "failed");
-        return;
-      }
-    }
-
-    // Optimistically add message to UI
+    // Add message to state
     addMessages([newMessage]);
-    set("replyingToMsg", null);
+    set('replyingToMsg', null);
 
-    // Upload file if needed
-    if (isFile) {
-      const file = content as MobileFilePayload;
+    let uploadedContentUrl: string | null = null;
+
+    // Upload file if not text
+    if (type !== 'text' && finalContent instanceof File) {
       try {
-        const { url } = await GetFileUrl(file, (percent) => {
+        const { url } = await getFileUrl(finalContent, (percent) => {
           setUploadingProgress(newMessage.msgId, percent);
         });
-        updateMessageContent(threadId, newMessage.msgId, url);
-        newMessage.content = url;
+
+        uploadedContentUrl = url;
+
+        // Update message content with real URL
+        updateMessageContent(newMessage.threadId, newMessage.msgId, uploadedContentUrl);
+        newMessage.content = uploadedContentUrl;
+
+        // Clean up blob URL
+        if (blobUrl) URL.revokeObjectURL(blobUrl);
       } catch (err) {
-        console.error("[useSendMessage] Upload failed", err);
-        updateMessageStatus(threadId, newMessage.msgId, "failed");
+        console.error('Error during file upload', err);
+        updateMessageStatus(newMessage.threadId, newMessage.msgId, 'failed');
+        if (blobUrl) URL.revokeObjectURL(blobUrl);
         return;
       }
     }
 
-    // Emit via socket with 10s timeout
-    socketRef?.current?.timeout(10000).emit(
-      "message:new",
-      newMessage,
-      (err: any, res: any) => {
-        if (err || !res?.ok) {
-          updateMessageStatus(threadId, newMessage.msgId, "failed");
-          return;
-        }
-        updateMessageStatus(threadId, newMessage.msgId, "sent");
+    // Send message via socket
+    socketRef.current?.emit('message:new', newMessage, (res: { ok: boolean }) => {
+      if (!res.ok) {
+        console.error('Failed to send message via socket');
+        updateMessageStatus(newMessage.threadId, newMessage.msgId, 'failed');
+        return;
       }
-    );
+
+      // Mark as sent
+      updateMessageStatus(newMessage.threadId, newMessage.msgId, 'sent');
+    });
   };
 
   return { handleSendMessage };

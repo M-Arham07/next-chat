@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "Next Chat",
+    "slug": "next-chat",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "nextchat",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
@@ -16,13 +16,25 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Allow access to your photo library to select profiles pictures and share media",
+        "NSCameraUsageDescription": "Allow access to your camera to capture photos and videos",
+        "NSMicrophoneUsageDescription": "Allow access to your microphone to record voice messages",
+        "NSDocumentsFolderUsageDescription": "Allow access to documents for file sharing"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -31,11 +43,30 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Next Chat to access your photos and videos",
+          "cameraPermission": "Allow Next Chat to access your camera"
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow Next Chat to access your microphone to record voice messages"
+        }
+      ],
       "expo-web-browser",
+      "@react-native-google-signin/google-signin",
       "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "YOUR_EAS_PROJECT_ID"
+      }
     }
   }
 }

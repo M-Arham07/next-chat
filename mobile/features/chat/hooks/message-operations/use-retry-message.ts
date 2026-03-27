@@ -1,12 +1,11 @@
-import { Message, MessageContentType } from "@chat/shared";
-import type { MobileFilePayload } from "./use-send-message";
+import { Message, MessageContentType } from '@chat/shared';
 
 interface UseRetryMessageParams {
-  removeMessage: (threadId: string, msgId: string, nuke?: boolean) => void;
+  removeMessage: (threadId: string, msgId: string, skipSort?: boolean) => void;
   handleSendMessage: (
     threadId: string,
-    type: Omit<MessageContentType, "deleted">,
-    content: string | MobileFilePayload
+    type: Omit<MessageContentType, 'deleted'>,
+    content: string | File
   ) => Promise<void>;
 }
 
@@ -17,11 +16,11 @@ export const useRetryMessage = ({
   const handleRetryMessage = async (message: Message): Promise<void> => {
     const { threadId, msgId, type, content } = message;
 
-    // Nuke the failed message from state completely
+    // Remove the failed message from state
     removeMessage(threadId, msgId, true);
 
-    // Re-send with same content (local URI still valid for the session)
-    await handleSendMessage(threadId, type, content);
+    // Re-send the message
+    await handleSendMessage(threadId, type as Omit<MessageContentType, 'deleted'>, content);
   };
 
   return { handleRetryMessage };
