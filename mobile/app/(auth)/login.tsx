@@ -145,11 +145,14 @@ export default function LoginScreen() {
             </View>
 
             <Button
-              label={loading ? "Please wait…" : isSignUp ? "Create Account" : "Sign In"}
               onPress={handleEmailAuth}
               disabled={loading}
               className="mt-1"
-            />
+            >
+              <Text>
+                {loading ? "Please wait…" : isSignUp ? "Create Account" : "Sign In"}
+              </Text>
+            </Button>
 
             <View className="flex-row items-center gap-x-3">
               <View className="flex-1 h-px bg-border" />
@@ -186,5 +189,6 @@ export default function LoginScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+
   );
 }

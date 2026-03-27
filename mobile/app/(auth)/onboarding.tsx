@@ -125,10 +125,13 @@ export default function OnboardingScreen() {
             </View>
 
             <Button
-              label={loading ? "Saving…" : "Save Profile"}
               onPress={handleSave}
               disabled={!imageUri || !username.trim() || loading}
-            />
+            >
+              <Text>
+                {loading ? "Saving…" : "Save Profile"}
+              </Text>
+            </Button>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

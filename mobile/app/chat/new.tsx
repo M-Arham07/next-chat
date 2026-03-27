@@ -237,10 +237,13 @@ export default function NewChatScreen() {
             </TouchableOpacity>
           ) : (
             <Button
-              label={createThreadMutation.isPending ? "Creating…" : `Create Group (${selectedUsers.length} selected)`}
               onPress={handleCreateGroup}
               disabled={selectedUsers.length < 2 || createThreadMutation.isPending}
-            />
+            >
+              <Text>
+                {createThreadMutation.isPending ? "Creating…" : `Create Group (${selectedUsers.length} selected)`}
+              </Text>
+            </Button>
           )}
         </View>
       )}
