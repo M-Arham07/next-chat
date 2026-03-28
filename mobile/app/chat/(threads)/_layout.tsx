@@ -15,7 +15,7 @@ export default function ThreadsLayout() {
       {/* Main threads/inbox list */}
       <Stack.Screen name="index" />
 
-      {/* Individual thread/message view */}
+      {/* Individual thread/message view - dynamic route */}
       <Stack.Screen
         name="[threadId]"
         options={{

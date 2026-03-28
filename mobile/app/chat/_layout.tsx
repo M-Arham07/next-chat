@@ -12,23 +12,21 @@ export default function ChatLayout() {
         animationEnabled: true,
       }}
     >
-      {/* Main threads/inbox view */}
-      <Stack.Screen name="(threads)" />
-
-      {/* Individual thread messages */}
+      {/* Threads group (handles its own layout) */}
       <Stack.Screen
-        name="(threads)/[threadId]"
+        name="(threads)"
         options={{
-          presentation: 'card',
+          headerShown: false,
         }}
       />
 
       {/* New thread/search users */}
       <Stack.Screen
-        name="new"
+        name="new/index"
         options={{
           presentation: 'modal',
           animationEnabled: true,
+          headerShown: false,
         }}
       />
 
@@ -38,6 +36,7 @@ export default function ChatLayout() {
         options={{
           presentation: 'modal',
           animationEnabled: true,
+          headerShown: false,
         }}
       />
     </Stack>

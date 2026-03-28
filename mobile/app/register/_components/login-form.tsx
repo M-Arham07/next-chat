@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { EyeIcon, EyeOffIcon, ArrowLeftIcon } from 'lucide-react-native';
 import { ProviderButton } from './provider-button';
-import { signInWithOAuth } from '@/supabase/signInWithOAuth';
 import { signInWithEmail, signUpWithEmail } from '@/supabase/signInWithEmail';
 import { useRouter } from 'expo-router';
 
@@ -43,7 +42,9 @@ export function LoginForm({ onBack }: LoginFormProps) {
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [oauthLoading, setOAuthLoading] = React.useState(false);
   const [loginError, setLoginError] = React.useState<string | null>(null);
+  const [oauthError, setOAuthError] = React.useState<string | null>(null);
   const [successMessage, setSuccessMessage] = React.useState<string | null>(null);
   const [isSignUp, setIsSignUp] = React.useState(false);
   const router = useRouter();
@@ -74,7 +75,9 @@ export function LoginForm({ onBack }: LoginFormProps) {
       } else {
         const loginData = data as LoginFormData;
         await signInWithEmail(loginData.email, loginData.password);
-        router.push('/(authenticated)/chat');
+        // Don't manually redirect - auth state listener will handle it
+        // The session is stored in SecureStore, useAuth hook detects it,
+        // and root layout auto-redirects to /chat
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Authentication failed. Please try again.';
@@ -117,6 +120,16 @@ export function LoginForm({ onBack }: LoginFormProps) {
           <View className="mb-6 flex-row items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/10 p-4">
             <Text className="flex-1 text-sm font-medium text-destructive">{loginError}</Text>
             <TouchableOpacity onPress={() => setLoginError(null)}>
+              <Text className="text-lg text-destructive">×</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* OAuth Error Message */}
+        {oauthError && (
+          <View className="mb-6 flex-row items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/10 p-4">
+            <Text className="flex-1 text-sm font-medium text-destructive">{oauthError}</Text>
+            <TouchableOpacity onPress={() => setOAuthError(null)}>
               <Text className="text-lg text-destructive">×</Text>
             </TouchableOpacity>
           </View>
@@ -228,7 +241,7 @@ export function LoginForm({ onBack }: LoginFormProps) {
         {/* Submit Button */}
         <Button
           onPress={handleSubmit(onSubmit)}
-          disabled={isSubmitting || isLoading}
+          disabled={isSubmitting || isLoading || oauthLoading}
           className="mb-6 h-12 flex-row items-center justify-center gap-2"
         >
           {isSubmitting || isLoading ? (
@@ -272,9 +285,10 @@ export function LoginForm({ onBack }: LoginFormProps) {
         <View className="gap-3">
           {providers.map((provider) => (
             <ProviderButton
-              onPress={() => signInWithOAuth("google")}
               key={provider.label}
               label={provider.label}
+              onError={setOAuthError}
+              onLoading={setOAuthLoading}
             />
           ))}
         </View>

@@ -8,9 +8,11 @@
 
 export function getEnvironmentName(): string {
 
-    // fallback to pc:
-    if (typeof navigator === "undefined") return "pc";
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? "mobile" : "pc";
+    return "mobile";
+
+    // // fallback to pc:
+    // if (typeof navigator === "undefined") return "pc";
+    // return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? "mobile" : "pc";
 }
 
 

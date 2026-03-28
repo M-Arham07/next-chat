@@ -10,7 +10,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@chat/shared": "workspace:*",
+    "@chat/shared": "file:../shared",
     "@eslint/js": "^9.39.2",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",

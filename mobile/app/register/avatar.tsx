@@ -7,7 +7,6 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useUniwind } from 'uniwind';
 import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { useMutation } from '@tanstack/react-query';
@@ -21,7 +20,6 @@ import { apiClient } from '@/lib/api-client';
  */
 export default function AvatarScreen() {
   const router = useRouter();
-  const { colors } = useUniwind();
   const { profile } = useAuth();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -163,10 +161,7 @@ export default function AvatarScreen() {
             )}
           </View>
         ) : (
-          <View
-            className="w-32 h-32 rounded-full items-center justify-center border-2 border-dashed"
-            style={{ borderColor: colors['border'] }}
-          >
+          <View className="w-32 h-32 rounded-full items-center justify-center border-2 border-dashed border-border">
             <Text className="text-4xl">📷</Text>
           </View>
         )}
@@ -215,7 +210,7 @@ export default function AvatarScreen() {
             }`}
           >
             {isUploading ? (
-              <ActivityIndicator color={colors['primary-foreground']} />
+              <ActivityIndicator color="#ffffff" />
             ) : (
               <Text className="text-primary-foreground font-semibold text-center">
                 Upload & Continue

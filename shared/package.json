@@ -7,6 +7,6 @@
     "build": "echo ok"
   },
   "dependencies": {
-    "mongoose": "^9.1.6"
+     "zod": "4.3.6"
   }
 }

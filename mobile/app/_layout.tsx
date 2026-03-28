@@ -1,6 +1,6 @@
 import '@/global.css';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useUniwind } from 'uniwind';
@@ -17,7 +17,8 @@ import { AuthProvider, useAuth } from '@/features/auth/hooks/useAuth';
 import { LoaderContextProvider } from '@/store/loader/use-loader';
 import { QueryProvider } from '@/providers/query-provider';
 import { ChatAppProvider } from '@/features/chat/hooks/use-chat-app';
-import { useLoader } from '@/store/loader/use-loader';
+import { getAuthClient } from '@/supabase/getAuthClient';
+import { supabase } from '@/supabase/supabase-client';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -36,25 +37,43 @@ function RootLayoutNav() {
   const router = useRouter();
   const { profile, loading: authLoading } = useAuth();
   const { theme } = useUniwind();
+ 
 
-  // Determine if user is authenticated
-  const isAuthenticated = !!profile;
-  const inRegisterFlow = segments[0] === 'register';
+  const currentRouteGroup = segments[0];
 
-  /**
-   * Redirect user based on authentication state
-   */
+
+
   useEffect(() => {
-    if (!authLoading) {
-      if (!isAuthenticated && !inRegisterFlow) {
-        // Not authenticated and not in register flow - redirect to register
-        router.replace('/register');
-      } else if (isAuthenticated && inRegisterFlow) {
-        // Authenticated and in register flow - redirect to chat
-        router.replace('/chat');
+
+
+    const authCheck = async () => {
+
+      if (currentRouteGroup !== "register") {
+
+        const isAuthenticated = !!(await getAuthClient());
+
+        if (!isAuthenticated) {
+          return router.replace("/register");
+        }
+
+
+        if (!profile) {
+          return router.replace("/register/onboarding")
+        }
+
+
       }
+
+
+
+
     }
-  }, [isAuthenticated, authLoading, inRegisterFlow, router]);
+
+
+    authCheck();
+  }, [profile]);
+
+
 
   return (
     <ThemeProvider value={NAV_THEME[theme ?? 'light']}>
@@ -94,7 +113,7 @@ export default function RootLayout() {
    * Already loaded via global.css with NativeWind
    * No additional font loading needed
    */
-  
+
   useEffect(() => {
     // Hide splash screen on mount
     SplashScreen.hideAsync();

@@ -1,6 +1,5 @@
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useUniwind } from 'uniwind';
 import { useChatApp } from '@/features/chat/hooks/use-chat-app';
 import { useLoader } from '@/store/loader/use-loader';
 import { Thread } from '@chat/shared';
@@ -13,7 +12,6 @@ import { useMemo } from 'react';
  */
 export default function ThreadsScreen() {
   const router = useRouter();
-  const { colors } = useUniwind();
   const { loading } = useLoader();
   const {
     threads,
@@ -49,10 +47,7 @@ export default function ThreadsScreen() {
         activeOpacity={0.7}
       >
         {/* Avatar placeholder */}
-        <View
-          className="w-10 h-10 rounded-full mr-3"
-          style={{ backgroundColor: colors.primary }}
-        />
+        <View className="w-10 h-10 rounded-full mr-3 bg-primary" />
 
         {/* Thread info */}
         <View className="flex-1">
@@ -66,10 +61,7 @@ export default function ThreadsScreen() {
 
         {/* Unread badge */}
         {unreadCount > 0 && (
-          <View
-            className="px-2 py-1 rounded-full ml-2"
-            style={{ backgroundColor: colors.primary }}
-          >
+          <View className="px-2 py-1 rounded-full ml-2 bg-primary">
             <Text className="text-xs text-primary-foreground font-semibold">
               {unreadCount}
             </Text>
@@ -89,8 +81,7 @@ export default function ThreadsScreen() {
       </Text>
       <TouchableOpacity
         onPress={handleNewMessage}
-        className="px-4 py-2 rounded-lg"
-        style={{ backgroundColor: colors.primary }}
+        className="px-4 py-2 rounded-lg bg-primary"
       >
         <Text className="text-primary-foreground font-semibold">
           Start Messaging

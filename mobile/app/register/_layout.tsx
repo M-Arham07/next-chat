@@ -23,8 +23,8 @@ export default function RegisterLayout() {
       {/* Avatar upload */}
       <Stack.Screen name="avatar" />
 
-      {/* Onboarding (optional) */}
-      <Stack.Screen name="onboarding" />
+      {/* Onboarding (nested route) */}
+      <Stack.Screen name="onboarding/index" />
     </Stack>
   );
 }

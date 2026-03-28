@@ -1,5 +1,5 @@
 {
-  "name": "minimal",
+  "name": "mobile",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
@@ -10,7 +10,6 @@
     "clean": "rm -rf .expo node_modules"
   },
   "dependencies": {
-    "@chat/shared": "workspace:*",
     "@hookform/resolvers": "^3.10.0",
     "@react-native-async-storage/async-storage": "^3.0.2",
     "@react-native-google-signin/google-signin": "^16.1.2",
