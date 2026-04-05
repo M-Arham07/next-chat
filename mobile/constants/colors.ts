@@ -1,0 +1,43 @@
+export const LIGHT_COLORS = {
+  background: '#F9F9F9',
+  foreground: '#262626',
+  card: '#FFFFFF',
+  cardForeground: '#262626',
+  primary: '#1F1F1F',
+  primaryForeground: '#F9F9F9',
+  secondary: '#EBEBEB',
+  secondaryForeground: '#262626',
+  muted: '#E0E0E0',
+  mutedForeground: '#737373',
+  accent: '#1F1F1F',
+  accentForeground: '#F9F9F9',
+  destructive: '#E53E3E',
+  destructiveForeground: '#E53E3E',
+  border: '#EBEBEB',
+  input: '#F5F5F5',
+  ring: '#808080',
+  radius: 10,
+} as const;
+
+export const DARK_COLORS = {
+  background: '#1A1A1A',
+  foreground: '#F5F5F5',
+  card: '#262626',
+  cardForeground: '#F5F5F5',
+  primary: '#F9F9F9',
+  primaryForeground: '#1A1A1A',
+  secondary: '#404040',
+  secondaryForeground: '#F5F5F5',
+  muted: '#474747',
+  mutedForeground: '#A6A6A6',
+  accent: '#F9F9F9',
+  accentForeground: '#1A1A1A',
+  destructive: '#7F1D1D',
+  destructiveForeground: '#E53E3E',
+  border: '#404040',
+  input: '#333333',
+  ring: '#808080',
+  radius: 10,
+} as const;
+
+export type ThemeColors = typeof LIGHT_COLORS;

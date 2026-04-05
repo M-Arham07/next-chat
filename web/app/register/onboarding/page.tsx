@@ -7,7 +7,7 @@ import OnboardingContent from "./_components/onboarding-content";
 import AvatarUpload from "@/components/shared/upload-avatar/avatar.upload";
 import UsernameForm from "./_components/username-form";
 import { useLoader } from "@/store/loader/use-loader";
-import { CreateProfileSchemaResponse } from "@chat/shared/schema/profiles/create-profile";
+import { CreateProfileSchemaResponse } from "@chat/shared";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 

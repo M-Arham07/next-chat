@@ -7,6 +7,8 @@ import { uploadAvatarAndGetLink } from "@/features/upload-avatar/get-avatar-link
 
 export async function POST(request: NextRequest): Promise<NextResponse<CreateProfileSchemaResponseType>> {
     try {
+
+        
         const formData = await request.formData();
         const usernameInput = formData.get("username");
         const imageInput = formData.get("image");

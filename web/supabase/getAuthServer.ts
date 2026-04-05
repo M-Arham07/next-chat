@@ -4,16 +4,18 @@ import { createClient } from './server'
 export async function getAuthServer() {
 
     const supabase = await createClient();
-    
+
 
     const {
         data: { user },
         error,
     } = await supabase.auth.getUser()
 
+    if (error) {
+        console.error("[get-auth-user] Failed to get auth >> ", error);
 
-    console.error("[get-auth-server] Failed to get auth >> ",error);
-    if (error) return null;
+        return null;
+    }
 
     return user
 }

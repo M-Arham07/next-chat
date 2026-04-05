@@ -1,0 +1,20 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "allowImportingTsExtensions": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx", "**/*.d.ts", ".expo/types/**/*.ts", "expo-env.d.ts", "nativewind-env.d.ts"],
+  "exclude": [
+    "app/chat/_components/**/*",
+    "app/chat/new/_components/**/*",
+    "app/chat/(threads)/[threadId]/_components/**/*",
+    "app/chat/(threads)/[threadId]/loading.tsx",
+    "app/chat/(threads)/loading.tsx",
+    "features/upload-avatar/get-avatar-link.ts"
+  ]
+}

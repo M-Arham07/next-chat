@@ -1,0 +1,120 @@
+ "use client";
+ import { CheckCheck } from "lucide-react-native";
+ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+ import { motion } from "@/lib/motion";
+ import { useChatApp } from "@/features/chat/hooks/use-chat-app";
+ import { Message, Thread, participant } from "@chat/shared";
+ import { formatTime } from "@/lib/format-time";
+ import { useAuth } from "@/features/auth/hooks/useAuth";
+ import { useRouter } from "expo-router";
+ import { Pressable } from "react-native";
+
+
+
+const avatarColors = [
+  "bg-avatar-1",
+  "bg-avatar-2",
+  "bg-avatar-3",
+  "bg-avatar-4",
+  "bg-avatar-5",
+];
+
+
+// this component will receive the individual thread object ! 
+const ThreadItem = ({ thread }: { thread: Thread }) => {
+  // Deterministic color based on id
+  const colorClass = avatarColors[Math.floor(Math.random() * avatarColors.length)];
+
+  const { profile } = useAuth();
+  const { messages, typingUsers } = useChatApp()!;
+  const router = useRouter();
+
+
+  const lastUserIdTypingIdx = (typingUsers?.[thread.threadId]?.size ?? 0) - 1;
+  const currentlyTypingUserId= [...(typingUsers?.[thread.threadId] ?? [])][lastUserIdTypingIdx]
+
+  const currentlyTypingUsername = thread.participants?.find(p => p.userId === currentlyTypingUserId)?.username;
+
+  // get last message of this thread : 
+
+  const msgsLength = messages?.[thread.threadId]?.length ?? -1;
+
+  const lastMessage: Message | undefined = messages?.[thread.threadId]?.[msgsLength - 1];
+
+
+
+
+  // IF THREAD TYPE IS DIRECT:
+  let otherParticipant: participant | undefined = undefined;
+
+  if (thread.type === "direct") {
+    otherParticipant = thread.participants?.find(p => p.username.toLowerCase() !== profile.username.toLowerCase());
+  }
+
+
+
+
+
+
+  return (
+    <Pressable
+      onPress={() =>
+        (router.push as (href: string) => void)(`/chat/(threads)/${thread.threadId}`)
+      }
+    >
+      <motion.div
+        className={`flex items-center gap-3 px-4 py-3 transition-all duration-200 hover:bg-accent/50 group ${
+          false ? "selected bg-accent" : ""
+        }`}
+      >
+        <Avatar className="w-12 h-12 shrink-0 ring-1 ring-border/50">
+
+          <AvatarImage src={thread.groupImage ||
+            otherParticipant?.image
+            || ""
+          } alt={thread.groupName || ""} className="object-cover" />
+
+          <AvatarFallback className={`${colorClass} text-foreground text-base font-medium`}>
+            {(thread?.groupImage || otherParticipant?.username)!.charAt(0).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+
+        <div className="flex-1 min-w-0 py-1 border-b border-border/30">
+          <div className="flex items-center justify-between">
+            <span className="font-medium text-[15px] text-foreground truncate">
+              {
+                /* If thread.groupName exists, then show the group name 
+                 Otherwise, its a private dm so show the other participant's username ! 
+                 (use "Unknown" as a fallback)
+                */
+                thread.groupName || otherParticipant?.username || "Unknown"
+              }
+            </span>
+            <span className="text-xs text-muted-foreground shrink-0 ml-2 font-mono">
+              {formatTime(lastMessage?.timestamp)}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+
+            {/** WILL BE REPLACED BY READBY.INCLUDES! */}
+            {false &&
+              <CheckCheck className="w-4 h-4 shrink-0 text-success" />
+            }
+
+            <p className="text-sm text-muted-foreground truncate flex-1">
+
+
+              {currentlyTypingUsername ? `${currentlyTypingUsername} is typing...`
+                : lastMessage?.type === "text"
+                  ? lastMessage.content.slice(0, 30) + "..."
+                  : `${lastMessage?.type} message`}
+            </p>
+          </div>
+
+        </div>
+      </motion.div>
+    </Pressable>
+  );
+};
+
+export default ThreadItem;

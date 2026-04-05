@@ -8,6 +8,8 @@ type handleTypingHandler = (
 ) => void;
 
 
+
+
 const handleTypingStart: handleTypingHandler = (socket, threadId, username) => {
 
     if (!threadId || !username) return;
@@ -16,9 +18,8 @@ const handleTypingStart: handleTypingHandler = (socket, threadId, username) => {
 
 
 
-
-
 }
+
 
 
 const handleTypingStop: handleTypingHandler = (socket, threadId, username) => {
