@@ -55,7 +55,7 @@ const useChatAppHook = (): ChatAppHook => {
         replyingToMsg,
         set, updateMessageStatus, updateMessageContent, removeMessage, addTypingUser, removeTypingUser, setUploadingProgress } = store;
 
-    const { profile } = useAuth();
+    const { profile, recovery } = useAuth();
 
 
     // to prevent stale closures! : 
@@ -87,6 +87,7 @@ const useChatAppHook = (): ChatAppHook => {
     // Extract initial data loading
     useInitialLoad({
         mounted,
+        recoveryReady: recovery.status === "ready",
         socketRef,
         markMounted,
         setThreads,

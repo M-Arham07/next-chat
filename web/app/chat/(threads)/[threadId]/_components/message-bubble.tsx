@@ -251,11 +251,11 @@ return (
         )}
 
         {message.type === "text" && message.content && <TextMessage content={message.content} />}
-        {message.type === "image" && message.content && <ImageMessage msgId={message.msgId} imageUrl={message.content} status={status} />}
-        {message.type === "voice" && message.content && <VoiceMessage msgId={message.msgId} voiceUrl={message.content} status={status} />}
-        {message.type === "video" && message.content && <VideoMessage msgId={message.msgId} videoUrl={message.content} status={status} />}
+        {message.type === "image" && message.content && <ImageMessage threadId={message.threadId} msgId={message.msgId} imageUrl={message.content} keyVersion={message.keyVersion} media={message.media} status={status} />}
+        {message.type === "voice" && message.content && <VoiceMessage threadId={message.threadId} msgId={message.msgId} voiceUrl={message.content} keyVersion={message.keyVersion} media={message.media} status={status} />}
+        {message.type === "video" && message.content && <VideoMessage threadId={message.threadId} msgId={message.msgId} videoUrl={message.content} keyVersion={message.keyVersion} media={message.media} status={status} />}
         {message.type === "document" && message.content && (
-          <DocumentMessage msgId={message.msgId} documentName={getOriginalFilename(message.content)} documentUrl={message.content} status={status} />
+          <DocumentMessage threadId={message.threadId} msgId={message.msgId} documentName={message.media?.originalFilename || getOriginalFilename(message.content)} documentUrl={message.content} keyVersion={message.keyVersion} media={message.media} status={status} />
         )}
 
         <div

@@ -54,7 +54,7 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
 
     let otherParticipant: participant | undefined = undefined;
 
-    if (thisThread?.type === "direct") {
+    if (thisThread?.type === "direct" && profile?.username) {
         otherParticipant = thisThread.participants?.find(p => p.username.toLowerCase() !== profile.username.toLowerCase());
     }
 
@@ -150,7 +150,7 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
 
 
 
-    if (!mounted) {
+    if (!mounted || !profile) {
         return <Loading />
     }
 

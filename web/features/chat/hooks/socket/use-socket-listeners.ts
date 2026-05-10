@@ -5,7 +5,7 @@ import { Profile } from "@chat/shared/schema/profiles/profile";
 
 interface SocketListenersParams {
     socketRef: RefObject<SocketClientType | null>;
-    profileRef: RefObject<Profile>;
+    profileRef: RefObject<Profile | null>;
     onMessageReceived: (msg: Message) => void;
     onMessageDeleted: (threadId: string, msgId: string) => void;
     onTypingStart: (threadId: string, id: string) => void;

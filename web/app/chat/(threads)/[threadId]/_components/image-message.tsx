@@ -4,32 +4,39 @@ import { useState } from "react";
 import ImageViewer from "./image-viewer";
 import Image from "next/image";
 import { useChatAppStore } from "@/features/chat/store/chatapp.store";
+import type { EncryptedMediaMetadata } from "@chat/shared";
+import { useDecryptedMedia } from "@/features/chat/hooks/use-decrypted-media";
 
 interface ImageMessageProps {
+  threadId: string
   msgId: string
   imageUrl: string
+  keyVersion?: number | null
+  media?: EncryptedMediaMetadata | null
   status?: string
 }
 
-const ImageMessage = ({ msgId, imageUrl, status }: ImageMessageProps) => {
+const ImageMessage = ({ threadId, msgId, imageUrl, keyVersion, media, status }: ImageMessageProps) => {
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false)
   const progress = useChatAppStore(s => s.uploadingProgress?.[msgId] || 0);
+  const { objectUrl, loading } = useDecryptedMedia(threadId, keyVersion, media, imageUrl);
+  const displayUrl = objectUrl || imageUrl || "/placeholder.svg";
 
   return (
     <>
       <div className="p-1 relative">
         <Image
-          src={imageUrl || "/placeholder.svg"}
+          src={displayUrl}
           alt="Message"
           onClick={() => {
-            if (status !== "sending") setIsImageViewerOpen(true)
+            if (status !== "sending" && !loading) setIsImageViewerOpen(true)
           }}
           width={500}
           height={500}
           loading="lazy"
-          className={`rounded-xl max-w-62.5 sm:max-w-75 object-cover transition-opacity ${status === "sending" ? "opacity-40 grayscale-[0.5] cursor-not-allowed" : "cursor-pointer hover:opacity-90"}`}
+          className={`rounded-xl max-w-62.5 sm:max-w-75 object-cover transition-opacity ${(status === "sending" || loading) ? "opacity-40 grayscale-[0.5] cursor-not-allowed" : "cursor-pointer hover:opacity-90"}`}
         />
-        {status === "sending" && (
+        {(status === "sending" || loading) && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
              <div className="relative w-10 h-10 flex items-center justify-center">
                 <svg className="absolute w-full h-full -rotate-90">
@@ -54,12 +61,12 @@ const ImageMessage = ({ msgId, imageUrl, status }: ImageMessageProps) => {
                     className="text-primary transition-all duration-300"
                   />
                 </svg>
-                <span className="text-[10px] font-bold text-white">{progress}%</span>
+                <span className="text-[10px] font-bold text-white">{loading ? "..." : `${progress}%`}</span>
              </div>
           </div>
         )}
       </div>
-      <ImageViewer imageUrl={imageUrl || ""} isOpen={isImageViewerOpen} onClose={() => setIsImageViewerOpen(false)} />
+      <ImageViewer imageUrl={displayUrl || ""} isOpen={isImageViewerOpen} onClose={() => setIsImageViewerOpen(false)} />
     </>
   )
 }

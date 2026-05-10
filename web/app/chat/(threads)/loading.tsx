@@ -1,4 +1,5 @@
+import { ChatWorkspaceSkeleton } from "../_components/chat-workspace-skeleton";
 
-export default async function Loading() { 
-    return <h1>Threads are loading</h1>
+export default function Loading() {
+    return <ChatWorkspaceSkeleton stage="bootstrap" />;
 }

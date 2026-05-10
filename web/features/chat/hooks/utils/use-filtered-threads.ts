@@ -8,7 +8,7 @@ import { ActiveFilter } from "../../types/active-filter";
 interface UseFilteredThreadsParams {
     threads: Thread[];
     messages: MessageState;
-    profile: Profile;
+    profile: Profile | null;
     searchQuery: string;
     activeFilter: ActiveFilter;
 }

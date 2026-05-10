@@ -3,7 +3,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useEffect } from "react";
 
 export type NavTab = "threads" | "updates" | "communities" | "calls";
 
@@ -23,9 +22,7 @@ const navItems: { id: NavTab; icon: React.ElementType; label: string }[] = [
 const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
 
   const { profile } = useAuth();
-  useEffect(()=>console.log(profile),[profile])
-
-
+  const profileInitial = profile?.username?.charAt(0)?.toUpperCase() || "?";
 
   return (
     <motion.div
@@ -45,7 +42,7 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
         <Avatar className="w-10 h-10 mb-6 ring-2 ring-border">
 
           <AvatarFallback className="bg-foreground text-background text-sm font-bold">
-            {profile.username.charAt(0)?.toUpperCase() || "?"}
+            {profileInitial}
           </AvatarFallback>
         </Avatar>
       </motion.div>
@@ -100,9 +97,9 @@ const DesktopSidebar = ({ activeTab, onTabChange }: DesktopSidebarProps) => {
           <Settings className="w-5 h-5" />
         </Button>
         <Avatar className="w-9 h-9 ring-1 ring-border">
-          <AvatarImage src={profile.image || ""} />
+          <AvatarImage src={profile?.image || ""} />
           <AvatarFallback className="bg-avatar-3 text-foreground text-xs font-medium">
-            {profile.username.charAt(0)?.toUpperCase() || "?"}
+            {profileInitial}
           </AvatarFallback>
         </Avatar>
       </motion.div>

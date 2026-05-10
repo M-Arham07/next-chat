@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Threads } from "@chat/shared";
 import { getProfileServer } from "@/supabase/getProfileServer";
 import { createClient } from "@/supabase/server";
 

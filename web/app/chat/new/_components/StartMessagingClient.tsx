@@ -14,6 +14,8 @@ import { useChatApp } from '@/features/chat/hooks/use-chat-app'
 import { CreateThreadSchemaResponse } from '@chat/shared/schema'
 import { optimizeImage } from '@/lib/optimize-image'
 import { useQuery, useMutation } from '@tanstack/react-query'
+import { useAuth } from '@/features/auth/hooks/useAuth'
+import { ensureThreadBootstrap } from '@/features/chat/lib/e2ee'
 
 export function StartMessagingClient() {
   const [query, setQuery] = useState('')
@@ -26,6 +28,7 @@ export function StartMessagingClient() {
 
   const router = useRouter()
   const { addThread } = useChatApp()
+  const { profile } = useAuth()
 
   // Initialize debounced search setter
   useEffect(() => {
@@ -97,6 +100,11 @@ export function StartMessagingClient() {
   }
 
   const handleCreateGroup = async (groupName: string, groupImage: File, setIsCreating: Dispatch<SetStateAction<boolean>>): Promise<void> => {
+    if (!profile?.id) {
+      toast.error("Profile is still loading")
+      return
+    }
+
     setIsCreating(true)
     const otherParticipantUserIds = selectedUsers.map(u => u.id)
 
@@ -110,6 +118,7 @@ export function StartMessagingClient() {
       formData.append("groupImage", optimizedImage)
 
       const createdThreadId = await createThreadMutation.mutateAsync(formData)
+      await ensureThreadBootstrap(profile.id, createdThreadId)
 
       setShowModal(false)
       setSelectedUsers([])
@@ -117,6 +126,7 @@ export function StartMessagingClient() {
       toast.success('Group created successfully')
       router.push(`/chat/${createdThreadId}`)
     } catch (err) {
+      console.error("[create-group] Failed to provision encrypted thread", err)
       toast.error("Failed to create group! Please try again")
     } finally {
       setIsCreating(false)
@@ -124,15 +134,22 @@ export function StartMessagingClient() {
   }
 
   const handleUserChat = async (userId: string, username: string): Promise<void> => {
+    if (!profile?.id) {
+      toast.error("Profile is still loading")
+      return
+    }
+
     const formData = new FormData()
     formData.append("type", "direct")
     formData.append("otherParticipantUserIds", JSON.stringify([userId]))
 
     try {
       const createdThreadId = await createThreadMutation.mutateAsync(formData)
+      await ensureThreadBootstrap(profile.id, createdThreadId)
       toast.success(`Starting chat with ${username}`)
       router.push(`/chat/${createdThreadId}`)
     } catch (err) {
+      console.error("[create-direct-thread] Failed to provision encrypted thread", err)
       toast.error(`Failed to start chat with ${username}`)
     }
   }

@@ -4,6 +4,8 @@ import { Message } from "@chat/shared";
 import { Dispatch, RefObject, SetStateAction, useEffect, useRef } from "react";
 import { useChatApp } from "./use-chat-app";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { hydrateMessagesForDisplay } from "@/features/chat/lib/e2ee";
 
 
 type useInfiniteScrollProps = (
@@ -18,6 +20,7 @@ type useInfiniteScrollProps = (
 export const useInfiniteScroll: useInfiniteScrollProps = (threadId, sentinelRef, mainRef, mounted, setLoadingState) => {
 
     const { addMessages, messages } = useChatApp();
+    const { profile } = useAuth();
 
 
     // compound cursor = { timestamp, msgId } of the OLDEST message we currently have
@@ -118,7 +121,12 @@ export const useInfiniteScroll: useInfiniteScrollProps = (threadId, sentinelRef,
                 const scrollHeightBefore = container?.scrollHeight ?? 0;
                 const scrollTopBefore = container?.scrollTop ?? 0;
 
-                addMessages(latestPage, { appendToStart: true });
+                if (!profile?.id) {
+                    return;
+                }
+
+                const hydratedMessages = await hydrateMessagesForDisplay(profile.id, latestPage);
+                addMessages(hydratedMessages, { appendToStart: true });
 
                 // After React paints, restore scroll so the user stays at the same visual position
                 requestAnimationFrame(() => {
@@ -157,7 +165,7 @@ export const useInfiniteScroll: useInfiniteScrollProps = (threadId, sentinelRef,
         return () => {
             observer.disconnect();
         }
-    }, [mounted, hasNextPage])
+    }, [mounted, hasNextPage, profile?.id])
 
     return {
         retry: () => {

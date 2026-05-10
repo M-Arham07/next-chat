@@ -3,14 +3,15 @@ import { getEnvironmentName, Message, MessageContentType, MessageStatusType } fr
 import { toast } from "sonner";
 import { type SocketClientType } from "@/features/chat/lib/socket-client";
 import { reconstructFileFromBlobUrl } from "@/features/chat/lib/file-utils";
-import { GetFileUrl } from "@/features/chat/lib/upload-utils";
 import { messageSchema } from "@chat/shared/schema";
 import { MAX_FILE_SIZE, MAX_OPTIMIZABLE_IMAGE_SIZE, MAX_VIDEO_SIZE_FOR_BROWSER } from "@chat/shared/constants";
 import { Profile } from "@chat/shared/schema/profiles/profile";
 import type { ChatAppStore } from "../../store/chatapp.store";
+import { logE2eeStep, previewCiphertext, previewIv } from "@/features/chat/lib/e2ee/debug";
+import { ensureRegisteredDevice, ensureThreadBootstrap, encryptMessage, uploadEncryptedMedia } from "@/features/chat/lib/e2ee";
 
 interface UseSendMessageParams {
-    profileRef: RefObject<Profile>;
+    profileRef: RefObject<Profile | null>;
     socketRef: RefObject<SocketClientType | null>;
     replyingToMsg: Message | null;
     set: (key: keyof ChatAppStore, value: any) => void;
@@ -35,9 +36,13 @@ export const useSendMessage = ({
         type: Omit<MessageContentType, "deleted">,
         content: string | File)
         : Promise<void> => {
+        const profileId = profileRef.current?.id;
 
-            console.log("hi from handlesend")
-            
+        if (!profileId) {
+            toast.error("Profile is still loading");
+            return;
+        }
+
         // if message is a file, we'll upload it to supabase, and gets it's url! 
 
         // but to ensure that file previews are shown quickly on frontend (for loading states),
@@ -81,12 +86,14 @@ export const useSendMessage = ({
         let newMessage: Message = {
             msgId: process.env.NODE_ENV === "production" ? crypto.randomUUID() : (Date.now() - Math.random()).toString(),
             threadId: threadId,
-            sender: profileRef.current.id,
+            sender: profileId,
+            senderUserId: profileId,
             type: type as MessageContentType,
             content: localBlobUrl || (finalContent as string),
             timestamp: new Date(Date.now()).toISOString(),
             replyToMsgId: replyingToMsg?.msgId,
-            status: "sending"
+            status: "sending",
+            contentFormat: "legacy_plaintext",
         }
 
 
@@ -122,24 +129,39 @@ export const useSendMessage = ({
 
         set("replyingToMsg", null);
 
-        let uploadedContentUrl: string | null = null;
+        let uploadedMediaMetadata: Message["media"] | null = null;
 
         // if its a file : 
 
         if (type !== "text" && finalContent instanceof File) {
             try {
-                const { url } = await GetFileUrl(finalContent, (percent) => {
-                    setUploadingProgress(newMessage.msgId, percent);
+                const bootstrap = await ensureThreadBootstrap(profileId, threadId);
+                const device = await ensureRegisteredDevice(profileId);
+
+                logE2eeStep("Preparing media message encryption", {
+                    msgId: newMessage.msgId,
+                    threadId,
+                    keyVersion: bootstrap.keyVersion,
+                    deviceId: device.deviceId,
+                    filename: finalContent.name,
                 });
 
-                uploadedContentUrl = url;
+                uploadedMediaMetadata = await uploadEncryptedMedia({
+                    file: finalContent,
+                    senderDeviceId: device.deviceId,
+                    keyVersion: bootstrap.keyVersion,
+                    threadKey: bootstrap.threadKey,
+                    onProgress: (percent) => {
+                        setUploadingProgress(newMessage.msgId, percent);
+                    },
+                });
 
-                // update the message in the store with the real URL instead of local blob
-                updateMessageContent(newMessage.threadId, newMessage.msgId, uploadedContentUrl);
-                newMessage.content = uploadedContentUrl; // ensure socket emits the real URL
+                newMessage.contentFormat = "e2ee_media";
+                newMessage.media = uploadedMediaMetadata;
+                newMessage.senderDeviceId = device.deviceId;
+                newMessage.keyVersion = bootstrap.keyVersion;
 
                 if (rawBlobUrl) URL.revokeObjectURL(rawBlobUrl);
-
             } catch (err) {
                 console.error("Error during file upload", err);
                 toast.error("Failed to upload file");
@@ -148,9 +170,59 @@ export const useSendMessage = ({
             }
         }
 
+        if (type === "text") {
+            try {
+                const device = await ensureRegisteredDevice(profileId);
+                const bootstrap = await ensureThreadBootstrap(profileId, threadId);
+                const encryptedPayload = await encryptMessage(finalContent as string, bootstrap.threadKey);
+
+                logE2eeStep("Prepared encrypted text payload", {
+                    msgId: newMessage.msgId,
+                    threadId,
+                    keyVersion: bootstrap.keyVersion,
+                    deviceId: device.deviceId,
+                    ciphertextPreview: previewCiphertext(encryptedPayload.ciphertext),
+                    ivPreview: previewIv(encryptedPayload.iv),
+                    encryptedMessage: encryptedPayload,
+                });
+
+                newMessage = {
+                    ...newMessage,
+                    senderDeviceId: device.deviceId,
+                    content: "Encrypted message",
+                    contentFormat: "e2ee_text",
+                    encryptedPayload,
+                    keyVersion: bootstrap.keyVersion,
+                };
+            } catch (err) {
+                console.error("Failed to encrypt outgoing message", err);
+                updateMessageStatus(newMessage.threadId, newMessage.msgId, "failed");
+                toast.error("Failed to encrypt message");
+                return;
+            }
+        }
+
         // socketRef.current.emit the message , then use ack! 
 
-        socketRef?.current?.timeout(10000).emit("message:new", newMessage, (err, res) => {
+        const messageToEmit: Message = newMessage.contentFormat === "e2ee_media" && uploadedMediaMetadata
+            ? {
+                ...newMessage,
+                content: uploadedMediaMetadata.originalFilename || uploadedMediaMetadata.storagePath,
+            }
+            : newMessage;
+
+        logE2eeStep("Emitting encrypted chat payload", {
+            msgId: messageToEmit.msgId,
+            threadId: messageToEmit.threadId,
+            type: messageToEmit.type,
+            contentFormat: messageToEmit.contentFormat,
+            keyVersion: messageToEmit.keyVersion,
+            senderDeviceId: messageToEmit.senderDeviceId,
+            encryptedMessage: messageToEmit.encryptedPayload ?? null,
+            encryptedMedia: messageToEmit.media ?? null,
+        });
+
+        socketRef?.current?.timeout(10000).emit("message:new", messageToEmit, (err, res) => {
 
             console.log("Res is", res)
 

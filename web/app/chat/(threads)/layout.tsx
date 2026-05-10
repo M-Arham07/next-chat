@@ -1,6 +1,8 @@
 "use client";
 import { ComingSoon } from "../_components/shared";
 import { motion, AnimatePresence } from "framer-motion";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
 import { DesktopSidebar, NavTab } from "../_components/layout";
 import { ThreadHeader, ThreadFilterTabs, ThreadItem, ThreadList } from "../_components";
@@ -8,15 +10,17 @@ import { FloatingActionButton } from "../_components";
 import { useChatApp } from "@/features/chat/hooks/use-chat-app";
 import { ActiveFilter } from "@/features/chat/types";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { ChatWorkspaceSkeleton } from "../_components/chat-workspace-skeleton";
 
 
 
 
 
 export default function ThreadsLayout({ children }: { children: React.ReactNode }) {
+    const router = useRouter();
 
 
-    const { loading } = useAuth();
+    const { loading, recovery } = useAuth();
 
     const { activeTab,
         searchQuery,
@@ -26,9 +30,15 @@ export default function ThreadsLayout({ children }: { children: React.ReactNode 
 
     } = useChatApp()!;
 
+    useEffect(() => {
+        if (recovery.status === "setup-required" || recovery.status === "restore-required") {
+            router.replace("/register/recovery");
+        }
+    }, [recovery.status, router]);
 
-    if (loading) {
-        return <h1> Wait while you're being authorized...</h1>
+
+    if (loading || recovery.status === "checking") {
+        return <ChatWorkspaceSkeleton stage="auth" />
     }
 
 
@@ -38,14 +48,18 @@ export default function ThreadsLayout({ children }: { children: React.ReactNode 
 
 
 
-    if (!mounted) return null;
+    if (recovery.status === "setup-required" || recovery.status === "restore-required") {
+        return <ChatWorkspaceSkeleton stage="recovery" />
+    }
+
+    if (!mounted) {
+        return <ChatWorkspaceSkeleton stage="bootstrap" />
+    }
 
 
 
     return (
         <>
-
-
             {/* ================= DESKTOP LAYOUT ================= */}
             <motion.div
                 className="hidden md:flex h-screen bg-background overflow-hidden"

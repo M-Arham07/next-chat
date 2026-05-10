@@ -7,6 +7,7 @@ import { useChatApp } from "@/features/chat/hooks/use-chat-app";
 import { Message, Thread, participant } from "@chat/shared";
 import { formatTime } from "@/lib/format-time";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useEffect, useMemo, useState } from "react";
 
 
 
@@ -18,11 +19,20 @@ const avatarColors = [
   "bg-avatar-5",
 ];
 
+function pickDeterministicAvatarColor(seed: string) {
+  let hash = 0;
+
+  for (let index = 0; index < seed.length; index += 1) {
+    hash = (hash * 31 + seed.charCodeAt(index)) >>> 0;
+  }
+
+  return avatarColors[hash % avatarColors.length];
+}
+
 
 // this component will receive the individual thread object ! 
 const ThreadItem = ({ thread }: { thread: Thread }) => {
-  // Deterministic color based on id
-  const colorClass = avatarColors[Math.floor(Math.random() * avatarColors.length)];
+  const [mounted, setMounted] = useState(false);
 
   const { profile } = useAuth();
   const { messages, typingUsers } = useChatApp()!;
@@ -45,10 +55,16 @@ const ThreadItem = ({ thread }: { thread: Thread }) => {
   // IF THREAD TYPE IS DIRECT:
   let otherParticipant: participant | undefined = undefined;
 
-  if (thread.type === "direct") {
+  if (thread.type === "direct" && profile?.username) {
     otherParticipant = thread.participants?.find(p => p.username.toLowerCase() !== profile.username.toLowerCase());
   }
 
+  const colorSeed = otherParticipant?.userId || thread.threadId || thread.groupName || "thread";
+  const colorClass = useMemo(() => pickDeterministicAvatarColor(colorSeed), [colorSeed]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
 
 
@@ -88,7 +104,7 @@ const ThreadItem = ({ thread }: { thread: Thread }) => {
               }
             </span>
             <span className="text-xs text-muted-foreground shrink-0 ml-2 font-mono">
-              {formatTime(lastMessage?.timestamp)}
+              {mounted ? formatTime(lastMessage?.timestamp) : ""}
             </span>
           </div>
           <div className="flex items-center gap-1.5 mt-0.5 min-w-0">

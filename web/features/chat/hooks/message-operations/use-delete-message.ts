@@ -5,7 +5,7 @@ import { type SocketClientType } from "@/features/chat/lib/socket-client";
 import { Profile } from "@chat/shared/schema/profiles/profile";
 
 interface UseDeleteMessageParams {
-    profileRef: RefObject<Profile>;
+    profileRef: RefObject<Profile | null>;
     socketRef: RefObject<SocketClientType | null>;
     updateMessageStatus: (threadId: string, msgId: string, newStatus: MessageStatusType) => void;
     removeMessage: (threadId: string, msgId: string) => void;
@@ -25,7 +25,7 @@ export const useDeleteMessage = ({
 
         const { threadId, msgId, sender } = messageToDelete;
 
-        if (sender !== profileRef.current.id) return;
+        if (!profileRef.current?.id || sender !== profileRef.current.id) return;
 
         // FIRST SET STATUS TO SENDING  (to show loading)
 

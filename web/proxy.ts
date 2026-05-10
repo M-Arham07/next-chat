@@ -5,6 +5,7 @@ import { updateSession } from './supabase/proxy';
 import { rewriteWithCookies } from './supabase/rewrite';
 import { getProfileServer } from './supabase/getProfileServer';
 import { getAuthServer } from './supabase/getAuthServer';
+import { hasEncryptedBackupServer } from './supabase/hasEncryptedBackupServer';
 // This function can be marked `async` if using `await` inside
 export default async function proxy(request: NextRequest) {
 
@@ -17,6 +18,7 @@ export default async function proxy(request: NextRequest) {
 
 
     const [auth, profile] = await Promise.all([getAuthServer(), getProfileServer()]);
+    const hasEncryptedBackup = await hasEncryptedBackupServer(auth?.id);
 
 
 
@@ -26,9 +28,19 @@ export default async function proxy(request: NextRequest) {
 
     // if user isnt authenticated but tries to access onboarding page: 
     if (pathname === "/register/onboarding") {
-       
-
         if (!auth) return NextResponse.redirect(new URL("/register", request.url));
+    }
+
+    if (pathname === "/register/recovery") {
+        if (!auth) {
+            return NextResponse.redirect(new URL("/register", request.url));
+        }
+
+        if (!profile) {
+            return NextResponse.redirect(new URL("/register/onboarding", request.url));
+        }
+
+        return response;
     }
 
 
@@ -49,6 +61,10 @@ export default async function proxy(request: NextRequest) {
 
         }
 
+        if (!hasEncryptedBackup) {
+            return NextResponse.redirect(new URL("/register/recovery", request.url))
+        }
+
 
 
     }
@@ -61,6 +77,9 @@ export default async function proxy(request: NextRequest) {
     if (profile) {
 
         if (pathname.startsWith("/register")) {
+            if (pathname === "/register/recovery") {
+                return response;
+            }
             return NextResponse.redirect(new URL("/chat", request.url));
         }
     }

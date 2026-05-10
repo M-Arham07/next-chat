@@ -5,20 +5,27 @@ import { useRef, useState } from "react";
 import { useChatAppStore } from "@/features/chat/store/chatapp.store";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { EncryptedMediaMetadata } from "@chat/shared";
+import { useDecryptedMedia } from "@/features/chat/hooks/use-decrypted-media";
 
 interface VideoMessageProps {
+  threadId: string;
   msgId: string;
   videoUrl: string;
+  keyVersion?: number | null;
+  media?: EncryptedMediaMetadata | null;
   status?: string;
 }
 
-const VideoMessage = ({ msgId, videoUrl, status }: VideoMessageProps) => {
+const VideoMessage = ({ threadId, msgId, videoUrl, keyVersion, media, status }: VideoMessageProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [duration, setDuration] = useState(0);
   const progress = useChatAppStore(s => s.uploadingProgress?.[msgId] || 0);
-  const displayUrl = videoUrl.startsWith("blob:") ? videoUrl.split("#")[0] : videoUrl;
+  const { objectUrl, loading } = useDecryptedMedia(threadId, keyVersion, media, videoUrl);
+  const resolvedUrl = objectUrl || videoUrl;
+  const displayUrl = resolvedUrl.startsWith("blob:") ? resolvedUrl.split("#")[0] : resolvedUrl;
 
   const formatDuration = (seconds: number) => {
     if (!seconds || !isFinite(seconds)) return "0:00";
@@ -28,7 +35,7 @@ const VideoMessage = ({ msgId, videoUrl, status }: VideoMessageProps) => {
   };
 
   const togglePlay = () => {
-    if (status === "sending") return;
+    if (status === "sending" || loading) return;
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause();
@@ -75,7 +82,7 @@ const VideoMessage = ({ msgId, videoUrl, status }: VideoMessageProps) => {
           <source src={displayUrl} type="video/mp4" />
         </video>
 
-        {status === "sending" ? (
+        {(status === "sending" || loading) ? (
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-black/40 backdrop-blur-sm rounded-xl">
             <div className="relative w-12 h-12 flex items-center justify-center">
               <svg className="absolute w-full h-full -rotate-90">
@@ -103,7 +110,7 @@ const VideoMessage = ({ msgId, videoUrl, status }: VideoMessageProps) => {
               <span className="text-[10px] font-bold text-white">{progress}%</span>
             </div>
             <span className="text-[10px] text-white/70 font-medium uppercase tracking-widest">
-              {progress < 50 ? "Optimizing..." : "Uploading..."}
+              {loading ? "Decrypting..." : (progress < 50 ? "Optimizing..." : "Uploading...")}
             </span>
           </div>
         ) : (

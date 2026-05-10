@@ -1,13 +1,16 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Thread } from "@chat/shared";
+import { Message } from "@chat/shared";
 import { MessageState } from "../../types";
 import { type SocketClientType } from "@/features/chat/lib/socket-client";
 import { Profile } from "@chat/shared/schema/profiles/profile";
 import type { ChatAppStore } from "../../store/chatapp.store";
+import { hydrateMessagesForDisplay } from "@/features/chat/lib/e2ee";
 
 interface UseInitialLoadParams {
     mounted: boolean;
+    recoveryReady: boolean;
     socketRef: React.RefObject<SocketClientType | null>;
     markMounted: () => void;
     setThreads: (threads: Thread[]) => void;
@@ -16,12 +19,12 @@ interface UseInitialLoadParams {
         value: ChatAppStore[K]
     ) => void
     setLoading: (loading: boolean) => void;
-    profile: Profile;
+    profile: Profile | null;
 }
 
 interface InboxData {
     threads: Thread[];
-    messages: Array<{ threadId: string }>;
+    messages: Message[];
 }
 
 const fetchInbox = async (): Promise<InboxData> => {
@@ -36,6 +39,7 @@ const fetchInbox = async (): Promise<InboxData> => {
 
 export const useInitialLoad = ({
     mounted,
+    recoveryReady,
     markMounted,
     setThreads,
     set,
@@ -45,34 +49,38 @@ export const useInitialLoad = ({
     const { data, isLoading, error } = useQuery({
         queryKey: ["inbox", profile?.id],
         queryFn: fetchInbox,
-        enabled: !mounted && !!profile?.id,
+        enabled: !mounted && !!profile?.id && recoveryReady,
         staleTime: Infinity,
     });
 
     useEffect(() => {
-        if (!mounted && data) {
-            markMounted();
+        const hydrateInbox = async () => {
+            if (!mounted && data) {
+                markMounted();
+                setThreads(data.threads);
 
-            console.log("FETCHING ALL CHATS ")
+                if (!profile?.id) {
+                    return;
+                }
 
-            // RETURN TYPE WILL NOT BE NULL IN CASE OF OK RESPONSE
+                const hydratedMessages = await hydrateMessagesForDisplay(profile.id, data.messages);
+                const result: MessageState = {};
 
-            setThreads(data.threads);
+                for (const msg of hydratedMessages) {
+                    (result[msg.threadId] ??= []).push(msg);
+                }
 
-            // TRANSFORM MESSAGES TO message state eg : "threadId" : "message"
-
-            let result: MessageState = {};
-
-            for (const msg of data.messages) {
-                (result[msg.threadId] ??= []).push(msg as any);
+                set("messages", result);
             }
+        };
 
-            set("messages", result);
-        }
-    }, [data, mounted, markMounted, setThreads, set]);
+        void hydrateInbox();
+    }, [data, mounted, markMounted, setThreads, set, profile?.id]);
 
     useEffect(() => {
-        setLoading(isLoading);
+        if (!isLoading) {
+            setLoading(false);
+        }
     }, [isLoading, setLoading]);
 
     useEffect(() => {

@@ -4,10 +4,15 @@ import { useEffect, useRef, useState } from "react"
 import { Play, Pause } from "lucide-react"
 import { Avatar } from "@/components/ui/avatar"
 import { useChatAppStore } from "@/features/chat/store/chatapp.store"
+import type { EncryptedMediaMetadata } from "@chat/shared"
+import { useDecryptedMedia } from "@/features/chat/hooks/use-decrypted-media"
 
 interface VoiceMessageProps {
+  threadId: string
   msgId: string
   voiceUrl: string
+  keyVersion?: number | null
+  media?: EncryptedMediaMetadata | null
   status?: string
 }
 
@@ -24,12 +29,13 @@ function isGoodDuration(d: number) {
   return Number.isFinite(d) && d > 0 && d !== Infinity
 }
 
-export default function VoiceMessage({ msgId, voiceUrl, status }: VoiceMessageProps) {
+export default function VoiceMessage({ threadId, msgId, voiceUrl, keyVersion, media, status }: VoiceMessageProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [bars, setBars] = useState<number[]>(Array.from({ length: BAR_COUNT }, () => 22))
   const progressPercent = useChatAppStore(s => s.uploadingProgress?.[msgId] || 0);
+  const { objectUrl, loading } = useDecryptedMedia(threadId, keyVersion, media, voiceUrl);
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
@@ -171,7 +177,7 @@ export default function VoiceMessage({ msgId, voiceUrl, status }: VoiceMessagePr
       }
 
       try {
-        const res = await fetch(voiceUrl)
+        const res = await fetch(objectUrl || voiceUrl)
         const buf = await res.arrayBuffer()
         if (cancelled) return
 
@@ -188,7 +194,7 @@ export default function VoiceMessage({ msgId, voiceUrl, status }: VoiceMessagePr
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [voiceUrl])
+  }, [objectUrl, voiceUrl])
 
   useEffect(() => {
     return () => {
@@ -215,7 +221,7 @@ export default function VoiceMessage({ msgId, voiceUrl, status }: VoiceMessagePr
         <span className="text-xs font-semibold text-foreground">M</span>
       </Avatar>
 
-      {status === "sending" ? (
+      {(status === "sending" || loading) ? (
         <div className="relative h-10 w-10 shrink-0 flex items-center justify-center">
             <svg className="absolute w-full h-full -rotate-90">
               <circle
@@ -239,11 +245,12 @@ export default function VoiceMessage({ msgId, voiceUrl, status }: VoiceMessagePr
                 className="text-primary transition-all duration-300"
               />
             </svg>
-            <span className="text-[10px] font-bold text-foreground">{progressPercent}%</span>
+            <span className="text-[10px] font-bold text-foreground">{loading ? "..." : `${progressPercent}%`}</span>
         </div>
       ) : (
         <button
           onClick={handleToggle}
+          disabled={loading}
           className="grid h-10 w-10 shrink-0 place-items-center rounded-full border bg-secondary/40 text-foreground shadow-xs transition hover:bg-secondary/70 active:scale-[0.98]"
           aria-label={isPlaying ? "Pause voice message" : "Play voice message"}
         >
@@ -274,7 +281,7 @@ export default function VoiceMessage({ msgId, voiceUrl, status }: VoiceMessagePr
 
       <audio
         ref={audioRef}
-        src={voiceUrl}
+        src={objectUrl || voiceUrl}
         preload="metadata"
         crossOrigin="anonymous"
         onLoadedMetadata={syncDurationFromAudio}

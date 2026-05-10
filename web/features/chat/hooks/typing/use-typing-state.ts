@@ -3,7 +3,7 @@ import { type SocketClientType } from "@/features/chat/lib/socket-client";
 import { Profile } from "@chat/shared/schema/profiles/profile";
 
 interface UseTypingStateParams {
-    profile: Profile;
+    profile: Profile | null;
     socketRef: RefObject<SocketClientType | null>;
 }
 
@@ -12,7 +12,8 @@ export const useTypingState = ({ profile, socketRef }: UseTypingStateParams) => 
     const isTypingRef = useRef(false);
 
     const stopTypingEmit = (threadId: string) => {
-        socketRef.current?.emit("typing:stop", threadId, profile.id! || "");
+        if (!profile?.id) return;
+        socketRef.current?.emit("typing:stop", threadId, profile.id);
     }
 
     const handleTyping = (threadId: string) => {

@@ -48,7 +48,7 @@ export default function OnboardingPage() {
         onSettled: () => setLoading(false),
         onSuccess: (data) => {
             setSuccessMessage(data);
-            router.push("/");
+            router.push("/register/recovery");
         },
         onError: (err) => {
             setError(err.message);
