@@ -1,18 +1,14 @@
-import { type AckFN, type Message } from "@chat/shared";
+import {} from "@chat/shared";
 import { messageSchema } from "@chat/shared/schema/message.ts";
-import type { TypedSocket } from "../../types.ts";
 import { supabase } from "../../supabase/supabase.ts";
 import { logger } from "../../lib/logger.ts";
-
-export const handleNewMessage = async (socket: TypedSocket, newMessage: Message, ack: AckFN): Promise<void> => {
+export const handleNewMessage = async (socket, newMessage, ack) => {
     try {
         messageSchema.parse(newMessage);
         newMessage.status = "sent";
-
         if (socket.profile.id !== (newMessage.senderUserId ?? newMessage.sender)) {
             throw new Error("SENDER_MISMATCH");
         }
-
         const { error: dbInsertError } = await supabase.rpc("store_message_from_realtime", {
             p_msg_id: newMessage.msgId,
             p_thread_id: newMessage.threadId,
@@ -31,31 +27,18 @@ export const handleNewMessage = async (socket: TypedSocket, newMessage: Message,
             p_algorithm: newMessage.encryptedPayload?.algorithm ?? null,
             p_aad: newMessage.encryptedPayload?.aad ?? null,
         });
-
         if (dbInsertError) {
             throw new Error(dbInsertError.message);
         }
-
-        if (newMessage.contentFormat === "e2ee_media" && newMessage.media?.mediaId) {
-            const { error: mediaBindError } = await supabase.rpc("bind_reserved_media_to_message", {
-                p_media_id: newMessage.media.mediaId,
-                p_msg_id: newMessage.msgId,
-                p_sender_user_id: socket.profile.id,
-            });
-
-            if (mediaBindError) {
-                throw new Error(mediaBindError.message);
-            }
-        }
-
         socket.to(newMessage.threadId).emit("message:received", newMessage);
-        logger.db(`Message emitted to thread:${newMessage.threadId}`,newMessage);
+        logger.db(`Message ${newMessage.msgId} emitted to thread:${newMessage.threadId}`);
         ack({ ok: true, data: "SENT_OK" });
-    } catch (err) {
+    }
+    catch (err) {
         if (err instanceof Error) {
             logger.error("[handleNewMessage] Failed to send message >>", err.message);
         }
-
         ack({ ok: false, data: "SEND_FAILED" });
     }
 };
+//# sourceMappingURL=handle-new-message.js.map

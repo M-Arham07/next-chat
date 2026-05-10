@@ -29,7 +29,10 @@ export async function deleteMessage(socket: TypedSocket, msgToDelete: Message, a
 
 
 
-        const { error: dbDeleteError } = await supabase.from("messages").delete().eq("msg_id", msgId);
+        const { error: dbDeleteError } = await supabase.rpc("delete_message_for_user", {
+            p_msg_id: msgId,
+            p_sender_user_id: socket.profile.id,
+        });
 
         if (dbDeleteError) throw new Error(dbDeleteError.message);
 

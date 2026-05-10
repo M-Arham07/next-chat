@@ -32,6 +32,9 @@ export async function socketMiddleware(socket: Socket, next: NextFn): Promise<vo
 
         const profile = await getProfileFromToken(sessionToken);
 
+        if (!profile?.username) {
+            throw new Error("ONBOARDING_INCOMPLETE");
+        }
 
 
         logger.success(`AUTH_SUCCESS: ${profile.username}`);

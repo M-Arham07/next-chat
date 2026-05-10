@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>E2EE Demo</title>
+  <style>
+    :root {
+      --bg: #f5efe5;
+      --panel: rgba(255, 255, 255, 0.82);
+      --panel-strong: #fffdfa;
+      --text: #1d1a16;
+      --muted: #665f56;
+      --line: rgba(29, 26, 22, 0.12);
+      --accent: #ba4a00;
+      --accent-soft: rgba(186, 74, 0, 0.1);
+      --green: #136f4a;
+      --blue: #0d5ea6;
+      --shadow: 0 16px 50px rgba(54, 38, 24, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(186, 74, 0, 0.16), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(13, 94, 166, 0.12), transparent 26%),
+        linear-gradient(135deg, #f3ecdf 0%, #f7f3eb 48%, #ece4d6 100%);
+      min-height: 100vh;
+    }
+
+    .page {
+      width: min(1200px, calc(100% - 32px));
+      margin: 24px auto 48px;
+    }
+
+    .hero {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: 1.2fr 0.8fr;
+      align-items: start;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: var(--panel);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-copy {
+      padding: 28px;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      font-weight: 600;
+      line-height: 1.05;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 4vw, 4rem);
+      letter-spacing: -0.04em;
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      font-size: 1.1rem;
+      margin-bottom: 14px;
+    }
+
+    p {
+      margin: 0;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .mini-box {
+      padding: 14px;
+      background: var(--panel-strong);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+    }
+
+    .mini-box strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.95rem;
+    }
+
+    .status {
+      padding: 28px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      width: fit-content;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.95rem;
+    }
+
+    .status-chip::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: currentColor;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 6px;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font: inherit;
+      font-size: 0.95rem;
+      transition: transform 0.18s ease, opacity 0.18s ease, background 0.18s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button.primary {
+      background: var(--text);
+      color: #fff;
+    }
+
+    button.secondary {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .panel {
+      padding: 22px;
+    }
+
+    .label {
+      display: inline-block;
+      margin-bottom: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.72rem;
+    }
+
+    .flow {
+      display: grid;
+      gap: 16px;
+    }
+
+    .flow-step {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px;
+      background: rgba(255, 255, 255, 0.75);
+    }
+
+    .flow-step strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .people {
+      display: grid;
+      gap: 14px;
+    }
+
+    .person {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .person h3 {
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+    }
+
+    textarea, input {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 16px;
+      padding: 12px 14px;
+      font: inherit;
+      color: var(--text);
+      margin-top: 10px;
+    }
+
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+      background: #fff;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 0.98rem;
+      word-break: break-word;
+    }
+
+    .output-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      color: #1f2d3d;
+    }
+
+    .code-card {
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+    }
+
+    .code-card h3 {
+      font-size: 1rem;
+      margin-bottom: 12px;
+    }
+
+    .timeline {
+      margin-top: 20px;
+      padding: 22px;
+    }
+
+    .log {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .log-item {
+      border-left: 3px solid var(--blue);
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.82);
+      border-radius: 0 14px 14px 0;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .log-item strong {
+      color: var(--text);
+    }
+
+    .green {
+      color: var(--green);
+    }
+
+    .blue {
+      color: var(--blue);
+    }
+
+    .accent {
+      color: var(--accent);
+    }
+
+    .empty {
+      color: #8a8176;
+      font-style: italic;
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .layout,
+      .output-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .mini-grid,
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <div class="card hero-copy">
+        <div class="label">End-to-End Encryption Demo</div>
+        <h1>See the message turn into ciphertext before the server could ever read it.</h1>
+        <p>
+          This page simulates a two-person chat using the browser's Web Crypto API.
+          Alice and Bob each get their own identity key pair. Alice creates a shared
+          thread key, wraps it for Bob, encrypts a message locally, and Bob decrypts it locally.
+        </p>
+        <div class="mini-grid">
+          <div class="mini-box">
+            <strong>1. Identity Keys</strong>
+            Public keys are shareable. Private keys stay local.
+          </div>
+          <div class="mini-box">
+            <strong>2. Thread Key</strong>
+            One AES key encrypts the actual chat message.
+          </div>
+          <div class="mini-box">
+            <strong>3. Wrapped Sharing</strong>
+            The thread key is protected before it is shared.
+          </div>
+        </div>
+      </div>
+
+      <div class="card status">
+        <div class="status-chip" id="statusChip">Ready to generate identities</div>
+        <p>
+          The server in this demo is imaginary. It only transports:
+          <span class="accent">public keys</span>,
+          <span class="blue">wrapped thread keys</span>, and
+          <span class="green">ciphertext</span>.
+        </p>
+        <div class="controls">
+          <button class="primary" id="runDemoButton">Run Full Demo</button>
+          <button class="secondary" id="resetButton">Reset</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div class="card panel">
+        <div class="label">Flow</div>
+        <div class="flow">
+          <div class="flow-step">
+            <strong>Step 1: Generate identity key pairs</strong>
+            <p>Alice and Bob each create an ECDH key pair. Only the public key is meant to leave the device.</p>
+          </div>
+          <div class="flow-step">
+            <strong>Step 2: Create one thread key</strong>
+            <p>Alice creates one AES-GCM key that will encrypt actual message content inside this conversation.</p>
+          </div>
+          <div class="flow-step">
+            <strong>Step 3: Wrap the thread key for Bob</strong>
+            <p>Alice uses her private key and Bob's public key to derive a shared secret, then encrypts the thread key.</p>
+          </div>
+          <div class="flow-step">
+            <strong>Step 4: Encrypt the message locally</strong>
+            <p>Plaintext becomes ciphertext before any transport. This is the core E2EE step.</p>
+          </div>
+          <div class="flow-step">
+            <strong>Step 5: Bob unwraps and decrypts locally</strong>
+            <p>Bob reconstructs the thread key on his side, then turns ciphertext back into readable plaintext.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card panel">
+        <div class="label">Participants</div>
+        <div class="people">
+          <div class="person">
+            <h3>Alice</h3>
+            <p>Sender. Creates the thread key and encrypts the outgoing message.</p>
+            <div class="metrics">
+              <div class="metric">
+                <span>Public Key</span>
+                <strong id="alicePublicKeyPreview" class="empty">Not generated yet</strong>
+              </div>
+              <div class="metric">
+                <span>Private Key</span>
+                <strong id="alicePrivateKeyPreview" class="empty">Stays local</strong>
+              </div>
+              <div class="metric">
+                <span>Thread Key</span>
+                <strong id="threadKeyPreview" class="empty">Not created yet</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="person">
+            <h3>Bob</h3>
+            <p>Recipient. Receives the wrapped thread key and decrypts the message on his own device.</p>
+            <div class="metrics">
+              <div class="metric">
+                <span>Public Key</span>
+                <strong id="bobPublicKeyPreview" class="empty">Not generated yet</strong>
+              </div>
+              <div class="metric">
+                <span>Private Key</span>
+                <strong id="bobPrivateKeyPreview" class="empty">Stays local</strong>
+              </div>
+              <div class="metric">
+                <span>Bob Thread Key</span>
+                <strong id="bobThreadKeyPreview" class="empty">Not unwrapped yet</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <label for="plaintextInput" class="label" style="margin-top: 18px;">Plaintext Message</label>
+        <textarea id="plaintextInput">Hello Bob. This message is encrypted in Alice's browser before transport.</textarea>
+      </div>
+    </section>
+
+    <section class="output-grid">
+      <div class="card code-card">
+        <h3>Server Can See</h3>
+        <pre id="serverView">{
+  "publicKeys": "Not shared yet",
+  "wrappedThreadKey": "Not shared yet",
+  "ciphertext": "No encrypted message yet"
+}</pre>
+      </div>
+
+      <div class="card code-card">
+        <h3>Recipient Decrypts Locally</h3>
+        <pre id="recipientView">Bob has not decrypted anything yet.</pre>
+      </div>
+    </section>
+
+    <section class="card timeline">
+      <div class="label">Live Timeline</div>
+      <div class="log" id="log"></div>
+    </section>
+  </div>
+
+  <script>
+    const state = {
+      alice: null,
+      bob: null,
+      threadKey: null,
+      wrappedThreadKey: null,
+      encryptedPayload: null,
+      decryptedMessage: null,
+    };
+
+    const statusChip = document.getElementById("statusChip");
+    const logElement = document.getElementById("log");
+    const serverView = document.getElementById("serverView");
+    const recipientView = document.getElementById("recipientView");
+    const plaintextInput = document.getElementById("plaintextInput");
+
+    const alicePublicKeyPreview = document.getElementById("alicePublicKeyPreview");
+    const alicePrivateKeyPreview = document.getElementById("alicePrivateKeyPreview");
+    const bobPublicKeyPreview = document.getElementById("bobPublicKeyPreview");
+    const bobPrivateKeyPreview = document.getElementById("bobPrivateKeyPreview");
+    const threadKeyPreview = document.getElementById("threadKeyPreview");
+    const bobThreadKeyPreview = document.getElementById("bobThreadKeyPreview");
+
+    const setStatus = (text) => {
+      statusChip.textContent = text;
+    };
+
+    const log = (title, detail) => {
+      const item = document.createElement("div");
+      item.className = "log-item";
+      item.innerHTML = "<strong>" + title + "</strong><br>" + detail;
+      logElement.appendChild(item);
+    };
+
+    const clearLog = () => {
+      logElement.innerHTML = "";
+    };
+
+    const shortPreview = (value) => {
+      if (!value) return "Unavailable";
+      return value.length > 28 ? value.slice(0, 28) + "..." : value;
+    };
+
+    const toBase64 = (arrayBuffer) => {
+      let binary = "";
+      const bytes = new Uint8Array(arrayBuffer);
+      for (const byte of bytes) {
+        binary += String.fromCharCode(byte);
+      }
+      return btoa(binary);
+    };
+
+    const fromBase64 = (value) => {
+      const binary = atob(value);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) {
+        bytes[index] = binary.charCodeAt(index);
+      }
+      return bytes;
+    };
+
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+
+    const exportPublicKey = async (key) => {
+      return await crypto.subtle.exportKey("jwk", key);
+    };
+
+    const importPublicKey = async (jwk) => {
+      return await crypto.subtle.importKey(
+        "jwk",
+        jwk,
+        { name: "ECDH", namedCurve: "P-256" },
+        true,
+        []
+      );
+    };
+
+    const generateIdentity = async (name) => {
+      const keyPair = await crypto.subtle.generateKey(
+        { name: "ECDH", namedCurve: "P-256" },
+        false,
+        ["deriveKey"]
+      );
+
+      return {
+        name,
+        privateKey: keyPair.privateKey,
+        publicKey: keyPair.publicKey,
+        publicKeyJwk: await exportPublicKey(keyPair.publicKey),
+      };
+    };
+
+    const generateThreadKey = async () => {
+      return await crypto.subtle.generateKey(
+        { name: "AES-GCM", length: 256 },
+        true,
+        ["encrypt", "decrypt"]
+      );
+    };
+
+    const exportThreadKey = async (key) => {
+      const raw = await crypto.subtle.exportKey("raw", key);
+      return toBase64(raw);
+    };
+
+    const deriveWrappingKey = async (privateKey, otherPublicKey) => {
+      return await crypto.subtle.deriveKey(
+        {
+          name: "ECDH",
+          public: otherPublicKey,
+        },
+        privateKey,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt", "decrypt"]
+      );
+    };
+
+    const wrapThreadKey = async (threadKey, senderPrivateKey, recipientPublicKey, senderPublicKeyJwk) => {
+      const wrappingKey = await deriveWrappingKey(senderPrivateKey, recipientPublicKey);
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const rawThreadKey = await crypto.subtle.exportKey("raw", threadKey);
+
+      const wrappedKey = await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv },
+        wrappingKey,
+        rawThreadKey
+      );
+
+      return {
+        algorithm: "ECDH-P256/AES-GCM",
+        iv: toBase64(iv),
+        wrappedKey: toBase64(wrappedKey),
+        senderPublicKey: senderPublicKeyJwk,
+      };
+    };
+
+    const unwrapThreadKey = async (wrappedThreadKey, recipientPrivateKey) => {
+      const senderPublicKey = await importPublicKey(wrappedThreadKey.senderPublicKey);
+      const wrappingKey = await deriveWrappingKey(recipientPrivateKey, senderPublicKey);
+
+      const rawThreadKey = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv: fromBase64(wrappedThreadKey.iv) },
+        wrappingKey,
+        fromBase64(wrappedThreadKey.wrappedKey)
+      );
+
+      return await crypto.subtle.importKey(
+        "raw",
+        rawThreadKey,
+        { name: "AES-GCM", length: 256 },
+        true,
+        ["encrypt", "decrypt"]
+      );
+    };
+
+    const encryptMessage = async (plaintext, threadKey) => {
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const ciphertext = await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv },
+        threadKey,
+        encoder.encode(plaintext)
+      );
+
+      return {
+        algorithm: "AES-GCM",
+        iv: toBase64(iv),
+        ciphertext: toBase64(ciphertext),
+      };
+    };
+
+    const decryptMessage = async (payload, threadKey) => {
+      const plaintextBuffer = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv: fromBase64(payload.iv) },
+        threadKey,
+        fromBase64(payload.ciphertext)
+      );
+
+      return decoder.decode(plaintextBuffer);
+    };
+
+    const renderServerView = () => {
+      serverView.textContent = JSON.stringify(
+        {
+          publicKeys: state.alice && state.bob ? {
+            alice: state.alice.publicKeyJwk,
+            bob: state.bob.publicKeyJwk,
+          } : "Not shared yet",
+          wrappedThreadKey: state.wrappedThreadKey || "Not shared yet",
+          ciphertext: state.encryptedPayload || "No encrypted message yet",
+        },
+        null,
+        2
+      );
+    };
+
+    const renderRecipientView = async () => {
+      recipientView.textContent = JSON.stringify(
+        {
+          decryptedMessage: state.decryptedMessage || "Nothing decrypted yet",
+          explanation: state.decryptedMessage
+            ? "Bob used his private key to unwrap the thread key, then used the thread key to decrypt the ciphertext."
+            : "Recipient-side output will appear here after the demo runs.",
+        },
+        null,
+        2
+      );
+    };
+
+    const renderIdentityPreviews = async () => {
+      alicePublicKeyPreview.textContent = state.alice ? shortPreview(JSON.stringify(state.alice.publicKeyJwk)) : "Not generated yet";
+      alicePrivateKeyPreview.textContent = state.alice ? "Non-extractable CryptoKey in browser memory" : "Stays local";
+      bobPublicKeyPreview.textContent = state.bob ? shortPreview(JSON.stringify(state.bob.publicKeyJwk)) : "Not generated yet";
+      bobPrivateKeyPreview.textContent = state.bob ? "Non-extractable CryptoKey in browser memory" : "Stays local";
+      threadKeyPreview.textContent = state.threadKey ? shortPreview(await exportThreadKey(state.threadKey)) : "Not created yet";
+      bobThreadKeyPreview.textContent = state.bobThreadKey ? shortPreview(await exportThreadKey(state.bobThreadKey)) : "Not unwrapped yet";
+    };
+
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    const resetState = () => {
+      state.alice = null;
+      state.bob = null;
+      state.threadKey = null;
+      state.bobThreadKey = null;
+      state.wrappedThreadKey = null;
+      state.encryptedPayload = null;
+      state.decryptedMessage = null;
+
+      clearLog();
+      setStatus("Ready to generate identities");
+      renderServerView();
+      renderRecipientView();
+      renderIdentityPreviews();
+      log("Reset", "The demo state is empty again. No keys, no wrapped data, no ciphertext.");
+    };
+
+    const runDemo = async () => {
+      resetState();
+
+      const plaintext = plaintextInput.value.trim();
+      if (!plaintext) {
+        setStatus("Add a plaintext message first");
+        log("Missing plaintext", "The demo needs a message to encrypt.");
+        return;
+      }
+
+      setStatus("Generating Alice and Bob identity keys");
+      state.alice = await generateIdentity("Alice");
+      state.bob = await generateIdentity("Bob");
+      await renderIdentityPreviews();
+      renderServerView();
+      log(
+        "Step 1: Identity keys created",
+        "Alice and Bob each have a public/private key pair. Public keys can travel. Private keys do not."
+      );
+      await sleep(250);
+
+      setStatus("Alice creates a thread key");
+      state.threadKey = await generateThreadKey();
+      await renderIdentityPreviews();
+      log(
+        "Step 2: Thread key created",
+        "Alice generated one AES-GCM key for this conversation. This is the key that encrypts the actual message body."
+      );
+      await sleep(250);
+
+      setStatus("Alice wraps the thread key for Bob");
+      state.wrappedThreadKey = await wrapThreadKey(
+        state.threadKey,
+        state.alice.privateKey,
+        state.bob.publicKey,
+        state.alice.publicKeyJwk
+      );
+      renderServerView();
+      log(
+        "Step 3: Thread key wrapped",
+        "Alice derived a shared secret using her private key and Bob's public key, then encrypted the thread key for Bob."
+      );
+      await sleep(250);
+
+      setStatus("Alice encrypts the plaintext locally");
+      state.encryptedPayload = await encryptMessage(plaintext, state.threadKey);
+      renderServerView();
+      log(
+        "Step 4: Plaintext became ciphertext",
+        "The message was encrypted on Alice's device before transport. The server would only receive ciphertext and metadata."
+      );
+      await sleep(250);
+
+      setStatus("Bob unwraps the thread key");
+      state.bobThreadKey = await unwrapThreadKey(state.wrappedThreadKey, state.bob.privateKey);
+      await renderIdentityPreviews();
+      log(
+        "Step 5: Bob recovered the thread key",
+        "Bob used his private key plus Alice's public key to reconstruct the same wrapping secret and unwrap the thread key."
+      );
+      await sleep(250);
+
+      setStatus("Bob decrypts the message locally");
+      state.decryptedMessage = await decryptMessage(state.encryptedPayload, state.bobThreadKey);
+      await renderRecipientView();
+      log(
+        "Step 6: Bob decrypted successfully",
+        "Ciphertext returned to plaintext on Bob's side only. That is the E2EE property you want in your app."
+      );
+
+      setStatus("Demo complete");
+    };
+
+    document.getElementById("runDemoButton").addEventListener("click", async () => {
+      try {
+        await runDemo();
+      } catch (error) {
+        setStatus("Demo failed");
+        log("Crypto error", error instanceof Error ? error.message : String(error));
+      }
+    });
+
+    document.getElementById("resetButton").addEventListener("click", resetState);
+
+    resetState();
+  </script>
+</body>
+</html>

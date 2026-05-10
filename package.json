@@ -1,0 +1,18 @@
+{
+  "name": "chat-app-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10",
+  "scripts": {
+    "dev:web": "pnpm --dir web dev",
+    "dev:realtime": "pnpm --dir realtime dev",
+    "build:web": "pnpm --dir web build",
+    "build:realtime": "pnpm --dir realtime build",
+    "type-check:web": "pnpm --dir web type-check",
+    "type-check:realtime": "pnpm --dir realtime build",
+    "type-check": "pnpm type-check:web && pnpm type-check:realtime"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.0"
+  }
+}

@@ -7,6 +7,7 @@ export const threadSchema = z.object({
     participants: z.array(
         z.object({
             username: z.string(),
+            userId: z.string(),
             image: z.string(),
             role: z.enum(["admin", "member"]),
             joinedAt: z.date().nullable(),

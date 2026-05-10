@@ -5,23 +5,16 @@ export async function getUserThreads(userId: string): Promise<string[]> {
 
     if(!userId) throw new Error("No user id provided");
 
-
-
     try {
-
-       
-
-        // ONLY GET THREAD IDS!x
-        const {data,error} = await supabase
-        .from("thread_participants")
-        .select("thread_id")
-        .eq("user_id",userId)
+        const {data,error} = await supabase.rpc("get_user_thread_ids", {
+            p_user_id: userId,
+        });
 
 
         if(error) throw new Error(error.message);
 
 
-        const threadIds = data.map((item) => item.thread_id);
+        const threadIds = (data ?? []) as string[];
 
 
 

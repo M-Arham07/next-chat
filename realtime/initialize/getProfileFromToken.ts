@@ -1,4 +1,3 @@
-
 import { supabase } from "../supabase/supabase.ts";
 import type { Profile } from "@chat/shared/schema/profiles/profile.ts"
 import { logger } from "../lib/logger.ts";
@@ -24,16 +23,19 @@ export const getProfileFromToken = async (sessionToken: string): Promise<Profile
 
 
 
-    // 2. Fetch profile using user.id
-
     logger.info(`USER ID: ${userId}`);
-    const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .maybeSingle();
+    const { data: profile, error: profileError } = await supabase.rpc("get_profile_by_user_id", {
+        p_user_id: userId,
+    });
 
-    if (profileError) throw new Error("ONBOARDING_INCOMPLETE");
+    if (profileError) {
+        throw new Error("ONBOARDING_INCOMPLETE");
+    }
+
+    if (!profile) {
+        logger.error(`PROFILE_NOT_FOUND for user ${userId}`);
+        throw new Error("ONBOARDING_INCOMPLETE");
+    }
 
 
 
