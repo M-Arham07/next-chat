@@ -6,7 +6,7 @@ import {
     utf8ToUint8Array,
 } from "./base64";
 import { loadThreadKey, storeThreadKey } from "./storage";
-import { logE2eeStep, previewCiphertext, previewIv } from "./debug";
+import { logE2eeStep, measureAsync, previewCiphertext, previewIv } from "./debug";
 import type { EncryptedPayload, WrappedThreadKey } from "./types";
 
 const MESSAGE_ALGORITHM = {
@@ -22,7 +22,7 @@ const deriveSharedWrappingKey = async (
     privateKey: CryptoKey,
     publicKey: CryptoKey,
 ): Promise<CryptoKey> => {
-    return await crypto.subtle.deriveKey(
+    return await measureAsync("crypto.thread.derive-wrapping-key", async () => await crypto.subtle.deriveKey(
         {
             name: "ECDH",
             public: publicKey,
@@ -31,11 +31,11 @@ const deriveSharedWrappingKey = async (
         MESSAGE_ALGORITHM,
         false,
         ["encrypt", "decrypt"],
-    );
+    ));
 };
 
 export const generateThreadKey = async (): Promise<CryptoKey> => {
-    return await crypto.subtle.generateKey(MESSAGE_ALGORITHM, true, ["encrypt", "decrypt"]);
+    return await measureAsync("crypto.thread.generate-key", async () => await crypto.subtle.generateKey(MESSAGE_ALGORITHM, true, ["encrypt", "decrypt"]));
 };
 
 export const storeImportedThreadKey = async (
@@ -56,18 +56,18 @@ export const getStoredThreadKey = async (
 };
 
 export const exportThreadKey = async (threadKey: CryptoKey): Promise<string> => {
-    const rawThreadKey = await crypto.subtle.exportKey("raw", threadKey);
+    const rawThreadKey = await measureAsync("crypto.thread.export-key", async () => await crypto.subtle.exportKey("raw", threadKey));
     return arrayBufferToBase64(rawThreadKey);
 };
 
 export const importThreadKey = async (encodedThreadKey: string): Promise<CryptoKey> => {
-    return await crypto.subtle.importKey(
+    return await measureAsync("crypto.thread.import-key", async () => await crypto.subtle.importKey(
         "raw",
         toArrayBuffer(base64ToUint8Array(encodedThreadKey)),
         MESSAGE_ALGORITHM,
         true,
         ["encrypt", "decrypt"],
-    );
+    ));
 };
 
 export const encryptMessage = async (
@@ -80,11 +80,13 @@ export const encryptMessage = async (
 
     const iv = createIv();
     const encodedMessage = utf8ToUint8Array(plaintext);
-    const ciphertext = await crypto.subtle.encrypt(
+    const ciphertext = await measureAsync("crypto.message.encrypt", async () => await crypto.subtle.encrypt(
         { name: "AES-GCM", iv: toArrayBuffer(iv) },
         threadKey,
         toArrayBuffer(encodedMessage),
-    );
+    ), {
+        plaintextLength: plaintext.length,
+    });
 
     const payload: EncryptedPayload = {
         algorithm: "AES-GCM",
@@ -112,11 +114,13 @@ export const decryptMessage = async (
         algorithm: payload.algorithm,
     });
 
-    const plaintextBuffer = await crypto.subtle.decrypt(
+    const plaintextBuffer = await measureAsync("crypto.message.decrypt", async () => await crypto.subtle.decrypt(
         { name: "AES-GCM", iv: toArrayBuffer(base64ToUint8Array(payload.iv)) },
         threadKey,
         toArrayBuffer(base64ToUint8Array(payload.ciphertext)),
-    );
+    ), {
+        ciphertextLength: payload.ciphertext.length,
+    });
 
     const plaintext = uint8ArrayToUtf8(new Uint8Array(plaintextBuffer));
 
@@ -137,12 +141,12 @@ export const wrapThreadKeyForParticipant = async (
 
     const wrappingKey = await deriveSharedWrappingKey(senderPrivateKey, recipientPublicKey);
     const iv = createIv();
-    const rawThreadKey = await crypto.subtle.exportKey("raw", threadKey);
-    const wrappedKey = await crypto.subtle.encrypt(
+    const rawThreadKey = await measureAsync("crypto.thread.export-key.wrap", async () => await crypto.subtle.exportKey("raw", threadKey));
+    const wrappedKey = await measureAsync("crypto.thread.wrap", async () => await crypto.subtle.encrypt(
         { name: "AES-GCM", iv: toArrayBuffer(iv) },
         wrappingKey,
         rawThreadKey,
-    );
+    ));
 
     const wrappedPayload: WrappedThreadKey = {
         algorithm: "ECDH-P256/AES-GCM",
@@ -172,22 +176,22 @@ export const unwrapThreadKeyFromParticipant = async (
 
     const wrappingKey = await deriveSharedWrappingKey(recipientPrivateKey, senderPublicKey);
 
-    const rawThreadKey = await crypto.subtle.decrypt(
+    const rawThreadKey = await measureAsync("crypto.thread.unwrap", async () => await crypto.subtle.decrypt(
         {
             name: "AES-GCM",
             iv: toArrayBuffer(base64ToUint8Array(wrappedThreadKey.iv)),
         },
         wrappingKey,
         toArrayBuffer(base64ToUint8Array(wrappedThreadKey.wrappedKey)),
-    );
+    ));
 
-    const importedKey = await crypto.subtle.importKey(
+    const importedKey = await measureAsync("crypto.thread.import-key.unwrapped", async () => await crypto.subtle.importKey(
         "raw",
         rawThreadKey,
         MESSAGE_ALGORITHM,
         true,
         ["encrypt", "decrypt"],
-    );
+    ));
 
     logE2eeStep("Thread key unwrapped successfully");
 

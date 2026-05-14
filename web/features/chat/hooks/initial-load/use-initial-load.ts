@@ -40,6 +40,7 @@ const fetchInbox = async (): Promise<InboxData> => {
 export const useInitialLoad = ({
     mounted,
     recoveryReady,
+    socketRef,
     markMounted,
     setThreads,
     set,
@@ -58,6 +59,7 @@ export const useInitialLoad = ({
             if (!mounted && data) {
                 markMounted();
                 setThreads(data.threads);
+                await socketRef.current?.setThreadSubscriptions(data.threads.map((thread) => thread.threadId));
 
                 if (!profile?.id) {
                     return;

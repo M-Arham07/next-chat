@@ -23,18 +23,22 @@ export const useSocketListeners = ({
     useEffect(() => {
         if (!socketRef.current) return;
 
-        // REGISTER LISTENERS::: 
-        socketRef.current.on("message:received", onMessageReceived);
-        socketRef.current.on("message:deleted", onMessageDeleted);
-        socketRef.current.on("typing:start", (threadId, id) => {
-            console.log("received typing start")
-            console.log(profileRef.current?.id)
+        const handleTypingStart = (threadId: string, id: string) => {
             if (profileRef.current?.id !== id) {
                 onTypingStart(threadId, id);
             }
-        });
-        socketRef.current.on("typing:stop", onTypingStop);
+        };
 
-        // document.addEventListener("visibilitychange",()=>toast.error("visivility change"));
-    }, [onMessageReceived, onMessageDeleted, onTypingStart, onTypingStop]);
+        socketRef.current.onMessageReceived(onMessageReceived);
+        socketRef.current.onMessageDeleted(onMessageDeleted);
+        socketRef.current.onTypingStart(handleTypingStart);
+        socketRef.current.onTypingStop(onTypingStop);
+
+        return () => {
+            socketRef.current?.offMessageReceived(onMessageReceived);
+            socketRef.current?.offMessageDeleted(onMessageDeleted);
+            socketRef.current?.offTypingStart(handleTypingStart);
+            socketRef.current?.offTypingStop(onTypingStop);
+        };
+    }, [onMessageReceived, onMessageDeleted, onTypingStart, onTypingStop, profileRef, socketRef]);
 };

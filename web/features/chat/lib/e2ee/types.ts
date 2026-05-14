@@ -26,6 +26,12 @@ export interface RegisteredDeviceRecord {
     keyAlgorithm: string;
 }
 
+export interface BackupUnlockRecord {
+    iv: string;
+    ciphertext: string;
+    key: CryptoKey;
+}
+
 export interface ThreadKeyRecord {
     userId: string;
     threadId: string;

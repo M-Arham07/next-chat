@@ -34,21 +34,15 @@ export const useDeleteMessage = ({
         // idk why but this isnt working, need to fix it! 
         updateMessageStatus(threadId, msgId, "sending");
 
-        socketRef.current?.emit("message:delete", messageToDelete, (res) => {
-            if (!res.ok) {
-                toast.error("Failed to delete message!");
+        const res = await socketRef.current?.publishDelete(messageToDelete);
 
-                // if failed, restore original state:
-                updateMessageStatus(threadId, msgId, "sent");
-                return;
-            }
-
-            // if all goes well, update the state for this user:
-
-            removeMessage(threadId, msgId);
-
+        if (!res?.ok) {
+            toast.error("Failed to delete message!");
+            updateMessageStatus(threadId, msgId, "sent");
             return;
-        })
+        }
+
+        removeMessage(threadId, msgId);
     }
 
     return { handleDeleteMessage };

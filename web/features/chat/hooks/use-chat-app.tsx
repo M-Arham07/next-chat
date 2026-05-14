@@ -84,6 +84,14 @@ const useChatAppHook = (): ChatAppHook => {
         onTypingStop: (threadId: string, id: string) => removeTypingUser(threadId, id),
     });
 
+    useEffect(() => {
+        if (!socketRef.current || !threads?.length) {
+            return;
+        }
+
+        void socketRef.current.setThreadSubscriptions(threads.map((thread) => thread.threadId));
+    }, [socketRef, threads]);
+
     // Extract initial data loading
     useInitialLoad({
         mounted,

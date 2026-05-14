@@ -13,7 +13,7 @@ export const useTypingState = ({ profile, socketRef }: UseTypingStateParams) => 
 
     const stopTypingEmit = (threadId: string) => {
         if (!profile?.id) return;
-        socketRef.current?.emit("typing:stop", threadId, profile.id);
+        void socketRef.current?.publishTypingStop(threadId, profile.id);
     }
 
     const handleTyping = (threadId: string) => {
@@ -22,10 +22,7 @@ export const useTypingState = ({ profile, socketRef }: UseTypingStateParams) => 
 
         if (!isTypingRef.current) {
             isTypingRef.current = true;
-            console.log("TYPING START");
-
-            // emit! 
-            socketRef.current?.emit("typing:start", threadId, profile.id);
+            void socketRef.current?.publishTypingStart(threadId, profile.id);
         }
 
         // STOP (debounced)
@@ -34,8 +31,6 @@ export const useTypingState = ({ profile, socketRef }: UseTypingStateParams) => 
         typingTimeoutRef.current = setTimeout(() => {
             isTypingRef.current = false;
             typingTimeoutRef.current = null;
-            console.log("TYPING STOP");
-
             stopTypingEmit(threadId);
         }, 800);
     }

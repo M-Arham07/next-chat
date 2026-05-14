@@ -1,5 +1,6 @@
 import { arrayBufferToBase64, base64ToUint8Array, toArrayBuffer } from "./base64";
-import { logE2eeStep, previewCiphertext, previewIv } from "./debug";
+import { workerDecryptChunkedMedia, workerDecryptSingleMedia, workerEncryptMedia } from "./crypto-worker-client";
+import { logE2eeStep, measureAsync, previewCiphertext, previewIv, recordPerf } from "./debug";
 import { decryptMessage, encryptMessage } from "./messages";
 
 const FILE_KEY_ALGORITHM = {
@@ -42,22 +43,22 @@ export const deriveChunkIvFromSeed = (encodedSeed: string, chunkIndex: number): 
 };
 
 export const generateFileKey = async (): Promise<CryptoKey> => {
-    return await crypto.subtle.generateKey(FILE_KEY_ALGORITHM, true, ["encrypt", "decrypt"]);
+    return await measureAsync("crypto.media.generate-file-key", async () => await crypto.subtle.generateKey(FILE_KEY_ALGORITHM, true, ["encrypt", "decrypt"]));
 };
 
 export const exportFileKey = async (fileKey: CryptoKey): Promise<string> => {
-    const rawKey = await crypto.subtle.exportKey("raw", fileKey);
+    const rawKey = await measureAsync("crypto.media.export-file-key", async () => await crypto.subtle.exportKey("raw", fileKey));
     return arrayBufferToBase64(rawKey);
 };
 
 export const importFileKey = async (encodedKey: string): Promise<CryptoKey> => {
-    return await crypto.subtle.importKey(
+    return await measureAsync("crypto.media.import-file-key", async () => await crypto.subtle.importKey(
         "raw",
         toArrayBuffer(base64ToUint8Array(encodedKey)),
         FILE_KEY_ALGORITHM,
         true,
         ["encrypt", "decrypt"],
-    );
+    ));
 };
 
 export const wrapFileKeyWithThreadKey = async (
@@ -97,84 +98,70 @@ export const unwrapFileKeyWithThreadKey = async (
 };
 
 const encryptBuffer = async (buffer: ArrayBuffer, key: CryptoKey, iv: Uint8Array): Promise<ArrayBuffer> => {
-    return await crypto.subtle.encrypt(
+    return await measureAsync("crypto.media.encrypt-buffer", async () => await crypto.subtle.encrypt(
         {
             name: "AES-GCM",
             iv: toArrayBuffer(iv),
         },
         key,
         buffer,
-    );
+    ), {
+        byteLength: buffer.byteLength,
+    });
 };
 
 export const encryptMediaFile = async (file: File): Promise<EncryptedMediaResult> => {
+    const startedAt = performance.now();
     logE2eeStep("Encrypting media file", {
         filename: file.name,
         mimeType: file.type,
         sizeBytes: file.size,
     });
+    const fileBuffer = await measureAsync("media.file.read-array-buffer", async () => await file.arrayBuffer(), {
+        fileSize: file.size,
+    });
+    const encrypted = await workerEncryptMedia(fileBuffer, file.type, file.size);
+    const fileKey = await importFileKey(arrayBufferToBase64(encrypted.rawFileKey));
 
-    const fileKey = await generateFileKey();
-    const chunkIvSeed = createIvSeed();
-    const encodedSeed = arrayBufferToBase64(chunkIvSeed);
-
-    if (file.type.startsWith("image/") && file.size <= IMAGE_SINGLE_PASS_THRESHOLD) {
-        logE2eeStep("Using single-pass media encryption", {
-            filename: file.name,
-            thresholdBytes: IMAGE_SINGLE_PASS_THRESHOLD,
-        });
-
-        const iv = deriveChunkIv(chunkIvSeed, 0);
-        const buffer = await file.arrayBuffer();
-        const encryptedBuffer = await encryptBuffer(buffer, fileKey, iv);
-
-        return {
+    if (encrypted.mode === "single") {
+        const result: EncryptedMediaResult = {
             fileKey,
             mode: "single",
-            mimeType: file.type,
-            sizeBytes: file.size,
-            chunkIvSeed: encodedSeed,
-            encryptedBlob: new Blob([encryptedBuffer], { type: "application/octet-stream" }),
+            mimeType: encrypted.mimeType,
+            sizeBytes: encrypted.sizeBytes,
+            chunkIvSeed: encrypted.chunkIvSeed,
+            encryptedBlob: new Blob([encrypted.encryptedBuffer], { type: "application/octet-stream" }),
             chunks: [{
                 index: 0,
-                ciphertext: new Blob([encryptedBuffer], { type: "application/octet-stream" }),
+                ciphertext: new Blob([encrypted.encryptedBuffer], { type: "application/octet-stream" }),
             }],
         };
+        recordPerf("media.encrypt-file.single", performance.now() - startedAt, {
+            fileSize: file.size,
+        });
+        return result;
     }
 
-    const chunks: EncryptedMediaChunk[] = [];
-    let index = 0;
+    const chunks: EncryptedMediaChunk[] = encrypted.encryptedBuffers.map((buffer, index) => ({
+        index,
+        ciphertext: new Blob([buffer], { type: "application/octet-stream" }),
+    }));
 
-    for (let offset = 0; offset < file.size; offset += CHUNK_SIZE_BYTES) {
-        const slice = file.slice(offset, offset + CHUNK_SIZE_BYTES);
-        const buffer = await slice.arrayBuffer();
-        const encryptedBuffer = await encryptBuffer(buffer, fileKey, deriveChunkIv(chunkIvSeed, index));
-
-        logE2eeStep("Encrypted media chunk", {
-            filename: file.name,
-            chunkIndex: index,
-            chunkBytes: slice.size,
-            chunkCountSoFar: index + 1,
-        });
-
-        chunks.push({
-            index,
-            ciphertext: new Blob([encryptedBuffer], { type: "application/octet-stream" }),
-        });
-
-        index += 1;
-    }
-
-    return {
+    const result: EncryptedMediaResult = {
         fileKey,
         mode: "chunked",
-        mimeType: file.type,
-        sizeBytes: file.size,
-        chunkSizeBytes: CHUNK_SIZE_BYTES,
-        chunkCount: chunks.length,
-        chunkIvSeed: encodedSeed,
+        mimeType: encrypted.mimeType,
+        sizeBytes: encrypted.sizeBytes,
+        chunkSizeBytes: encrypted.chunkSizeBytes,
+        chunkCount: encrypted.chunkCount,
+        chunkIvSeed: encrypted.chunkIvSeed,
         chunks,
     };
+    recordPerf("media.encrypt-file.chunked", performance.now() - startedAt, {
+        fileSize: file.size,
+        chunkCount: chunks.length,
+    });
+    return result;
 };
 
 export const decryptEncryptedMediaBlob = async (
@@ -191,13 +178,12 @@ export const decryptEncryptedMediaBlob = async (
     });
 
     const encryptedBuffer = await encryptedBlob.arrayBuffer();
-    const decryptedBuffer = await crypto.subtle.decrypt(
-        {
-            name: "AES-GCM",
-            iv: toArrayBuffer(deriveChunkIvFromSeed(ivSeed, chunkIndex)),
-        },
-        fileKey,
+    const rawFileKey = await crypto.subtle.exportKey("raw", fileKey);
+    const { decryptedBuffer } = await workerDecryptSingleMedia(
         encryptedBuffer,
+        rawFileKey,
+        ivSeed,
+        chunkIndex,
     );
 
     return new Blob([decryptedBuffer], { type: mimeType });
@@ -214,17 +200,8 @@ export const decryptChunkedMedia = async (
         mimeType,
     });
 
-    const decryptedChunks: Blob[] = [];
-
-    for (const [index, encryptedChunk] of encryptedChunks.entries()) {
-        decryptedChunks.push(await decryptEncryptedMediaBlob(
-            encryptedChunk,
-            fileKey,
-            ivSeed,
-            index,
-            mimeType,
-        ));
-    }
-
-    return new Blob(decryptedChunks, { type: mimeType });
+    const rawFileKey = await crypto.subtle.exportKey("raw", fileKey);
+    const encryptedBuffers = await Promise.all(encryptedChunks.map(async (chunk) => await chunk.arrayBuffer()));
+    const { decryptedBuffers } = await workerDecryptChunkedMedia(encryptedBuffers, rawFileKey, ivSeed);
+    return new Blob(decryptedBuffers, { type: mimeType });
 };

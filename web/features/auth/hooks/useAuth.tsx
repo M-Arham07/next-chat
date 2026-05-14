@@ -8,7 +8,9 @@ import {
   createOrReplaceEncryptedBackup,
   forgetEncryptedBackup,
   loadEncryptedBackupStatus,
+  rehydrateUnlockedPassphraseForUser,
   restoreEncryptedBackup,
+  restoreEncryptedBackupIfUnlocked,
   syncEncryptedBackupIfUnlocked,
   verifyBackupPassphrase,
 } from "@/features/chat/lib/e2ee";
@@ -82,21 +84,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ])
 
       const hasLocalKeys = localThreadKeys.length > 0
-      const hasLocalRecoveryMaterial = hasLocalKeys || !!identity || !!device
       const backup = backupStatus.exists ? (backupStatus.backup ?? null) : null
+      const unlockedForDevice = backup ? await rehydrateUnlockedPassphraseForUser(resolvedProfile.id) : false
+      let resolvedHasLocalKeys = hasLocalKeys
+
+      if (backup && !resolvedHasLocalKeys && unlockedForDevice) {
+        const restoredBundle = await restoreEncryptedBackupIfUnlocked(resolvedProfile.id, backup)
+        resolvedHasLocalKeys = (restoredBundle?.threadKeys.length ?? 0) > 0
+      }
+
       let status: RecoveryStatus = "ready"
 
       if (!backup) {
         status = "setup-required"
-      } else if (!hasLocalRecoveryMaterial) {
+      } else if (!resolvedHasLocalKeys) {
+        if (!unlockedForDevice) {
+          status = "restore-required"
+        } else if (!identity || !device) {
+          status = "restore-required"
+        }
+      } else if (!identity || !device) {
         status = "restore-required"
       }
 
       setRecovery({
         status,
         backup,
-        hasLocalKeys,
-        error: null,
+        hasLocalKeys: resolvedHasLocalKeys,
+        error: backup && !unlockedForDevice && hasLocalKeys
+          ? "Backup sync is paused on this device until you unlock it again."
+          : null,
         syncing: false,
       })
     } catch (error) {

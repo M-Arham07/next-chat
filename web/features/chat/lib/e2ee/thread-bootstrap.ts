@@ -1,9 +1,9 @@
 import type { DeviceIdentity, ThreadBootstrap, WrappedThreadKey } from "@chat/shared";
 import { threadBootstrapSchema } from "@chat/shared/schema";
 import { ensureRegisteredDevice } from "./device-registration";
-import { logE2eeStep } from "./debug";
+import { logE2eeStep, measureAsync, recordPerf } from "./debug";
 import { getOrCreateIdentity, importPublicKey } from "./identity";
-import { syncEncryptedBackupIfUnlocked } from "./passphrase-backup";
+import { loadEncryptedBackupStatus, restoreEncryptedBackupIfUnlocked, syncEncryptedBackupIfUnlocked } from "./passphrase-backup";
 import {
     decryptMessage,
     encryptMessage,
@@ -26,6 +26,8 @@ interface ParticipantWrappedKeyPayload extends WrappedThreadKey {
 }
 
 const bootstrapInFlight = new Map<string, Promise<BootstrapResolution>>();
+const activeBootstrapCache = new Map<string, { resolvedAt: number; resolution: BootstrapResolution }>();
+const ACTIVE_BOOTSTRAP_CACHE_TTL_MS = 30_000;
 
 const fetchBootstrap = async (
     threadId: string,
@@ -40,16 +42,22 @@ const fetchBootstrap = async (
         searchParams.set("keyVersion", String(keyVersion));
     }
 
-    const response = await fetch(`/api/e2ee/thread/${threadId}/bootstrap?${searchParams.toString()}`, {
+    const response = await measureAsync("network.thread.bootstrap.fetch", async () => await fetch(`/api/e2ee/thread/${threadId}/bootstrap?${searchParams.toString()}`, {
         method: "GET",
         cache: "no-store",
+    }), {
+        threadId,
+        keyVersion: keyVersion ?? "active",
     });
 
     if (!response.ok) {
         throw new Error("Failed to fetch thread bootstrap");
     }
 
-    return threadBootstrapSchema.parse(await response.json());
+    return threadBootstrapSchema.parse(await measureAsync("serialize.thread-bootstrap.json", async () => await response.json(), {
+        threadId,
+        keyVersion: keyVersion ?? "active",
+    }));
 };
 
 const initializeThread = async (
@@ -129,6 +137,7 @@ export const provisionThreadEncryption = async (
     userId: string,
     threadId: string,
 ): Promise<BootstrapResolution> => {
+    const cacheKey = `${userId}:${threadId}:active`;
     logE2eeStep("Provisioning thread encryption", {
         userId,
         threadId,
@@ -168,12 +177,14 @@ export const provisionThreadEncryption = async (
         operation: bootstrap.activeKeyVersion ? "rekey" : "initialize",
     });
 
-    return {
+    const resolved = {
         device,
         keyVersion,
         threadKey,
         bootstrap: refreshedBootstrap,
     };
+    activeBootstrapCache.set(cacheKey, { resolvedAt: Date.now(), resolution: resolved });
+    return resolved;
 };
 
 export const ensureThreadBootstrap = async (
@@ -182,6 +193,15 @@ export const ensureThreadBootstrap = async (
 ): Promise<BootstrapResolution> => {
     const cacheKey = `${userId}:${threadId}:active`;
     const inFlight = bootstrapInFlight.get(cacheKey);
+    const cached = activeBootstrapCache.get(cacheKey);
+
+    if (cached && (Date.now() - cached.resolvedAt) < ACTIVE_BOOTSTRAP_CACHE_TTL_MS) {
+        recordPerf("cache.thread-bootstrap.hit", 0, {
+            threadId,
+            keyVersion: cached.resolution.keyVersion,
+        });
+        return cached.resolution;
+    }
 
     if (inFlight) {
         return await inFlight;
@@ -213,12 +233,14 @@ export const ensureThreadBootstrap = async (
                 keyVersion: bootstrap.activeKeyVersion,
             });
 
-            return {
+            const resolved = {
                 device,
                 keyVersion: bootstrap.activeKeyVersion,
                 threadKey: storedKey,
                 bootstrap,
             };
+            activeBootstrapCache.set(cacheKey, { resolvedAt: Date.now(), resolution: resolved });
+            return resolved;
         }
 
         const identity = await getOrCreateIdentity(userId);
@@ -237,16 +259,27 @@ export const ensureThreadBootstrap = async (
             keyVersion: bootstrap.activeKeyVersion,
         });
 
-        return {
+        const resolved = {
             device,
             keyVersion: bootstrap.activeKeyVersion,
             threadKey: importedKey,
             bootstrap,
         };
+        activeBootstrapCache.set(cacheKey, { resolvedAt: Date.now(), resolution: resolved });
+        return resolved;
     }
 
     if (bootstrap.activeKeyVersion) {
-        const storedKey = await getStoredThreadKey(userId, threadId, bootstrap.activeKeyVersion);
+        let storedKey = await getStoredThreadKey(userId, threadId, bootstrap.activeKeyVersion);
+
+        if (!storedKey) {
+            const backupStatus = await loadEncryptedBackupStatus();
+
+            if (backupStatus.exists && backupStatus.backup) {
+                await restoreEncryptedBackupIfUnlocked(userId, backupStatus.backup);
+                storedKey = await getStoredThreadKey(userId, threadId, bootstrap.activeKeyVersion);
+            }
+        }
 
         if (storedKey) {
             logE2eeStep("Missing wrapped key for active version, rotating from local thread key", {
@@ -254,13 +287,17 @@ export const ensureThreadBootstrap = async (
                 activeKeyVersion: bootstrap.activeKeyVersion,
             });
 
-            return await provisionThreadEncryption(userId, threadId);
+            const resolved = await provisionThreadEncryption(userId, threadId);
+            activeBootstrapCache.set(cacheKey, { resolvedAt: Date.now(), resolution: resolved });
+            return resolved;
         }
 
         throw new Error("THREAD_KEY_NOT_AVAILABLE_ON_THIS_DEVICE");
     }
 
-    return await provisionThreadEncryption(userId, threadId);
+    const resolved = await provisionThreadEncryption(userId, threadId);
+    activeBootstrapCache.set(cacheKey, { resolvedAt: Date.now(), resolution: resolved });
+    return resolved;
     })();
 
     bootstrapInFlight.set(cacheKey, bootstrapPromise);
@@ -281,6 +318,15 @@ const ensureThreadKeyVersion = async (
 
     if (storedKey) {
         return storedKey;
+    }
+
+    const activeCached = activeBootstrapCache.get(`${userId}:${threadId}:active`);
+    if (activeCached?.resolution.keyVersion === keyVersion) {
+        recordPerf("cache.thread-key.active-bootstrap-hit", 0, {
+            threadId,
+            keyVersion,
+        });
+        return activeCached.resolution.threadKey;
     }
 
     const bootstrapResolution = await ensureThreadBootstrap(userId, threadId);

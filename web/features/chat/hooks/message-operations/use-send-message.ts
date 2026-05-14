@@ -1,4 +1,4 @@
-import { RefObject, useRef } from "react";
+import { RefObject } from "react";
 import { getEnvironmentName, Message, MessageContentType, MessageStatusType } from "@chat/shared";
 import { toast } from "sonner";
 import { type SocketClientType } from "@/features/chat/lib/socket-client";
@@ -7,8 +7,8 @@ import { messageSchema } from "@chat/shared/schema";
 import { MAX_FILE_SIZE, MAX_OPTIMIZABLE_IMAGE_SIZE, MAX_VIDEO_SIZE_FOR_BROWSER } from "@chat/shared/constants";
 import { Profile } from "@chat/shared/schema/profiles/profile";
 import type { ChatAppStore } from "../../store/chatapp.store";
-import { logE2eeStep, previewCiphertext, previewIv } from "@/features/chat/lib/e2ee/debug";
-import { ensureRegisteredDevice, ensureThreadBootstrap, encryptMessage, uploadEncryptedMedia } from "@/features/chat/lib/e2ee";
+import { logE2eeStep, measureAsync, previewCiphertext, previewIv, recordPerf } from "@/features/chat/lib/e2ee/debug";
+import { ensureThreadBootstrap, encryptMessage, uploadEncryptedMedia } from "@/features/chat/lib/e2ee";
 
 interface UseSendMessageParams {
     profileRef: RefObject<Profile | null>;
@@ -36,6 +36,7 @@ export const useSendMessage = ({
         type: Omit<MessageContentType, "deleted">,
         content: string | File)
         : Promise<void> => {
+        const sendStartedAt = performance.now();
         const profileId = profileRef.current?.id;
 
         if (!profileId) {
@@ -133,33 +134,41 @@ export const useSendMessage = ({
 
         // if its a file : 
 
+        let bootstrapResolution: Awaited<ReturnType<typeof ensureThreadBootstrap>> | null = null;
+
         if (type !== "text" && finalContent instanceof File) {
             try {
-                const bootstrap = await ensureThreadBootstrap(profileId, threadId);
-                const device = await ensureRegisteredDevice(profileId);
+                bootstrapResolution = await measureAsync("send.media.bootstrap", async () => await ensureThreadBootstrap(profileId, threadId), {
+                    threadId,
+                });
+                const device = bootstrapResolution.device;
 
                 logE2eeStep("Preparing media message encryption", {
                     msgId: newMessage.msgId,
                     threadId,
-                    keyVersion: bootstrap.keyVersion,
+                    keyVersion: bootstrapResolution.keyVersion,
                     deviceId: device.deviceId,
                     filename: finalContent.name,
                 });
 
-                uploadedMediaMetadata = await uploadEncryptedMedia({
+                const resolvedBootstrap = bootstrapResolution;
+                uploadedMediaMetadata = await measureAsync("send.media.encrypt-upload", async () => await uploadEncryptedMedia({
                     file: finalContent,
                     senderDeviceId: device.deviceId,
-                    keyVersion: bootstrap.keyVersion,
-                    threadKey: bootstrap.threadKey,
+                    keyVersion: resolvedBootstrap.keyVersion,
+                    threadKey: resolvedBootstrap.threadKey,
                     onProgress: (percent) => {
                         setUploadingProgress(newMessage.msgId, percent);
                     },
+                }), {
+                    threadId,
+                    fileSize: finalContent.size,
                 });
 
                 newMessage.contentFormat = "e2ee_media";
                 newMessage.media = uploadedMediaMetadata;
                 newMessage.senderDeviceId = device.deviceId;
-                newMessage.keyVersion = bootstrap.keyVersion;
+                newMessage.keyVersion = bootstrapResolution.keyVersion;
 
                 if (rawBlobUrl) URL.revokeObjectURL(rawBlobUrl);
             } catch (err) {
@@ -172,14 +181,19 @@ export const useSendMessage = ({
 
         if (type === "text") {
             try {
-                const device = await ensureRegisteredDevice(profileId);
-                const bootstrap = await ensureThreadBootstrap(profileId, threadId);
-                const encryptedPayload = await encryptMessage(finalContent as string, bootstrap.threadKey);
+                bootstrapResolution = await measureAsync("send.text.bootstrap", async () => await ensureThreadBootstrap(profileId, threadId), {
+                    threadId,
+                });
+                const device = bootstrapResolution.device;
+                const encryptedPayload = await measureAsync("send.text.encrypt", async () => await encryptMessage(finalContent as string, bootstrapResolution!.threadKey), {
+                    threadId,
+                    plaintextLength: typeof finalContent === "string" ? finalContent.length : 0,
+                });
 
                 logE2eeStep("Prepared encrypted text payload", {
                     msgId: newMessage.msgId,
                     threadId,
-                    keyVersion: bootstrap.keyVersion,
+                    keyVersion: bootstrapResolution.keyVersion,
                     deviceId: device.deviceId,
                     ciphertextPreview: previewCiphertext(encryptedPayload.ciphertext),
                     ivPreview: previewIv(encryptedPayload.iv),
@@ -192,7 +206,7 @@ export const useSendMessage = ({
                     content: "Encrypted message",
                     contentFormat: "e2ee_text",
                     encryptedPayload,
-                    keyVersion: bootstrap.keyVersion,
+                    keyVersion: bootstrapResolution.keyVersion,
                 };
             } catch (err) {
                 console.error("Failed to encrypt outgoing message", err);
@@ -201,8 +215,6 @@ export const useSendMessage = ({
                 return;
             }
         }
-
-        // socketRef.current.emit the message , then use ack! 
 
         const messageToEmit: Message = newMessage.contentFormat === "e2ee_media" && uploadedMediaMetadata
             ? {
@@ -222,21 +234,21 @@ export const useSendMessage = ({
             encryptedMedia: messageToEmit.media ?? null,
         });
 
-        socketRef?.current?.timeout(10000).emit("message:new", messageToEmit, (err, res) => {
+        const sendResult = await measureAsync("send.transport.publish", async () => await socketRef.current?.publishMessage(messageToEmit), {
+            threadId,
+            type,
+        });
 
-            console.log("Res is", res)
+        if (!sendResult?.ok) {
+            updateMessageStatus(newMessage.threadId, newMessage.msgId, "failed");
+            return;
+        }
 
-            if (err || !res.ok) {
-
-                console.log(err ? "Send timeout!" : "Error from server");
-
-                updateMessageStatus(newMessage.threadId, newMessage.msgId, "failed");
-                return;
-
-            }
-
-            // if everything goes well, update the status! 
-            updateMessageStatus(newMessage.threadId, newMessage.msgId, "sent");
+        updateMessageStatus(newMessage.threadId, newMessage.msgId, "sent");
+        recordPerf("send.total", performance.now() - sendStartedAt, {
+            threadId,
+            type,
+            contentFormat: newMessage.contentFormat,
         });
 
         set("replyingToMsg", null);
