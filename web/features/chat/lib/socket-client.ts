@@ -16,6 +16,7 @@ const DEFAULT_TIMEOUT_MS = 10_000;
 export class RealtimeChatClient {
     private readonly supabase: SupabaseClient;
     private readonly channels = new Map<string, RealtimeChannel>();
+    private readonly hydratedMessagePromises = new Map<string, Promise<Message>>();
     private readonly messageReceivedListeners = new Set<(message: Message) => void>();
     private readonly messageDeletedListeners = new Set<(threadId: string, msgId: string) => void>();
     private readonly typingStartListeners = new Set<(threadId: string, userId: string) => void>();
@@ -189,7 +190,8 @@ export class RealtimeChatClient {
                 filter: `thread_id=eq.${threadId}`,
             }, async ({ new: row }) => {
                 const startedAt = performance.now();
-                const message = await this.hydrateMessageRow(row as MessageRow);
+                const rowData = row as MessageRow;
+                const message = await this.hydrateIncomingMessage(rowData);
                 recordPerf("receive.message.total", performance.now() - startedAt, {
                     threadId,
                     contentFormat: message.contentFormat,
@@ -245,6 +247,23 @@ export class RealtimeChatClient {
 
         this.channels.delete(threadId);
         await this.supabase.removeChannel(channel);
+    }
+
+    private async hydrateIncomingMessage(row: MessageRow): Promise<Message> {
+        const existing = this.hydratedMessagePromises.get(row.msg_id);
+
+        if (existing) {
+            return await existing;
+        }
+
+        const hydrationPromise = this.hydrateMessageRow(row);
+        this.hydratedMessagePromises.set(row.msg_id, hydrationPromise);
+
+        try {
+            return await hydrationPromise;
+        } finally {
+            this.hydratedMessagePromises.delete(row.msg_id);
+        }
     }
 
     private async hydrateMessageRow(row: MessageRow): Promise<Message> {

@@ -8,8 +8,8 @@ const FILE_KEY_ALGORITHM = {
     length: 256,
 } satisfies AesKeyGenParams;
 
-const CHUNK_SIZE_BYTES = 2 * 1024 * 1024;
-const IMAGE_SINGLE_PASS_THRESHOLD = 16 * 1024 * 1024;
+export const CHUNK_SIZE_BYTES = 2 * 1024 * 1024;
+export const IMAGE_SINGLE_PASS_THRESHOLD = 16 * 1024 * 1024;
 const IV_LENGTH = 12;
 
 export interface EncryptedMediaChunk {
@@ -29,7 +29,7 @@ export interface EncryptedMediaResult {
     chunks?: EncryptedMediaChunk[];
 }
 
-const createIvSeed = (): Uint8Array => crypto.getRandomValues(new Uint8Array(IV_LENGTH));
+export const createIvSeed = (): Uint8Array => crypto.getRandomValues(new Uint8Array(IV_LENGTH));
 
 const deriveChunkIv = (seed: Uint8Array, chunkIndex: number): Uint8Array => {
     const iv = new Uint8Array(seed);
@@ -40,6 +40,10 @@ const deriveChunkIv = (seed: Uint8Array, chunkIndex: number): Uint8Array => {
 
 export const deriveChunkIvFromSeed = (encodedSeed: string, chunkIndex: number): Uint8Array => {
     return deriveChunkIv(base64ToUint8Array(encodedSeed), chunkIndex);
+};
+
+export const createEncodedChunkIvSeed = (): string => {
+    return arrayBufferToBase64(createIvSeed().buffer);
 };
 
 export const generateFileKey = async (): Promise<CryptoKey> => {

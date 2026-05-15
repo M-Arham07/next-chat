@@ -4,7 +4,7 @@ import type React from "react"
 
 import { motion } from "framer-motion"
 import { Check, CheckCheck } from "lucide-react"
-import { useState, useRef, useEffect } from "react"
+import { memo, useRef, useState } from "react"
 
 
 import TextMessage from "./text-message"
@@ -14,7 +14,6 @@ import DocumentMessage from "./document-message"
 import VideoMessage from "./video-message"
 import MessageContextMenu from "./message-context-menu"
 import { Message } from "@chat/shared"
-import { useChatApp } from "@/features/chat/hooks/use-chat-app"
 import { formatTime } from "@/lib/format-time"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getOriginalFilename } from "@/features/chat/lib/file-utils"
@@ -29,11 +28,13 @@ interface MessageBubbleProps {
   isHighlighted: boolean
   onReplyClick: (messageId: string) => void
   onReply: (message: Message) => void
+  onRetry: (message: Message) => Promise<void>
+  repliedToMsg: Message | null
   displayPic: { url?: string, show?: boolean }
   status: string
 
 }
-const MessageBubble = ({
+const MessageBubbleComponent = ({
 
 
   message,
@@ -42,7 +43,9 @@ const MessageBubble = ({
   onReplyClick,
   status = "sent",
   displayPic,
-  onReply
+  onReply,
+  onRetry,
+  repliedToMsg
 
 
 }: MessageBubbleProps) => {
@@ -53,20 +56,6 @@ const MessageBubble = ({
   const containerRef = useRef<HTMLDivElement>(null)
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const hasTriggeredReply = useRef(false);
-
-
-  const { messages, handleRetryMessage } = useChatApp()!;
-
-
-
-
-
-
-
-  // if this message is a reply to another message, get the message to which this message is a reply to!
-
-
-  const repliedToMsg: Message | null = messages![message.threadId].find(m => m.msgId === message?.replyToMsgId) ?? null;
 
 
 
@@ -281,7 +270,7 @@ return (
           // Show retry button in case message sending failed
           // WE'LL SEND THE MESSAGE WITH LATEST TIMESTAMP!
           onClick={async () => {
-            await handleRetryMessage(message);
+            await onRetry(message);
           }}
           className="ml-2 px-3 py-1 text-xs font-medium text-red-500 bg-red-500/10 border border-red-500/30 rounded hover:bg-red-500/20 transition-colors opacity-0 group-hover:opacity-100"
         >
@@ -301,5 +290,32 @@ return (
   </>
 )
 }
+
+const areMessagesEquivalent = (left: Message, right: Message): boolean => (
+  left.msgId === right.msgId
+  && left.content === right.content
+  && left.status === right.status
+  && left.type === right.type
+  && left.timestamp === right.timestamp
+  && left.replyToMsgId === right.replyToMsgId
+  && left.keyVersion === right.keyVersion
+  && left.sender === right.sender
+  && left.senderUserId === right.senderUserId
+  && left.senderDeviceId === right.senderDeviceId
+  && left.contentFormat === right.contentFormat
+);
+
+const arePropsEqual = (prev: MessageBubbleProps, next: MessageBubbleProps): boolean => (
+  areMessagesEquivalent(prev.message, next.message)
+  && prev.isSent === next.isSent
+  && prev.isHighlighted === next.isHighlighted
+  && prev.status === next.status
+  && prev.displayPic.url === next.displayPic.url
+  && prev.displayPic.show === next.displayPic.show
+  && prev.repliedToMsg?.msgId === next.repliedToMsg?.msgId
+  && prev.repliedToMsg?.content === next.repliedToMsg?.content
+);
+
+const MessageBubble = memo(MessageBubbleComponent, arePropsEqual);
 
 export default MessageBubble

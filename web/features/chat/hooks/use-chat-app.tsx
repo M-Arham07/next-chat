@@ -78,7 +78,7 @@ const useChatAppHook = (): ChatAppHook => {
     useSocketListeners({
         socketRef,
         profileRef,
-        onMessageReceived: (msg: Message) => handleReceiveMessage(msg, profileRef, addMessages),
+        onMessageReceived: (msg: Message) => handleReceiveMessage(msg, addMessages),
         onMessageDeleted: (threadId: string, msgId: string) => removeMessage(threadId, msgId),
         onTypingStart: (threadId: string, id: string) => addTypingUser(threadId, id),
         onTypingStop: (threadId: string, id: string) => removeTypingUser(threadId, id),

@@ -309,7 +309,7 @@ export const ensureThreadBootstrap = async (
     }
 };
 
-const ensureThreadKeyVersion = async (
+export const ensureThreadKeyVersion = async (
     userId: string,
     threadId: string,
     keyVersion: number,

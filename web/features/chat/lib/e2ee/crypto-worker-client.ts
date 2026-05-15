@@ -26,9 +26,11 @@ type DecryptSingleMediaResponse = { decryptedBuffer: ArrayBuffer };
 type DecryptChunkedMediaResponse = { decryptedBuffers: ArrayBuffer[] };
 type EncryptBackupResponse = { encryptedBlob: string; salt: string; iv: string };
 type DecryptBackupResponse = { bundleJson: string };
+type EncryptMediaChunkResponse = { encryptedBuffer: ArrayBuffer };
 
 type WorkerResponseMap = {
     "encrypt-media": EncryptMediaResponse;
+    "encrypt-media-chunk": EncryptMediaChunkResponse;
     "decrypt-single-media": DecryptSingleMediaResponse;
     "decrypt-chunked-media": DecryptChunkedMediaResponse;
     "encrypt-backup": EncryptBackupResponse;
@@ -40,6 +42,12 @@ type WorkerRequestMap = {
         fileBuffer: ArrayBuffer;
         mimeType: string;
         sizeBytes: number;
+    };
+    "encrypt-media-chunk": {
+        chunkBuffer: ArrayBuffer;
+        rawFileKey: ArrayBuffer;
+        ivSeedBase64: string;
+        chunkIndex: number;
     };
     "decrypt-single-media": {
         encryptedBuffer: ArrayBuffer;
@@ -178,6 +186,20 @@ export const workerDecryptSingleMedia = async (
 ): Promise<DecryptSingleMediaResponse> => {
     return await callWorker("decrypt-single-media", {
         encryptedBuffer,
+        rawFileKey,
+        ivSeedBase64,
+        chunkIndex,
+    });
+};
+
+export const workerEncryptMediaChunk = async (
+    chunkBuffer: ArrayBuffer,
+    rawFileKey: ArrayBuffer,
+    ivSeedBase64: string,
+    chunkIndex: number,
+): Promise<EncryptMediaChunkResponse> => {
+    return await callWorker("encrypt-media-chunk", {
+        chunkBuffer,
         rawFileKey,
         ivSeedBase64,
         chunkIndex,

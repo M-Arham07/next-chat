@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, use } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import ChatHeader from "./chat-header";
 import ChatInput from "./chat-input";
 import MessageBubble from "./message-bubble";
@@ -9,7 +9,7 @@ import TypingIndicator from "./typing-indicator";
 import { useInfiniteScroll } from "@/features/chat/hooks/use-infinite-scroll";
 import Loading from "../loading";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { participant } from "@chat/shared";
+import { Message, participant } from "@chat/shared";
 
 
 
@@ -45,7 +45,7 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
 
 
 
-    const { messages, replyingToMsg, handleSendMessage, handleTyping, set, stopTypingEmit, threads, typingUsers } = useChatApp()!;
+    const { messages, replyingToMsg, handleSendMessage, handleRetryMessage, handleTyping, set, stopTypingEmit, threads, typingUsers } = useChatApp()!;
 
     // must not be null , null auth will be blocked by loading screen
     const { profile } = useAuth()!;
@@ -57,6 +57,17 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
     if (thisThread?.type === "direct" && profile?.username) {
         otherParticipant = thisThread.participants?.find(p => p.username.toLowerCase() !== profile.username.toLowerCase());
     }
+
+    const threadMessages = messages?.[threadId] ?? [];
+    const repliedToMessageMap = useMemo(() => {
+        const nextMap = new Map<string, Message>();
+
+        for (const message of threadMessages) {
+            nextMap.set(message.msgId, message);
+        }
+
+        return nextMap;
+    }, [threadMessages]);
 
 
     const [mounted, setMounted] = useState(false);
@@ -95,13 +106,13 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
     const hasScrolledRef = useRef(false);
     useEffect(() => {
         if (hasScrolledRef.current) return;
-        if (!messages?.[threadId]?.length) return;
+        if (!threadMessages.length) return;
 
         requestAnimationFrame(() => {
             messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
             hasScrolledRef.current = true;
         });
-    }, [messages?.[threadId]]);
+    }, [threadMessages]);
 
 
 
@@ -131,6 +142,11 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
             }, 2000)
         }
     }
+
+    const handleReply = useCallback((message: Message) => {
+        set("replyingToMsg", message);
+        inputRef?.current?.focus();
+    }, [set]);
 
 
 
@@ -215,10 +231,11 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
                 <div className="space-y-1 relative">
                     {/* {contextMenuOpenMessageId && <div className="absolute inset-0 pointer-events-none z-40" />} */}
 
-                    {messages?.[threadId]?.map((message, idx) => {
-                        const prevMsg = messages[threadId][idx - 1];
+                    {threadMessages.map((message, idx) => {
+                        const prevMsg = threadMessages[idx - 1];
                         const showSeparator = !prevMsg ||
                             getDateLabel(prevMsg.timestamp) !== getDateLabel(message.timestamp);
+                        const repliedToMsg = message.replyToMsgId ? repliedToMessageMap.get(message.replyToMsgId) ?? null : null;
 
                         return (
                             <div key={message.msgId}>
@@ -249,12 +266,9 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
                                         isSent={message.sender === profile.id}
                                         isHighlighted={highlightedMessageId === message.msgId}
                                         onReplyClick={handleReplyPreviewClick}
-                                        onReply={() => {
-                                            set("replyingToMsg", message)
-                                            // focus the message input so on-screen keyboard shows up
-                                            inputRef?.current?.focus();
-
-                                        }}
+                                        onReply={handleReply}
+                                        onRetry={handleRetryMessage}
+                                        repliedToMsg={repliedToMsg}
 
 
                                         displayPic={
@@ -263,7 +277,7 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
 
                                                 // if previous message was of the same user ,dont show his dp again 
 
-                                                show: messages?.[threadId][idx - 1]?.sender !== message.sender
+                                                show: threadMessages[idx - 1]?.sender !== message.sender
                                             }
                                         }
                                         status={message.status}
@@ -272,7 +286,9 @@ export default function MessagesViewClient({ threadId }: { threadId: string }) {
 
                             </div>
                         );
-                    }) || <h1>Start a conversation </h1>}
+                    })}
+
+                    {threadMessages.length === 0 && <h1>Start a conversation </h1>}
 
                     {/* Render typing bubbles: */}
                     {[...(typingUsers?.[threadId] ?? [])].map((typingUserId) => {

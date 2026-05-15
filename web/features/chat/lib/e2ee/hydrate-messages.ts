@@ -1,6 +1,7 @@
 import type { Message } from "@chat/shared";
 import { measureAsync, recordPerf } from "./debug";
-import { decryptThreadMessage } from "./thread-bootstrap";
+import { decryptMessage } from "./messages";
+import { ensureThreadKeyVersion } from "./thread-bootstrap";
 
 export const hydrateMessagesForDisplay = async (
     userId: string,
@@ -8,6 +9,7 @@ export const hydrateMessagesForDisplay = async (
 ): Promise<Message[]> => {
     const startedAt = performance.now();
     const decryptPromises = new Map<string, Promise<string>>();
+    const threadKeyPromises = new Map<string, Promise<CryptoKey>>();
 
     const hydrated = await Promise.all(messages.map(async (message) => {
         if (message.contentFormat !== "e2ee_text" || !message.encryptedPayload || !message.keyVersion) {
@@ -17,16 +19,22 @@ export const hydrateMessagesForDisplay = async (
         try {
             const keyVersion = message.keyVersion;
             const encryptedPayload = message.encryptedPayload;
+            const threadKeyCacheKey = `${message.threadId}:${keyVersion}`;
+            let threadKeyPromise = threadKeyPromises.get(threadKeyCacheKey);
+
+            if (!threadKeyPromise) {
+                threadKeyPromise = ensureThreadKeyVersion(userId, message.threadId, keyVersion);
+                threadKeyPromises.set(threadKeyCacheKey, threadKeyPromise);
+            }
+
             const cacheKey = `${message.threadId}:${message.keyVersion}:${message.msgId}`;
             let decryptPromise = decryptPromises.get(cacheKey);
 
             if (!decryptPromise) {
-                decryptPromise = measureAsync("crypto.message.decrypt-for-display", async () => await decryptThreadMessage(
-                    userId,
-                    message.threadId,
-                    keyVersion,
-                    encryptedPayload,
-                ), {
+                decryptPromise = measureAsync("crypto.message.decrypt-for-display", async () => {
+                    const threadKey = await threadKeyPromise;
+                    return await decryptMessage(encryptedPayload, threadKey);
+                }, {
                     threadId: message.threadId,
                     keyVersion,
                 });

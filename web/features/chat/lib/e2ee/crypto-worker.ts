@@ -8,6 +8,15 @@ type EncryptMediaRequest = {
     sizeBytes: number;
 };
 
+type EncryptMediaChunkRequest = {
+    type: "encrypt-media-chunk";
+    requestId: string;
+    chunkBuffer: ArrayBuffer;
+    rawFileKey: ArrayBuffer;
+    ivSeedBase64: string;
+    chunkIndex: number;
+};
+
 type DecryptSingleMediaRequest = {
     type: "decrypt-single-media";
     requestId: string;
@@ -45,6 +54,7 @@ type DecryptBackupRequest = {
 
 type WorkerRequest =
     | EncryptMediaRequest
+    | EncryptMediaChunkRequest
     | DecryptSingleMediaRequest
     | DecryptChunkedMediaRequest
     | EncryptBackupRequest
@@ -74,6 +84,12 @@ type WorkerSuccess =
                 rawFileKey: ArrayBuffer;
                 encryptedBuffers: ArrayBuffer[];
             };
+    }
+    | {
+        requestId: string;
+        ok: true;
+        type: "encrypt-media-chunk";
+        result: { encryptedBuffer: ArrayBuffer };
     }
     | {
         requestId: string;
@@ -272,6 +288,23 @@ const decryptSingleMedia = async (request: DecryptSingleMediaRequest): Promise<W
     };
 };
 
+const encryptMediaChunk = async (request: EncryptMediaChunkRequest): Promise<WorkerSuccess> => {
+    const fileKey = await importRawAesKey(request.rawFileKey);
+    const seed = base64ToUint8Array(request.ivSeedBase64);
+    const encryptedBuffer = await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv: toArrayBuffer(deriveChunkIv(seed, request.chunkIndex)) },
+        fileKey,
+        toArrayBuffer(request.chunkBuffer),
+    );
+
+    return {
+        requestId: request.requestId,
+        ok: true,
+        type: "encrypt-media-chunk",
+        result: { encryptedBuffer },
+    };
+};
+
 const decryptChunkedMedia = async (request: DecryptChunkedMediaRequest): Promise<WorkerSuccess> => {
     const fileKey = await importRawAesKey(request.rawFileKey);
     const seed = base64ToUint8Array(request.ivSeedBase64);
@@ -352,6 +385,9 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
             case "decrypt-single-media":
                 response = await decryptSingleMedia(request);
                 break;
+            case "encrypt-media-chunk":
+                response = await encryptMediaChunk(request);
+                break;
             case "decrypt-chunked-media":
                 response = await decryptChunkedMedia(request);
                 break;
@@ -373,6 +409,8 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
             } else {
                 transferables.push(...response.result.encryptedBuffers);
             }
+        } else if (response.type === "encrypt-media-chunk") {
+            transferables.push(response.result.encryptedBuffer);
         } else if (response.type === "decrypt-single-media") {
             transferables.push(response.result.decryptedBuffer);
         } else if (response.type === "decrypt-chunked-media") {

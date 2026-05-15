@@ -1,8 +1,9 @@
 import { createClient } from "@/supabase/client";
 import type { EncryptedMediaMetadata } from "@chat/shared";
 import { logE2eeStep, measureAsync, recordPerf } from "./debug";
-import { encryptMediaFile, wrapFileKeyWithThreadKey } from "./media";
+import { CHUNK_SIZE_BYTES, IMAGE_SINGLE_PASS_THRESHOLD, createEncodedChunkIvSeed, encryptMediaFile, wrapFileKeyWithThreadKey } from "./media";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { workerEncryptMediaChunk } from "./crypto-worker-client";
 
 interface UploadEncryptedMediaParams {
     file: File;
@@ -89,74 +90,147 @@ export const uploadEncryptedMedia = async ({
         keyVersion,
     });
 
-    const encryptedMedia = await measureAsync("media.encrypt-file.total", async () => await encryptMediaFile(file), {
-        fileSize: file.size,
-        mimeType: file.type,
-    });
-    const { wrappedFileKey, fileKeyIv } = await measureAsync("media.wrap-file-key", async () => await wrapFileKeyWithThreadKey(encryptedMedia.fileKey, threadKey));
+    const shouldUseSinglePass = file.type.startsWith("image/") && file.size <= IMAGE_SINGLE_PASS_THRESHOLD;
     const supabase = createClient();
 
-    const init = await initializeMedia({
-        senderDeviceId,
-        keyVersion,
-        mimeType: encryptedMedia.mimeType,
-        originalFilename: file.name,
-        sizeBytes: encryptedMedia.sizeBytes,
-        encryptionMode: encryptedMedia.mode,
-        chunkSizeBytes: encryptedMedia.chunkSizeBytes ?? null,
-        chunkCount: encryptedMedia.chunkCount ?? null,
-        chunkIvSeed: encryptedMedia.chunkIvSeed,
-        wrappedFileKey,
-        fileKeyIv,
-        previewCiphertext: null,
-        previewIv: null,
-    });
+    let metadata: EncryptedMediaMetadata;
 
-    logE2eeStep("Reserved encrypted media storage", {
-        mediaId: init.mediaId,
-        storagePath: init.storagePath,
-        bucket: init.bucket,
-        mode: encryptedMedia.mode,
-    });
+    if (shouldUseSinglePass) {
+        const encryptedMedia = await measureAsync("media.encrypt-file.total", async () => await encryptMediaFile(file), {
+            fileSize: file.size,
+            mimeType: file.type,
+        });
+        const { wrappedFileKey, fileKeyIv } = await measureAsync("media.wrap-file-key", async () => await wrapFileKeyWithThreadKey(encryptedMedia.fileKey, threadKey));
+        const init = await initializeMedia({
+            senderDeviceId,
+            keyVersion,
+            mimeType: encryptedMedia.mimeType,
+            originalFilename: file.name,
+            sizeBytes: encryptedMedia.sizeBytes,
+            encryptionMode: encryptedMedia.mode,
+            chunkSizeBytes: encryptedMedia.chunkSizeBytes ?? null,
+            chunkCount: encryptedMedia.chunkCount ?? null,
+            chunkIvSeed: encryptedMedia.chunkIvSeed,
+            wrappedFileKey,
+            fileKeyIv,
+            previewCiphertext: null,
+            previewIv: null,
+        });
 
-    if (encryptedMedia.mode === "single") {
+        logE2eeStep("Reserved encrypted media storage", {
+            mediaId: init.mediaId,
+            storagePath: init.storagePath,
+            bucket: init.bucket,
+            mode: encryptedMedia.mode,
+        });
+
         await uploadBlob(supabase, `${init.storagePath}/original.bin`, encryptedMedia.encryptedBlob!, "application/octet-stream");
         onProgress?.(100);
         logE2eeStep("Uploaded single encrypted media blob", {
             mediaId: init.mediaId,
             bytesUploaded: encryptedMedia.encryptedBlob?.size ?? 0,
         });
-    } else {
-        const total = encryptedMedia.chunks?.length ?? 0;
 
-        for (const [index, chunk] of (encryptedMedia.chunks ?? []).entries()) {
-            await uploadBlob(supabase, `${init.storagePath}/chunks/${chunk.index}.bin`, chunk.ciphertext, "application/octet-stream");
-            const progress = Math.round(((index + 1) / total) * 100);
+        metadata = {
+            mediaId: init.mediaId,
+            storagePath: init.storagePath,
+            mimeType: encryptedMedia.mimeType,
+            originalFilename: file.name,
+            sizeBytes: encryptedMedia.sizeBytes,
+            encryptionMode: encryptedMedia.mode,
+            chunkSizeBytes: encryptedMedia.chunkSizeBytes ?? null,
+            chunkCount: encryptedMedia.chunkCount ?? null,
+            chunkIvSeed: encryptedMedia.chunkIvSeed,
+            wrappedFileKey,
+            fileKeyIv,
+            previewCiphertext: null,
+            previewIv: null,
+        };
+    } else {
+        const startedEncryptionAt = performance.now();
+        const fileKey = await crypto.subtle.generateKey(
+            { name: "AES-GCM", length: 256 },
+            true,
+            ["encrypt", "decrypt"],
+        );
+        const rawFileKey = await crypto.subtle.exportKey("raw", fileKey);
+        const chunkIvSeed = createEncodedChunkIvSeed();
+        const chunkCount = Math.ceil(file.size / CHUNK_SIZE_BYTES);
+        const { wrappedFileKey, fileKeyIv } = await measureAsync("media.wrap-file-key", async () => await wrapFileKeyWithThreadKey(fileKey, threadKey));
+        const init = await initializeMedia({
+            senderDeviceId,
+            keyVersion,
+            mimeType: file.type,
+            originalFilename: file.name,
+            sizeBytes: file.size,
+            encryptionMode: "chunked",
+            chunkSizeBytes: CHUNK_SIZE_BYTES,
+            chunkCount,
+            chunkIvSeed,
+            wrappedFileKey,
+            fileKeyIv,
+            previewCiphertext: null,
+            previewIv: null,
+        });
+
+        logE2eeStep("Reserved encrypted media storage", {
+            mediaId: init.mediaId,
+            storagePath: init.storagePath,
+            bucket: init.bucket,
+            mode: "chunked",
+            chunkCount,
+        });
+
+        for (let chunkIndex = 0; chunkIndex < chunkCount; chunkIndex += 1) {
+            const offset = chunkIndex * CHUNK_SIZE_BYTES;
+            const chunkBlob = file.slice(offset, Math.min(offset + CHUNK_SIZE_BYTES, file.size));
+            const chunkBuffer = await measureAsync("media.chunk.read-array-buffer", async () => await chunkBlob.arrayBuffer(), {
+                chunkIndex,
+                bytes: chunkBlob.size,
+            });
+            const { encryptedBuffer } = await measureAsync("media.chunk.encrypt-upload", async () => await workerEncryptMediaChunk(
+                chunkBuffer,
+                rawFileKey.slice(0),
+                chunkIvSeed,
+                chunkIndex,
+            ), {
+                chunkIndex,
+                bytes: chunkBlob.size,
+            });
+            const encryptedBlob = new Blob([encryptedBuffer], { type: "application/octet-stream" });
+            await uploadBlob(supabase, `${init.storagePath}/chunks/${chunkIndex}.bin`, encryptedBlob, "application/octet-stream");
+
+            const progress = Math.round(((chunkIndex + 1) / chunkCount) * 100);
             onProgress?.(progress);
             logE2eeStep("Uploaded encrypted media chunk", {
                 mediaId: init.mediaId,
-                chunkIndex: chunk.index,
+                chunkIndex,
                 progress,
-                totalChunks: total,
+                totalChunks: chunkCount,
             });
         }
-    }
 
-    const metadata = {
-        mediaId: init.mediaId,
-        storagePath: init.storagePath,
-        mimeType: encryptedMedia.mimeType,
-        originalFilename: file.name,
-        sizeBytes: encryptedMedia.sizeBytes,
-        encryptionMode: encryptedMedia.mode,
-        chunkSizeBytes: encryptedMedia.chunkSizeBytes ?? null,
-        chunkCount: encryptedMedia.chunkCount ?? null,
-        chunkIvSeed: encryptedMedia.chunkIvSeed,
-        wrappedFileKey,
-        fileKeyIv,
-        previewCiphertext: null,
-        previewIv: null,
-    };
+        recordPerf("media.encrypt-file.chunked.stream", performance.now() - startedEncryptionAt, {
+            fileSize: file.size,
+            chunkCount,
+        });
+
+        metadata = {
+            mediaId: init.mediaId,
+            storagePath: init.storagePath,
+            mimeType: file.type,
+            originalFilename: file.name,
+            sizeBytes: file.size,
+            encryptionMode: "chunked",
+            chunkSizeBytes: CHUNK_SIZE_BYTES,
+            chunkCount,
+            chunkIvSeed,
+            wrappedFileKey,
+            fileKeyIv,
+            previewCiphertext: null,
+            previewIv: null,
+        };
+    }
 
     logE2eeStep("Encrypted media upload completed", {
         mediaId: metadata.mediaId,
