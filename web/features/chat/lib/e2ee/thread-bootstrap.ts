@@ -27,7 +27,9 @@ interface ParticipantWrappedKeyPayload extends WrappedThreadKey {
 
 const bootstrapInFlight = new Map<string, Promise<BootstrapResolution>>();
 const activeBootstrapCache = new Map<string, { resolvedAt: number; resolution: BootstrapResolution }>();
+const activeDeviceSyncCache = new Map<string, number>();
 const ACTIVE_BOOTSTRAP_CACHE_TTL_MS = 30_000;
+const ACTIVE_DEVICE_SYNC_TTL_MS = 30_000;
 
 const fetchBootstrap = async (
     threadId: string,
@@ -108,6 +110,29 @@ const rotateThread = async (
     return json.keyVersion;
 };
 
+const syncActiveThreadDevices = async (
+    threadId: string,
+    deviceId: string,
+    keyVersion: number,
+    participantWrappedKeys: ParticipantWrappedKeyPayload[],
+): Promise<void> => {
+    const response = await fetch(`/api/e2ee/thread/${threadId}/sync-devices`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            creatorDeviceId: deviceId,
+            keyVersion,
+            participantWrappedKeys,
+        }),
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to sync thread devices");
+    }
+};
+
 const wrapThreadKeyForActiveDevices = async (
     threadKey: CryptoKey,
     userId: string,
@@ -131,6 +156,37 @@ const wrapThreadKeyForActiveDevices = async (
             };
         }),
     );
+};
+
+const maybeSyncActiveThreadDevices = async (
+    userId: string,
+    threadId: string,
+    deviceId: string,
+    keyVersion: number,
+    threadKey: CryptoKey,
+    participantDevices: ThreadBootstrap["participantDevices"],
+): Promise<void> => {
+    const cacheKey = `${userId}:${threadId}:${keyVersion}:${participantDevices.length}`;
+    const lastSyncedAt = activeDeviceSyncCache.get(cacheKey);
+
+    if (lastSyncedAt && (Date.now() - lastSyncedAt) < ACTIVE_DEVICE_SYNC_TTL_MS) {
+        recordPerf("cache.thread-device-sync.hit", 0, {
+            threadId,
+            keyVersion,
+            participantDeviceCount: participantDevices.length,
+        });
+        return;
+    }
+
+    const participantWrappedKeys = await wrapThreadKeyForActiveDevices(threadKey, userId, participantDevices);
+    await syncActiveThreadDevices(threadId, deviceId, keyVersion, participantWrappedKeys);
+    activeDeviceSyncCache.set(cacheKey, Date.now());
+
+    logE2eeStep("Synced active thread key to participant devices", {
+        threadId,
+        keyVersion,
+        participantDeviceCount: participantDevices.length,
+    });
 };
 
 export const provisionThreadEncryption = async (
@@ -233,15 +289,23 @@ export const ensureThreadBootstrap = async (
                 keyVersion: bootstrap.activeKeyVersion,
             });
 
-            const resolved = {
-                device,
-                keyVersion: bootstrap.activeKeyVersion,
-                threadKey: storedKey,
-                bootstrap,
-            };
-            activeBootstrapCache.set(cacheKey, { resolvedAt: Date.now(), resolution: resolved });
-            return resolved;
-        }
+        const resolved = {
+            device,
+            keyVersion: bootstrap.activeKeyVersion,
+            threadKey: storedKey,
+            bootstrap,
+        };
+        await maybeSyncActiveThreadDevices(
+            userId,
+            threadId,
+            device.deviceId,
+            bootstrap.activeKeyVersion,
+            storedKey,
+            bootstrap.participantDevices,
+        );
+        activeBootstrapCache.set(cacheKey, { resolvedAt: Date.now(), resolution: resolved });
+        return resolved;
+    }
 
         const identity = await getOrCreateIdentity(userId);
         const senderPublicKey = await importPublicKey(bootstrap.wrappedThreadKey.senderPublicKey as JsonWebKey);
@@ -265,6 +329,14 @@ export const ensureThreadBootstrap = async (
             threadKey: importedKey,
             bootstrap,
         };
+        await maybeSyncActiveThreadDevices(
+            userId,
+            threadId,
+            device.deviceId,
+            bootstrap.activeKeyVersion,
+            importedKey,
+            bootstrap.participantDevices,
+        );
         activeBootstrapCache.set(cacheKey, { resolvedAt: Date.now(), resolution: resolved });
         return resolved;
     }
